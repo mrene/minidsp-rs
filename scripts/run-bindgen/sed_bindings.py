@@ -2,7 +2,7 @@
 import argparse
 import re
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+parser = argparse.ArgumentParser(description='Postprocess generated bindings.rs')
 parser.add_argument('infile', type=argparse.FileType('r', encoding='utf-8'),
                     help='Input file')
 parser.add_argument('outfile', type=argparse.FileType('w', encoding='utf-8'),
