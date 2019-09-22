@@ -2,11 +2,22 @@
 import argparse
 import re
 
-parser = argparse.ArgumentParser(description='Postprocess generated bindings.rs')
+parser = argparse.ArgumentParser(
+    description='Postprocess generated bindings.rs')
 parser.add_argument('infile', type=argparse.FileType('r', encoding='utf-8'),
                     help='Input file')
-parser.add_argument('outfile', type=argparse.FileType('w', encoding='utf-8'),
+parser.add_argument('outfile_bindings', type=argparse.FileType('w', encoding='utf-8'),
                     help='Output file')
+parser.add_argument('--outfile_enum', type=argparse.FileType('w', encoding='utf-8'), required=False,
+                    help='Output file for enums')
+
+
+def capitalize_enum(enum_name):
+    """Capitalizes names based on underscore
+    >>> capitalize_enum('pub enum my_enum')
+    'pub enum MyEnum'
+    """
+    return re.sub('(?:enum )(.*)', lambda match: 'enum ' + ''.join(map(lambda word: word.capitalize(), match[1].split('_'))), enum_name)
 
 
 def get_prefix(item, num_parts):
@@ -89,8 +100,13 @@ if __name__ == '__main__':
             if end_line.strip().startswith('#') or end_line.strip().startswith('//'):
                 continue
             if end_line.startswith('}'):
-                enum_end = enum_start + enum_end_relative + 1
-                enums[enum_name] = (enum_start, enum_end, longest_common_prefix(
+                enum_end = enum_start + enum_end_relative + 2
+                for start_before in range(1, enum_start + 1, 1):
+                    if not lines[enum_start - start_before].strip().startswith('#['):
+                        break
+                enum_start_with_attributes = enum_start - start_before + 1
+
+                enums[enum_name] = (enum_start_with_attributes, enum_end, longest_common_prefix(
                     enum_members), enum_members)
                 break
             try:
@@ -113,18 +129,34 @@ if __name__ == '__main__':
         members_pattern_ref = (r'\b(?:' + enum_name + '::)' +
                                '|'.join(map(re.escape, enum_members)) + r'\b')
         for row, line in enumerate(lines):
-            if enum_start <= row < enum_end:
-                # Replace enum field names (declaration): <COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <FIELD>
-                lines[row] = re.sub(members_pattern,
-                                    lambda match: match[0].replace(enum_prefix, ''), lines[row])
             if line.strip().startswith('#[doc'):
                 # Replace docs: <COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <ENUM_NAME>::<FIELD>
                 lines[row] = re.sub(members_pattern,
                                     lambda match: '::'.join([enum_name, match[0].replace(enum_prefix, '')]), line)
+            elif enum_start <= row < enum_end:
+                # 1. Replace enum field names (declaration): <COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <FIELD>
+                # 2. Replace enum field value to refer to constant with the full name
+                if '=' in line:
+                    key, value = line.split(' = ')
+                    cleaned_key = re.sub(members_pattern,
+                                         lambda match: match[0].replace(enum_prefix, ''), key)
+                    lines[row] = cleaned_key + ' = ' + key.strip() + ',\n'
             else:
                 # Replace references to enum fields: <ENUM_NAME>::<COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <ENUM_NAME>::<FIELD>
                 lines[row] = re.sub(members_pattern_ref,
                                     lambda match: match[0].replace(enum_prefix, ''), line)
 
-    with args.outfile as f:
+    with args.outfile_bindings as f:
         f.write(''.join(lines))
+
+    if args.outfile_enum:
+        with args.outfile_enum as f:
+            f.write('\n\n//\n')
+            f.write('// Enums\n')
+            f.write('//\n')
+            for enum_name, (enum_start, enum_end, enum_prefix, enum_members) in enums.items():
+                for line in lines[enum_start:enum_end]:
+                    if ' enum ' in line:
+                        f.write(capitalize_enum(line))
+                    else:
+                        f.write(line)
