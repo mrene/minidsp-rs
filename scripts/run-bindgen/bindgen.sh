@@ -20,6 +20,7 @@ function generate() {
     --whitelist-type $CEC_REGEX \
     --whitelist-function $CEC_REGEX \
     --whitelist-var $CEC_REGEX \
+    --blacklist-type cec_boolean \
     --no-prepend-enum-name \
     --rustfmt-bindings \
     --raw-line='#![allow(non_upper_case_globals)]' \
