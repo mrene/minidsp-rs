@@ -15,6 +15,7 @@ parser.add_argument('--outfile_enum', type=argparse.FileType('w', encoding='utf-
 DERIVE_ATTRIBUTE = '#[derive('
 DOC_ATTRIBUTE = '#[doc'
 
+
 def capitalize_underscore_word(word):
     """Capitalizes names based on underscore
     >>> capitalize_underscore_word('my_enum')
@@ -30,8 +31,8 @@ def capitalize_enum(enum_name):
     >>> capitalize_enum('pub enum my_enum')
     'pub enum MyEnum'
     """
-    return re.sub('(?:enum )(.*)', 
-        lambda match: 'enum ' + capitalize_underscore_word(match[1]), enum_name)
+    return re.sub('(?:enum )(.*)',
+                  lambda match: 'enum ' + capitalize_underscore_word(match[1]), enum_name)
 
 
 def get_prefix(item, num_parts):
@@ -94,7 +95,9 @@ def longest_common_prefix(items):
     # No common prefix found
     return ''
 
-EnumInfo = namedtuple('Enuminfo', ['start_row', 'end_row', 'enum_variant_to_value', 'orig_enum_variant_to_new'])
+
+EnumInfo = namedtuple('Enuminfo', [
+                      'start_row', 'end_row', 'enum_variant_to_value', 'orig_enum_variant_to_new'])
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -125,12 +128,16 @@ if __name__ == '__main__':
                 # Clean up enum names
                 # - remove prefix: <COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <FIELD>
                 # - TEST_VAL -> TestVal
-                enum_primitive_names = ['libcec_sys::' + name for name in orig_enum_names_variants]
-                new_variants_names = [capitalize_underscore_word(key.replace(enum_prefix, '')) for key in orig_enum_names_variants] # TODO: CapitalizeThis
-                enum_variant_to_value = dict(zip(new_variants_names, enum_primitive_names))
-                orig_enum_variant_to_new_variant = dict(zip(orig_enum_names_variants, enum_variant_to_value))
-                enums[enum_name] = EnumInfo(enum_start_with_attributes, enum_end,  
-                    enum_variant_to_value, orig_enum_variant_to_new_variant)
+                enum_primitive_names = ['libcec_sys::' +
+                                        name for name in orig_enum_names_variants]
+                new_variants_names = [capitalize_underscore_word(key.replace(
+                    enum_prefix, '')) for key in orig_enum_names_variants]
+                enum_variant_to_value = dict(
+                    zip(new_variants_names, enum_primitive_names))
+                orig_enum_variant_to_new_variant = dict(
+                    zip(orig_enum_names_variants, enum_variant_to_value))
+                enums[enum_name] = EnumInfo(enum_start_with_attributes, enum_end,
+                                            enum_variant_to_value, orig_enum_variant_to_new_variant)
                 break
             try:
                 key, value = end_line.strip().split('=')
@@ -158,13 +165,16 @@ if __name__ == '__main__':
             elif enum_start <= row < enum_end:
                 if line.startswith(DERIVE_ATTRIBUTE):
                     # 1. Derive FromPrimitive (provided by num_derive) for enums to allow construction from primitive value
-                    lines[row] = line.replace(DERIVE_ATTRIBUTE, DERIVE_ATTRIBUTE + 'FromPrimitive, ')
+                    lines[row] = line.replace(
+                        DERIVE_ATTRIBUTE, DERIVE_ATTRIBUTE + 'FromPrimitive, ToPrimitive, ')
                 elif '=' in line:
                     # Replace enum field value to refer to constant with the full name
                     key, _ = line.split(' = ', 1)
                     key = key.strip()
                     new_variant = orig_enum_variant_to_new_variant[key]
-                    lines[row] = '    ' + ' = '.join([new_variant, enum_variant_to_value[new_variant]]) + ',\n'
+                    lines[row] = '    ' + \
+                        ' = '.join(
+                            [new_variant, enum_variant_to_value[new_variant]]) + ',\n'
             else:
                 # Replace references to enum fields: <ENUM_NAME>::<COMMON_ENUM_FIELD_PREFIX>_<FIELD> to <ENUM_NAME>::<FIELD>
                 lines[row] = re.sub(members_pattern_ref,
@@ -175,7 +185,7 @@ if __name__ == '__main__':
 
     if args.outfile_enum:
         with args.outfile_enum as f:
-            f.write('use num_derive::FromPrimitive;')
+            f.write('use num_derive::{FromPrimitive, ToPrimitive};')
             f.write('\n\n//\n')
             f.write('// Enums\n')
             f.write('//\n')
