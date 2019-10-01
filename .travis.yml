@@ -1,0 +1,69 @@
+# Based on the "trust" template v0.1.2
+# https://github.com/japaric/trust/tree/v0.1.2
+
+dist: trusty
+language: rust
+services: docker
+sudo: required
+
+# Rust builds on stable by default, this can be
+# overridden on a case by case basis down below.
+
+env:
+    global:
+        - CRATE_NAME=libcec-sys
+
+matrix:
+    # These are all the build jobs. Adjust as necessary. Comment out what you
+    # don't need
+    include:
+        # Linux
+        - env: TARGET=armv7-unknown-linux-gnueabihf
+        - env: TARGET=x86_64-unknown-linux-gnu
+
+before_install:
+    - set -e
+    - rustup self update
+
+install:
+    - sh ci/install.sh
+    - source ~/.cargo/env || true
+
+script:
+    - bash ci/script.sh
+
+after_script: set +e
+
+before_deploy:
+    - sh ci/before_deploy.sh
+
+deploy:
+    # update `api_key.secure`
+    # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
+    # - Encrypt it: `travis encrypt 0123456789012345678901234567890123456789
+    # - Paste the output down here
+    api_key:
+        secure: L27+6OKM3D2x1tD6CSNFMX1GehLPHBK6PR3ao4EOTYv2g4Uf/SqzsNukJwyX4W9ljKY0hgY0LCSR7xbq/vRf2Vywqb+4+juy5KOlk5bBCsrlwhExU0UIScPYOXzpz6cUvHJgJmMm19t9Lf9fv4vbyd/3y7wRFm8zx0JOneKiQgF2ZnCRuuTOa/E4BlEOFVSG/kFSqfuSvobd+rvP4ePIC4TkRC3TKJprPK1CwI0iAHA0VIMFcLXVgj06ZUNa/HTbSfqhiib0qlHOthgBdJLLMrQ/iD87xipgCENKMkLWXPR7URz9Y8r1nwSWkN0+20FWyf61nzCPIY40/nBfeIsOI4E0sDoXPaTcxFGNNpWxG2SJswSMrlTxGlRTRN0HONxqgIHbxQWmhE+nieC3AD1wtBQdHOR8xrDDedbVuKVNh0YYQ6ZotjmwKWW4ccfWU4fcjzN44QPDARCpPAWYxoiU7v2GB8RIV3gmQQBrPhT/ebwFfF3xfk4VwjnzU9SsNz0TaX0bssk3ocHBbziz1YIY8BQgs2di8sluBBsJnHIAuapE2fA0zXhcVTTBO+tXPLwnyecztFg3Hq6Ng/NBOU1xH/G3zrxRQGzaxnWbXij2s3ucFplZ0kNEkqvX2M9i1DDm+/jxkvvdcpuJx8ESI8v+qThnB54y8Ld/aAaeg5vvSCI=
+    file_glob: true
+    file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+    on:
+        # This is a library, do not deploy
+        condition: $DEPLOY = never
+        tags: true
+    provider: releases
+    skip_cleanup: true
+
+cache: cargo
+before_cache:
+    # Travis can't cache files that are not readable by "others"
+    - chmod -R a+r $HOME/.cargo
+
+branches:
+    only:
+        # release tags
+        - /^v\d+\.\d+\.\d+.*$/
+        - master
+
+notifications:
+    email:
+        on_success: never
