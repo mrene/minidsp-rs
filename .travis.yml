@@ -33,13 +33,13 @@ before_install:
     # for travis
     - git submodule update --init
     - >
-        git submodule foreach --recursive '
-          echo "pwd: $(pwd)" ; 
-          if [ -f .gitmodules ]; then 
-            ( sed -i ''s/git@github.com:/https:\/\/github.com\//'' .gitmodules 
-              && git submodule sync --recursive ) ; 
-          fi ; 
-          git submodule update --init
+        git submodule foreach --recursive ' \
+          echo "pwd: $(pwd)" ; \
+          if [ -f .gitmodules ]; then \
+            ( sed -i ''s/git@github.com:/https:\/\/github.com\//'' .gitmodules \
+              && git submodule sync --recursive ) ; \
+          fi ; \
+          git submodule update --init \
         ;'
     - rustup self update
 
