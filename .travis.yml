@@ -28,7 +28,7 @@ matrix:
         - env: TARGET=x86_64-unknown-linux-gnu
 
 before_install:
-    - set -e
+    - set -ex
     # basically git submodule update --init --recursive but replacing git@github.com with https
     # for travis
     - git submodule update --init
