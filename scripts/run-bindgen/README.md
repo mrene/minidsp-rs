@@ -22,7 +22,7 @@ Run bindgen:
 ./bindgen.sh
 ```
 
-The script generates FFI bindings in `<root>/libcec-sys/src/lib.rs`. 
+The script generates FFI bindings in `<root>/libcec-sys/src/lib.rs`.
 Bindings are generated from libcec 4.x C API (`cecc.h`).
 
 ## Updating libcec version
