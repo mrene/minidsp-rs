@@ -1,1 +1,1 @@
-#include "./usr/include/libcec/cecc.h"
+#include "../../libcec/include/cecc.h"
