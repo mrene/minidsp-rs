@@ -1,4 +1,4 @@
-.travis.yml and contents of ci folder are from trust project: https://github.com/japaric/trust
+.travis.yml and ci/before_deploy.ps1, ci/before_deploy.sh, install.sh and script.sh are based on trust project: https://github.com/japaric/trust
 
 The contents are licensed under MIT.
 
