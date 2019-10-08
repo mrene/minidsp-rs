@@ -6,6 +6,12 @@ language: rust
 services: docker
 sudo: required
 
+# Handle git submodules yourself
+# (from https://github.com/algolia/examples/issues/24)
+# To workaround submodule-of-submodule issues, specifically libcec/platform/support
+git:
+    submodules: false
+
 # Rust builds on stable by default, this can be
 # overridden on a case by case basis down below.
 
@@ -22,6 +28,9 @@ matrix:
         - env: TARGET=x86_64-unknown-linux-gnu
 
 before_install:
+    # Use sed to replace the SSH URL with the public URL, then initialize submodules
+    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+    - git submodule update --init --recursive
     - set -e
     - rustup self update
 
