@@ -18,11 +18,12 @@ function generate() {
     --raw-line='#![allow(non_snake_case)]' \
     --raw-line='#![allow(dead_code)]' \
     --raw-line='' \
-    --raw-line='#[link(name = "cec")] extern {}' \
     "$@" \
     -- \
     -I ../../libcec/include
 }
+
+# DISABLED --raw-line='#[link(name = "cec")] extern {}' \
 
 # Generate version with enums, and capture the enum definitions
 generate --rustified-enum $CEC_REGEX

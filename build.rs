@@ -7,20 +7,20 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const P8_PLATFORM_DIR_ENV: &str = "p8-platform_DIR";
+const LIBCEC_BUILD: &str = "libcec_build";
+const PLATFORM_BUILD: &str = "platform_build";
 
-fn main() {
-    if !Path::new("libcec/.git").exists() {
-        panic!("git submodules are not properly initialized! Aborting.")
-    }
+fn prepare_build(dst: &Path) {
     let mut copy_options: CopyOptions = CopyOptions::new();
     copy_options.overwrite = true;
-    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-    let tmp_libcec_src = dst.join("libcec_src");
-    let tmp_libcec = tmp_libcec_src.join("libcec");
-    copy("libcec", &tmp_libcec, &copy_options).unwrap();
-    let platform_build = dst.join("platform_build");
+    copy("libcec", &dst, &copy_options).unwrap();
+}
+
+fn compile_platform(dst: &Path) {
+    let platform_build = dst.join(PLATFORM_BUILD);
+    // let tmp_libcec_src = dst.join(LIBCEC_SRC);
     fs::create_dir_all(&platform_build).unwrap();
-    cmake::Config::new(tmp_libcec.join("src").join("platform"))
+    cmake::Config::new(dst.join("libcec").join("src").join("platform"))
         .out_dir(&platform_build)
         .env(P8_PLATFORM_DIR_ENV, &platform_build)
         .build();
@@ -29,10 +29,13 @@ fn main() {
         .env(P8_PLATFORM_DIR_ENV, &platform_build)
         .status()
         .expect("failed to make libcec platform!");
+}
 
-    let libcec_build = dst.join("libcec_build");
+fn compile_libcec(dst: &Path) {
+    let platform_build = dst.join(PLATFORM_BUILD);
+    let libcec_build = dst.join(LIBCEC_BUILD);
     fs::create_dir_all(&libcec_build).unwrap();
-    cmake::Config::new(&tmp_libcec)
+    cmake::Config::new(&dst.join("libcec"))
         .out_dir(&libcec_build)
         .env(P8_PLATFORM_DIR_ENV, &platform_build)
         .build();
@@ -42,4 +45,35 @@ fn main() {
         .env(P8_PLATFORM_DIR_ENV, &platform_build)
         .status()
         .expect("failed to make libcec!");
+}
+
+fn main() {
+    println!("cargo:rerun-if-env-changed=LIBCEC_SYS_STATIC");
+    println!("cargo:rerun-if-changed=build.rs");
+    let host = env::var("HOST").unwrap();
+    let target = env::var("TARGET").unwrap();
+    if !Path::new("libcec/.git").exists() {
+        panic!("git submodules are not properly initialized! Aborting.")
+    }
+
+    let want_static =
+        cfg!(feature = "static") || env::var("LIBCEC_SYS_STATIC").unwrap_or(String::new()) == "1";
+
+    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+
+    // We build from vendored source if we have windows, if cross compiling or if targeting musl
+    // In other cases, link to libc
+    if target.contains("msvc")
+        || target.contains("pc-windows-gnu")
+        || want_static
+        || target != host
+        || target.contains("musl")
+    {
+        prepare_build(&dst);
+        compile_platform(&dst);
+        compile_libcec(&dst);
+        return;
+    } else {
+        println!("cargo:rustc-link-lib=cec");
+    }
 }
