@@ -25,10 +25,13 @@ function generate() {
 
 cp -a ../../libcec/include include_tmp
 cp include_tmp/version.h.in include_tmp/version.h
-# FIXME: no hardcoding, parse versions from CMakeLists
-sed -i s/@LIBCEC_VERSION_MAJOR@/4/ include_tmp/version.h
-sed -i s/@LIBCEC_VERSION_MINOR@/0/ include_tmp/version.h
-sed -i s/@LIBCEC_VERSION_PATCH@/4/ include_tmp/version.h
+
+LIBCEC_VERSION_MAJOR=$(grep -E -o 'set\(LIBCEC_VERSION_MAJOR [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
+LIBCEC_VERSION_MINOR=$(grep -E -o 'set\(LIBCEC_VERSION_MINOR [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
+LIBCEC_VERSION_PATCH=$(grep -E -o 'set\(LIBCEC_VERSION_PATCH [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
+sed -i s/@LIBCEC_VERSION_MAJOR@/$LIBCEC_VERSION_MAJOR/ include_tmp/version.h
+sed -i s/@LIBCEC_VERSION_MINOR@/$LIBCEC_VERSION_MINOR/ include_tmp/version.h
+sed -i s/@LIBCEC_VERSION_PATCH@/$LIBCEC_VERSION_PATCH/ include_tmp/version.h
 
 # Generate version with enums, and capture the enum definitions
 generate --rustified-enum $CEC_REGEX
