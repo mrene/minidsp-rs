@@ -5,7 +5,6 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-#[link(name = "cec")] extern {}
 
 pub const CEC_LIB_VERSION_MAJOR: u32 = 4;
 pub const CEC_LIB_VERSION_MAJOR_STR: &'static [u8; 2usize] = b"4\0";

@@ -20,10 +20,15 @@ function generate() {
     --raw-line='' \
     "$@" \
     -- \
-    -I ../../libcec/include
+    -I include_tmp
 }
 
-# DISABLED --raw-line='#[link(name = "cec")] extern {}' \
+cp -a ../../libcec/include include_tmp
+cp include_tmp/version.h.in include_tmp/version.h
+# FIXME: no hardcoding, parse versions from CMakeLists
+sed -i s/@LIBCEC_VERSION_MAJOR@/4/ include_tmp/version.h
+sed -i s/@LIBCEC_VERSION_MINOR@/0/ include_tmp/version.h
+sed -i s/@LIBCEC_VERSION_PATCH@/4/ include_tmp/version.h
 
 # Generate version with enums, and capture the enum definitions
 generate --rustified-enum $CEC_REGEX
@@ -38,3 +43,4 @@ cp ${OUT}.enum ../../../cec-rs/src/enums.rs
 # Cleanup
 rm ${OUT}.tmp ${OUT}.enum
 mv ${OUT} ${DEST_DIR}/${OUT}
+rm -rf include_tmp
