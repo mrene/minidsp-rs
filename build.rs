@@ -55,25 +55,15 @@ fn main() {
     if !Path::new("libcec/.git").exists() {
         panic!("git submodules are not properly initialized! Aborting.")
     }
-
-    let want_static =
-        cfg!(feature = "static") || env::var("LIBCEC_SYS_STATIC").unwrap_or(String::new()) == "1";
-
     let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
-    // We build from vendored source if we have windows, if cross compiling or if targeting musl
-    // In other cases, link to libc
-    if target.contains("msvc")
-        || target.contains("pc-windows-gnu")
-        || want_static
-        || target != host
-        || target.contains("musl")
-    {
-        prepare_build(&dst);
-        compile_platform(&dst);
-        compile_libcec(&dst);
-        return;
-    } else {
-        println!("cargo:rustc-link-lib=cec");
-    }
+    println!("Building libcec from local source");
+    prepare_build(&dst);
+    compile_platform(&dst);
+    compile_libcec(&dst);
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.join(LIBCEC_BUILD).join("lib").display()
+    );
+    println!("cargo:rustc-link-lib=cec");
 }
