@@ -17,7 +17,11 @@ function generate() {
     --raw-line='#![allow(non_camel_case_types)]' \
     --raw-line='#![allow(non_snake_case)]' \
     --raw-line='#![allow(dead_code)]' \
-    --raw-line='' \
+    --raw-line='#![allow(' \
+    --raw-line='    clippy::redundant_static_lifetimes,' \
+    --raw-line='    clippy::unreadable_literal,' \
+    --raw-line='    clippy::cognitive_complexity' \
+    --raw-line=')]' \
     "$@" \
     -- \
     -I include_tmp
