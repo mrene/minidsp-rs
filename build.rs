@@ -48,10 +48,7 @@ fn compile_libcec(dst: &Path) {
 }
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=LIBCEC_SYS_STATIC");
     println!("cargo:rerun-if-changed=build.rs");
-    let host = env::var("HOST").unwrap();
-    let target = env::var("TARGET").unwrap();
     if !Path::new("libcec/.git").exists() {
         panic!("git submodules are not properly initialized! Aborting.")
     }
