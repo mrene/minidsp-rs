@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["Sami Salonen"]
 edition = "2018"
 license = "GPL-2.0"
+description = "FFI bindings to libcec"
+#documentation = "https://docs.rs/TODO"
+readme = "README.md"
+#include = ["/README.md", "/LICENSE", "/Cargo.toml", "/src/*.rs"]
+keywords = ["libcec", "cec", "hdmi"]
+categories = ["external-ffi-bindings"]
+homepage = "https://github.com/ssalonen/libcec-sys"
+repository = "https://github.com/ssalonen/libcec-sys"
 build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
