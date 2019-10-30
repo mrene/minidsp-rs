@@ -49,8 +49,15 @@ fn compile_libcec(dst: &Path) {
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    if !Path::new("libcec/.git").exists() {
-        panic!("git submodules are not properly initialized! Aborting.")
+    let libcec_git_dir = Path::new("libcec/CMakeLists.txt");
+    if !libcec_git_dir.exists() {
+        panic!(
+            "git submodules (tested {}, working dir {}) are not properly initialized! Aborting.",
+            libcec_git_dir.display(),
+            env::current_dir()
+                .expect("Unknown working directory")
+                .display()
+        )
     }
     let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
