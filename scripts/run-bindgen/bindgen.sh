@@ -27,12 +27,12 @@ function generate() {
     -I include_tmp
 }
 
-cp -a ../../libcec/include include_tmp
+cp -a ../../vendor/include include_tmp
 cp include_tmp/version.h.in include_tmp/version.h
 
-LIBCEC_VERSION_MAJOR=$(grep -E -o 'set\(LIBCEC_VERSION_MAJOR [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
-LIBCEC_VERSION_MINOR=$(grep -E -o 'set\(LIBCEC_VERSION_MINOR [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
-LIBCEC_VERSION_PATCH=$(grep -E -o 'set\(LIBCEC_VERSION_PATCH [^)]' ../../libcec/CMakeLists.txt|cut -d ' ' -f2)
+LIBCEC_VERSION_MAJOR=$(grep -E -o 'set\(LIBCEC_VERSION_MAJOR [^)]' ../../vendor/CMakeLists.txt|cut -d ' ' -f2)
+LIBCEC_VERSION_MINOR=$(grep -E -o 'set\(LIBCEC_VERSION_MINOR [^)]' ../../vendor/CMakeLists.txt|cut -d ' ' -f2)
+LIBCEC_VERSION_PATCH=$(grep -E -o 'set\(LIBCEC_VERSION_PATCH [^)]' ../../vendor/CMakeLists.txt|cut -d ' ' -f2)
 sed -i s/@LIBCEC_VERSION_MAJOR@/$LIBCEC_VERSION_MAJOR/ include_tmp/version.h
 sed -i s/@LIBCEC_VERSION_MINOR@/$LIBCEC_VERSION_MINOR/ include_tmp/version.h
 sed -i s/@LIBCEC_VERSION_PATCH@/$LIBCEC_VERSION_PATCH/ include_tmp/version.h
