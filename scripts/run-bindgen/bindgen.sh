@@ -6,11 +6,15 @@ DEST_DIR=../../src/
 CEC_REGEX='(libcec|cec|CEC|LIBCEC)_.*'
 
 function generate() {
+    # bindgen layout tests are disabled for cross-arch compatibility
+    # See https://kornel.ski/rust-sys-crate Stable API guidance
+    # and https://users.rust-lang.org/t/what-to-do-when-bindgen-tests-fail/23822
     bindgen wrapper.h -o ${OUT}.tmp \
     --whitelist-type $CEC_REGEX \
     --whitelist-function $CEC_REGEX \
     --whitelist-var $CEC_REGEX \
     --blacklist-type cec_boolean \
+    --no-layout-tests \
     --no-prepend-enum-name \
     --rustfmt-bindings \
     --raw-line='#![allow(non_upper_case_globals)]' \
