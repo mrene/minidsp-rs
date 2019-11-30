@@ -9,3 +9,7 @@ FFI bindings for the libcec
 Licensed under GNU GPL v2. See `LICENSE` file.
 
 Parts related to CI setup are licensed under terms specified in `LICENSE-CI`.
+
+## For developers
+
+Release: `cargo release`
