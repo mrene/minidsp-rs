@@ -166,7 +166,7 @@ if __name__ == '__main__':
                 if line.startswith(DERIVE_ATTRIBUTE):
                     # 1. Derive FromPrimitive (provided by num_derive) for enums to allow construction from primitive value
                     lines[row] = line.replace(
-                        DERIVE_ATTRIBUTE, DERIVE_ATTRIBUTE + 'FromPrimitive, ToPrimitive, ')
+                        DERIVE_ATTRIBUTE, DERIVE_ATTRIBUTE + 'TryFrom, Into, ')
                 elif '=' in line:
                     # Replace enum field value to refer to constant with the full name
                     key, _ = line.split(' = ', 1)
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     if args.outfile_enum:
         with args.outfile_enum as f:
-            f.write('use num_derive::{FromPrimitive, ToPrimitive};')
+            f.write('use enum_repr_derive::{Into, TryFrom};')
             f.write('\n\n//\n')
             f.write('// Enums\n')
             f.write('//\n')
