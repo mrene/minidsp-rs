@@ -1,0 +1,11 @@
+[package]
+name = "minidsp"
+version = "0.1.0"
+authors = ["Mathieu Rene <mathieu@zia.ai>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hidapi = "1.2.1"
+hap = "0.0.10"
