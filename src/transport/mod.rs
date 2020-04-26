@@ -1,35 +1,26 @@
-use std::convert::{TryFrom, Into, TryInto};
-use crate::transport::Error::{MalformedResponse, TransportError};
-use std::borrow::Borrow;
+pub use hid::HID;
+use hidapi::HidError;
 
 mod hid;
-pub use hid::HID;
 
-pub enum Error<E> {
-    TransportError(E),
-    MalformedResponse
+use failure::Fail;
+
+#[derive(Fail, Debug)]
+pub enum MiniDSPError {
+    #[fail(display = "An HID error has occurred: {}", _0)]
+    HIDError(#[cause] HidError),
+
+    #[fail(display = "A malformed packet was received")]
+    MalformedResponse,
 }
 
-/*
-Basic trait for devices capable of handling minidsp commands
- */
-pub trait Transport {
-    type Error: std::error::Error;
-
-    fn roundtrip(&self, packet: &[u8]) -> Result<Vec<u8>, Self::Error>;
-
-    fn execute<'a, Request, Response>(&self, request: Request) -> Result<Response, Error<Self::Error>>
-    where
-        Request: Into<Vec<u8>>,
-        Response: TryFrom<Vec<u8>>
-    {
-        let packet: Vec<u8> = request.into();
-
-        let buf = self.roundtrip(packet.as_ref())
-            .map_err(|e| TransportError(e))?;
-
-        let resp = buf.try_into().map_err(|_| MalformedResponse)?;
-
-        Ok(resp)
+impl From<HidError> for MiniDSPError {
+    fn from(e: HidError) -> Self {
+        MiniDSPError::HIDError(e)
     }
+}
+
+/// A basic trait for a pdu transport with unary request-response semantics
+pub trait Transport: Send {
+    fn roundtrip(&mut self, packet: &[u8]) -> Result<Vec<u8>, failure::Error>;
 }

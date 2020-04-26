@@ -8,4 +8,17 @@ edition = "2018"
 
 [dependencies]
 hidapi = "1.2.1"
-hap = "0.0.10"
+#hap = "0.0.10"
+clap = "2.33.0"
+failure = "0.1.7"
+tokio = { version = "0.2", features = ["full"] }
+#librespot = { git="https://github.com/librespot-org/librespot", branch="dev"}
+hex = "0.4.2"
+hidapi-async = "0.1.0"
+futures = "0.3.4"
+env_logger = "0.7.1"
+log = "0.4.8"
+#librespot-protocol = { git="https://github.com/librespot-org/librespot/protocol", branch="dev"}
+
+[target.arm-unknown-linux-gnueabihf]
+image = "rustembedded/cross:arm-unknown-linux-gnueabihf"

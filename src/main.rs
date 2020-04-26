@@ -1,147 +1,114 @@
+extern crate clap;
 extern crate hidapi;
 
-use hidapi::{HidApi, HidDevice};
-use std::error::Error;
-use std::iter;
+use clap::{App, Arg, ArgMatches, SubCommand};
 
-extern crate hap;
-
-use hap::characteristic::brightness;
-use hap::service::HapService;
-use hap::{
-    accessory::{television, Category, Information},
-    characteristic::{volume, Characteristic, Readable, Updatable},
-    transport::{IpTransport, Transport},
-    Config, HapType,
-};
-use std::ops::{Deref, DerefMut};
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::{Arc, Mutex};
-use minidsp::MiniDSP;
-use minidsp::transport;
-
-#[derive(Clone)]get_master_status
-struct Mute {
-    value: Arc<Mutex<bool>>,
-}
-
-impl Mute {
-    pub fn new() -> Self {
-        Mute {
-            value: Arc::new(Mutex::new(false)),
-        }
-    }
-}
-
-impl Readable<bool> for Mute {
-    fn on_read(&mut self, hap_type: HapType) -> Option<bool> {
-        let val = Some(*self.value.lock().unwrap());
-        println!("Read: {:?}", val);
-        val
-    }
-}
-
-impl Updatable<bool> for Mute {
-    fn on_update(&mut self, old_val: &bool, new_val: &bool, hap_type: HapType) {
-        let mut value = self.value.lock().unwrap();
-        *value = *new_val;
-        println!("Val: {:?} {:?} {:?}", *old_val, *new_val, hap_type);
-    }
-}
-
-#[derive(Clone)]
-struct Volume {
-    value: Arc<Mutex<u8>>,
-}
-
-impl Volume {
-    pub fn new() -> Self {
-        Volume {
-            value: Arc::new(Mutex::new(0)),
-        }
-    }
-}
-
-impl Readable<u8> for Volume {
-    fn on_read(&mut self, hap_type: HapType) -> Option<u8> {
-        let val = Some(*self.value.lock().unwrap());
-        println!("read vol: {:?}", val);
-        val
-    }
-}
-
-impl Updatable<u8> for Volume {
-    fn on_update(&mut self, old_val: &u8, new_val: &u8, hap_type: HapType) {
-        let mut value = self.value.lock().unwrap();
-        *value = *new_val;
-        println!("update vol: {:?}", *new_val);
-    }
-}
-
+use minidsp::{get_minidsp_transport, MiniDSP, Source, Gain};
 
 fn main() {
-    // let device = get_minidsp();
-    // let x = device.get_master_status().unwrap();
+    let matches = App::new("minidsp")
+        .version("1.0")
+        .author("Mathieu Rene")
+        .about("Controls a MiniDSP via HID commands")
+        .arg(Arg::with_name("verbose").short("v").help("Log HID reports"))
+        .arg(
+            Arg::with_name("log")
+                .short("l")
+                .help("logs request-response pairs"),
+        )
+        .subcommand(
+            SubCommand::with_name("gain")
+                .help("Sets the gain in decibels [-127, 0]")
+                .arg(Arg::with_name("value").required(true).index(1)),
+        )
+        .subcommand(
+            SubCommand::with_name("mute")
+                .help("Mutes or unmutes the master output")
+                .arg(
+                    Arg::with_name("value")
+                        .required(false)
+                        .index(1)
+                        .possible_values(&["on", "off"]),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("source")
+                .help("Changes the active audio source")
+                .arg(
+                    Arg::with_name("source")
+                        .required(true)
+                        .index(1)
+                        .possible_values(&["analog", "toslink", "usb"]),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("send")
+                .help("Sends a hex packet and compute length + crc")
+                .arg(
+                    Arg::with_name("data")
+                        .required(true)
+                        .index(1)
+                        .help("Hex-encoded data"),
+                ),
+        )
+        .get_matches();
 
-    let mut television = television::new(Information {
-        name: "MiniDSP".into(),
-        ..Default::default()
-    })
-    .unwrap();
-
-    television.inner.television.inner.set_hidden(false);
-
-    television.inner.television.inner.brightness = Some(brightness::new());
-
-    let mute = Mute::new();
-    let vol = Volume::new();
-
-    television
-        .inner
-        .speaker
-        .inner
-        .mute
-        .set_readable(mute.clone())
-        .unwrap();
-
-    television
-        .inner
-        .speaker
-        .inner
-        .mute
-        .set_updatable(mute.clone())
-        .unwrap();
-
-    let mut volume = volume::new();
-    volume.set_readable(vol.clone()).unwrap();
-    volume.set_updatable(vol.clone()).unwrap();
-
-    television.inner.speaker.inner.volume = Some(volume);
-
-    television.inner.speaker.set_hidden(false);
-    television.inner.speaker.set_primary(true);
-    television.inner.television.set_hidden(false);
-
-    let mut ip_transport = IpTransport::new(Config {
-        name: "MiniDSP".into(),
-        category: Category::Television,
-        ..Default::default()
-    })
-    .unwrap();
-
-    ip_transport.add_accessory(television).unwrap();
-
-    ip_transport.start().unwrap();
+    let result = run_command(matches);
+    if let Err(error) = result {
+        eprintln!("{:?}", error);
+    }
 }
 
-fn get_minidsp() -> MiniDSP<transport::HID> {
-    let hid = HidApi::new().unwrap();
-    // for device in hid.device_list() {
-    //     println!("{:?} {:?} {:?} {:?}", device.vendor_id(), device.product_id(), device.manufacturer_string(), device.product_string())
-    // }
-    let (vid, pid) = (0x2752, 0x0011);
-    let hid_device = hid.open(vid, pid).unwrap();
-    let device = transport::HID::new(hid_device);
-    MiniDSP::new(device)
+fn run_command(matches: ArgMatches) -> Result<(), failure::Error> {
+    let mut transport = Box::new(get_minidsp_transport()?);
+    if matches.occurrences_of("verbose") > 0 {
+        transport.verbose = true
+    }
+
+    if matches.occurrences_of("log") > 0 {
+        transport.log = true
+    }
+
+    let mut device = MiniDSP::new(transport);
+
+    if let Some(matches) = matches.subcommand_matches("gain") {
+        let value = matches.value_of("value").unwrap();
+        let value = i8::from_str_radix(value, 10).unwrap();
+
+        println!("set gain: {:?}", value);
+        Ok(device.set_master_volume(Gain(value as f32))?)
+    } else if let Some(matches) = matches.subcommand_matches("mute") {
+        let value = matches.value_of("value").unwrap().to_lowercase();
+        let value = match value.as_str() {
+            "on" => true,
+            "off" => false,
+            _ => true,
+        };
+
+        println!("mute {:?}", value);
+        Ok(device.set_master_mute(value)?)
+    } else if let Some(matches) = matches.subcommand_matches("source") {
+        let source = matches.value_of("source").unwrap().to_lowercase();
+        let source = match source.as_str() {
+            "analog" => Source::Analog,
+            "toslink" => Source::Toslink,
+            "usb" => Source::Usb,
+            _ => panic!("invalid source"),
+        };
+
+        println!("set source {:?}", source);
+        Ok(device.set_source(source)?)
+    } else if let Some(matches) = matches.subcommand_matches("send") {
+        let value = matches.value_of("data").unwrap();
+        let value = hex::decode(value.replace(" ", ""))?;
+
+        let response = device.transport.roundtrip(value.as_ref())?;
+        println!("response: {:02x?}", response);
+
+        Ok(())
+    } else {
+        let master_status = device.get_master_status()?;
+        println!("{:?}", master_status);
+        Ok(())
+    }
 }
