@@ -1,17 +1,37 @@
 # libcec-sys
 
-[![Build Status](https://www.travis-ci.org/ssalonen/libcec-sys.svg?branch=master)](https://www.travis-ci.org/ssalonen/libcec-sys)
-[![Crate](https://img.shields.io/crates/v/libcec-sys.svg)](https://crates.io/crates/libcec-sys)
-[![Documentation](https://docs.rs/libcec-sys/badge.svg)](https://docs.rs/libcec-sys)
+[![Crates.io](https://img.shields.io/crates/v/libcec-sys.svg)](https://crates.io/crates/libcec-sys)
+[![Docs.rs](https://docs.rs/libcec-sys/badge.svg)](https://docs.rs/libcec-sys)
+[![CI](https://github.com/ssalonen/libcec-sys/workflows/Continuous%20Integration/badge.svg)](https://github.com/ssalonen/libcec-sys/actions)
+[![Coverage Status](https://coveralls.io/repos/github/ssalonen/libcec-sys/badge.svg?branch=master)](https://coveralls.io/github/ssalonen/libcec-sys?branch=master)
 
 FFI bindings for the libcec
 
+## Installation
+
+### Cargo
+
+* Install the rust toolchain in order to have cargo installed by following
+  [this](https://www.rust-lang.org/tools/install) guide.
+* run `cargo install libcec-sys`
+
 ## License
 
-Licensed under GNU GPL v2. See `LICENSE` file.
+Licensed under GNU General Public License version 2, ([LICENSE](LICENSE) or https://opensource.org/licenses/GPL-2.0)
 
-Parts related to CI setup are licensed under terms specified in `LICENSE-CI`.
+The CI/CD setup in `.github/` is based on [rust-github/template](https://github.com/rust-github/template), and therefore licensed under  either of
 
-## For developers
+* Apache License, Version 2.0
+   ([LICENSE-CI-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license
+   ([LICENSE-CI-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
-Release: `cargo release`
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
