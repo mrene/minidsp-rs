@@ -28,7 +28,7 @@ build = 'build.rs'
 [dependencies]
 
 [build-dependencies]
-cmake = '0.1.42'
+cmake = '0.1.45'
 copy_dir = '0.1.2'
 [badges.maintenance]
 status = 'passively-maintained'
