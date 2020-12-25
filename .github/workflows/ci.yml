@@ -10,39 +10,30 @@ jobs:
                 rust: [stable]
                 job:
                     - os: ubuntu-latest
-                      os-name: linux
                       target: aarch64-unknown-linux-gnu
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: i686-unknown-linux-gnu
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: arm-unknown-linux-gnueabi
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: mips-unknown-linux-gnu
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: mips64-unknown-linux-gnueabi64
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: mips64el-unknown-linux-gnueabi64
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: mipsel-unknown-linux-gnu
                       use-cross: true
                     - os: ubuntu-latest
-                      os-name: linux
                       target: x86_64-unknown-linux-gnu
         steps:
             - name: Checkout repository
