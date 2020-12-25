@@ -3,6 +3,8 @@
 use copy_dir::copy_dir;
 use std::env;
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -14,6 +16,31 @@ const LIBCEC_SRC: &str = "vendor";
 fn prepare_build(dst: &Path) {
     let dst_src = dst.join(LIBCEC_SRC);
     copy_dir(LIBCEC_SRC, &dst_src).unwrap();
+
+    // libcec build tries to embed git revision and other details
+    // in LIB_INFO variable. This makes the build fail in certain cases.
+    // Let's disable the complex logic by overriding the variable with a constant
+    let set_build_info_path = dst_src
+        .join("src")
+        .join("libcec")
+        .join("cmake")
+        .join("SetBuildInfo.cmake");
+    let mut build_info_file = OpenOptions::new()
+        .write(true)
+        .open(&set_build_info_path)
+        .expect(&format!(
+            "Error opening {}",
+            &set_build_info_path.to_string_lossy()
+        ));
+    build_info_file
+        .set_len(0)
+        .expect("Error truncacting SetBuildInfo.cmake");
+    build_info_file
+        .write_all("set(LIB_INFO \"\")".as_bytes())
+        .expect(&format!(
+            "Error writing {}",
+            &set_build_info_path.to_string_lossy()
+        ));
 }
 
 fn compile_platform(dst: &Path) {
