@@ -9,32 +9,42 @@ jobs:
             matrix:
                 rust: [stable]
                 job:
-                    - os: ubuntu-latest
+                    - name: aarch64
+                      os: ubuntu-latest
                       target: aarch64-unknown-linux-gnu
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: i686
+                      os: ubuntu-latest
                       target: i686-unknown-linux-gnu
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: arm
+                      os: ubuntu-latest
                       target: arm-unknown-linux-gnueabi
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: armv7
+                      os: ubuntu-latest
                       target: armv7-unknown-linux-gnueabihf
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: mips
+                      os: ubuntu-latest
                       target: mips-unknown-linux-gnu
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: mips64
+                      os: ubuntu-latest
                       target: mips64-unknown-linux-gnueabi64
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: mips64el
+                      os: ubuntu-latest
                       target: mips64el-unknown-linux-gnueabi64
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: mipsel
+                      os: ubuntu-latest
                       target: mipsel-unknown-linux-gnu
                       use-cross: true
-                    - os: ubuntu-latest
+                    - name: x86_64
+                      os: ubuntu-latest
                       target: x86_64-unknown-linux-gnu
+                      use-cross: true
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
