@@ -27,7 +27,7 @@ jobs:
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: mips-unknown-linux-gnueabi
+                      target: mips-unknown-linux-gnu
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
@@ -39,7 +39,7 @@ jobs:
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: mipsel-unknown-linux-gnueabi
+                      target: mipsel-unknown-linux-gnu
                       use-cross: true
         steps:
             - name: Checkout repository
