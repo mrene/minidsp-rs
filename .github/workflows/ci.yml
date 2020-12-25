@@ -31,11 +31,11 @@ jobs:
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: mips64-unknown-linux-gnueabi
+                      target: mips64-unknown-linux-gnueabi64
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: mips64el-unknown-linux-gnueabi
+                      target: mips64el-unknown-linux-gnueabi64
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
