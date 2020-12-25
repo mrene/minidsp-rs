@@ -28,19 +28,13 @@ fn prepare_build(dst: &Path) {
     let mut build_info_file = OpenOptions::new()
         .write(true)
         .open(&set_build_info_path)
-        .expect(&format!(
-            "Error opening {}",
-            &set_build_info_path.to_string_lossy()
-        ));
+        .unwrap_or_else(|_| panic!("Error opening {}", &set_build_info_path.to_string_lossy()));
     build_info_file
         .set_len(0)
         .expect("Error truncacting SetBuildInfo.cmake");
     build_info_file
         .write_all("set(LIB_INFO \"\")".as_bytes())
-        .expect(&format!(
-            "Error writing {}",
-            &set_build_info_path.to_string_lossy()
-        ));
+        .unwrap_or_else(|_| panic!("Error writing {}", &set_build_info_path.to_string_lossy()));
 }
 
 fn compile_platform(dst: &Path) {
