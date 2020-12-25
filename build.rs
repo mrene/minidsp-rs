@@ -1,6 +1,6 @@
 // pro example: https://github.com/rust-lang/git2-rs/blob/master/libgit2-sys/build.rs
 // https://github.com/r-darwish/docker-libcec-rpi/blob/master/Dockerfile
-use fs_extra::dir::{copy, CopyOptions};
+use copy_dir::copy_dir;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -12,9 +12,9 @@ const PLATFORM_BUILD: &str = "platform_build";
 const LIBCEC_SRC: &str = "vendor";
 
 fn prepare_build(dst: &Path) {
-    let mut copy_options: CopyOptions = CopyOptions::new();
-    copy_options.overwrite = true;
-    copy(LIBCEC_SRC, &dst, &copy_options).unwrap();
+    let dst_src = dst.join(LIBCEC_SRC);
+    copy_dir(LIBCEC_SRC, &dst_src).unwrap();
+    let dst_gitdir = dst_src.join(".git");
 }
 
 fn compile_platform(dst: &Path) {
