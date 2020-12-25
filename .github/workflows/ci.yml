@@ -23,7 +23,7 @@ jobs:
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: armv7-unknown-linux-gnueabi
+                      target: armv7-unknown-linux-gnueabihf
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
@@ -41,6 +41,9 @@ jobs:
                       os-name: linux
                       target: mipsel-unknown-linux-gnu
                       use-cross: true
+                    - os: ubuntu-latest
+                      os-name: linux
+                      target: x86_64-unknown-linux-gnu
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
