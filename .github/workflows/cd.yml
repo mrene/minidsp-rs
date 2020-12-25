@@ -108,7 +108,18 @@ jobs:
             - uses: actions/checkout@master
             - name: Checkout submodules
               shell: bash
-              run: git submodule update --init --recursive
+              # basically git submodule update --init --recursive but replacing git@github.com with https
+              # for anonymous checkout
+              run: |
+                  git submodule update --init
+                  git submodule foreach --recursive '
+                  echo "pwd: $(pwd)" ; \
+                  if [ -f .gitmodules ]; then \
+                      ( sed -i "s/git@github.com:/https:\/\/github.com\//" .gitmodules \
+                      && git submodule sync --recursive ) ; \
+                  fi ; \
+                  git submodule update --init \
+                  ;'
             - uses: actions-rs/toolchain@v1
               with:
                   toolchain: stable
