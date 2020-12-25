@@ -139,8 +139,9 @@ jobs:
             - name: Clippy Check
               uses: actions-rs/cargo@v1
               with:
+                  use-cross: true
                   command: clippy
-                  args: -- -D warnings
+                  args: -- --target x86_64-unknown-linux-gnu -D warnings
 
     coverage:
         name: Code coverage
