@@ -36,7 +36,7 @@ fn prepare_build(dst: &Path) {
         .set_len(0)
         .expect("Error truncacting SetBuildInfo.cmake");
     build_info_file
-        .write_all("set(LIB_INFO \"\")".as_bytes())
+        .write_all(b"set(LIB_INFO \"\")")
         .unwrap_or_else(|_| panic!("Error writing {}", &set_build_info_path.to_string_lossy()));
 }
 
