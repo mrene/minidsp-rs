@@ -31,11 +31,11 @@ jobs:
                       use-cross: true
                     - name: mips64
                       os: ubuntu-latest
-                      target: mips64-unknown-linux-gnueabi64
+                      target: mips64-unknown-linux-gnuabi64
                       use-cross: true
                     - name: mips64el
                       os: ubuntu-latest
-                      target: mips64el-unknown-linux-gnueabi64
+                      target: mips64el-unknown-linux-gnuabi64
                       use-cross: true
                     - name: mipsel
                       os: ubuntu-latest
