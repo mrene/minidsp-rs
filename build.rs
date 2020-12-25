@@ -14,7 +14,6 @@ const LIBCEC_SRC: &str = "vendor";
 fn prepare_build(dst: &Path) {
     let dst_src = dst.join(LIBCEC_SRC);
     copy_dir(LIBCEC_SRC, &dst_src).unwrap();
-    let dst_gitdir = dst_src.join(".git");
 }
 
 fn compile_platform(dst: &Path) {
