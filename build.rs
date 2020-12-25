@@ -15,6 +15,9 @@ const LIBCEC_SRC: &str = "vendor";
 
 fn prepare_build(dst: &Path) {
     let dst_src = dst.join(LIBCEC_SRC);
+    if dst_src.exists() && dst_src.is_dir() {
+        fs::remove_dir_all(&dst_src).expect("Failed to remove build dir");
+    }
     copy_dir(LIBCEC_SRC, &dst_src).unwrap();
 
     // libcec build tries to embed git revision and other details
