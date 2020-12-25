@@ -33,4 +33,5 @@ jobs:
             - uses: actions-rs/cargo@v1
               with:
                   command: publish
-                  args: --token ${{ secrets.CARGO_API_KEY }} --allow-dirty
+                  use-cross: true
+                  args: --target x86_64-unknown-linux-gnu --token ${{ secrets.CARGO_API_KEY }} --allow-dirty
