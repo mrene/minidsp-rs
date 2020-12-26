@@ -1,6 +1,12 @@
+use anyhow::Result;
 use hidapi::{HidDevice, HidError};
 
-use crate::transport::Transport;
+pub use handle::HidTransport;
+
+use crate::transport::{MiniDSPError, OldTransport};
+
+mod async_wrapper;
+pub mod handle;
 
 #[derive(Default)]
 pub struct PacketFramer {
@@ -19,7 +25,7 @@ impl PacketFramer {
 
 pub trait Framer: Send {
     fn frame(&self, packet: &[u8]) -> Vec<u8>;
-    fn unframe(&self, response: &[u8]) -> Result<Vec<u8>, failure::Error>;
+    fn unframe(&self, response: &[u8]) -> Result<Vec<u8>, MiniDSPError>;
 }
 
 impl Framer for PacketFramer {
@@ -28,6 +34,7 @@ impl Framer for PacketFramer {
         let mut buf: Vec<u8> = Vec::with_capacity(65);
 
         // HID report id 0
+        // TODO: This is done by the transport
         buf.push(0);
 
         // Packet len including length itself
@@ -48,10 +55,10 @@ impl Framer for PacketFramer {
         buf
     }
 
-    fn unframe(&self, response: &[u8]) -> Result<Vec<u8>, failure::Error> {
+    fn unframe(&self, response: &[u8]) -> Result<Vec<u8>, MiniDSPError> {
         let len = response[0] as usize;
         if response.len() < len {
-            Err(failure::format_err!("response message was malformed"))
+            Err(MiniDSPError::MalformedResponse)
         } else if !self.omit_length {
             Ok(Vec::from(&response[1..len]))
         } else {
@@ -100,8 +107,8 @@ impl<TFramer: Framer + Default> HID<TFramer> {
     }
 }
 
-impl<TFramer: Framer + Default> Transport for HID<TFramer> {
-    fn roundtrip(&mut self, packet: &[u8]) -> Result<Vec<u8>, failure::Error> {
+impl<TFramer: Framer + Default> OldTransport for HID<TFramer> {
+    fn roundtrip(&mut self, packet: &[u8]) -> Result<Vec<u8>, MiniDSPError> {
         let buf = self.framer.frame(packet);
 
         self.drain()?;
@@ -110,10 +117,6 @@ impl<TFramer: Framer + Default> Transport for HID<TFramer> {
             println!("To device: {:02x?}", &buf);
         }
         self.device.write(&buf[..65])?;
-
-        // if self.verbose {
-        // eprintln!("written!");
-        // }
 
         let mut read_buf = [0u8; 65];
         self.device.read(&mut read_buf)?;
@@ -133,7 +136,7 @@ impl<TFramer: Framer + Default> Transport for HID<TFramer> {
 }
 
 pub fn format_frame(frame: &[u8]) -> String {
-    if frame.len() == 0 {
+    if frame.is_empty() {
         return "".to_owned();
     }
     let framer = PacketFramer::new();

@@ -1,24 +1,23 @@
 [package]
 name = "minidsp"
-version = "0.1.0"
-authors = ["Mathieu Rene <mathieu@zia.ai>"]
+version = "0.1.1"
+authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-hidapi = "1.2.1"
+hidapi = "1.2.5"
 #hap = "0.0.10"
-clap = "2.33.0"
-failure = "0.1.7"
-tokio = { version = "0.2", features = ["full"] }
-#librespot = { git="https://github.com/librespot-org/librespot", branch="dev"}
+clap = "2.33.3"
+#failure = "0.1.8"
+tokio = { version = "1.0.1", features = ["full"] }
 hex = "0.4.2"
-hidapi-async = "0.1.0"
-futures = "0.3.4"
-env_logger = "0.7.1"
-log = "0.4.8"
-#librespot-protocol = { git="https://github.com/librespot-org/librespot/protocol", branch="dev"}
+futures = "0.3.8"
+env_logger = "0.8.2"
+log = "0.4.11"
+anyhow = "1.0.36"
+thiserror = "1.0.22"
+bytes = "1.0.0"
+async-trait = "0.1.42"
 
 [target.arm-unknown-linux-gnueabihf]
 image = "rustembedded/cross:arm-unknown-linux-gnueabihf"

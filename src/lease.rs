@@ -1,11 +1,10 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{MiniDSP, Source, Gain};
+use anyhow::Result;
 
-pub fn lease_source(
-    minidsp: Arc<Mutex<MiniDSP>>,
-    source: Source,
-) -> Result<SourceLease, failure::Error> {
+use crate::{Gain, MiniDSP, Source};
+
+pub fn lease_source(minidsp: Arc<Mutex<MiniDSP>>, source: Source) -> Result<SourceLease> {
     {
         let mut minidsp = minidsp.lock().unwrap();
         minidsp.set_source(source)?;

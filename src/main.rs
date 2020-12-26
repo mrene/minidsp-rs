@@ -3,7 +3,7 @@ extern crate hidapi;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
-use minidsp::{get_minidsp_transport, MiniDSP, Source, Gain};
+use minidsp::{get_minidsp_transport, Gain, MiniDSP, Source};
 
 fn main() {
     let matches = App::new("minidsp")
@@ -59,7 +59,7 @@ fn main() {
     }
 }
 
-fn run_command(matches: ArgMatches) -> Result<(), failure::Error> {
+fn run_command(matches: ArgMatches) -> anyhow::Result<()> {
     let mut transport = Box::new(get_minidsp_transport()?);
     if matches.occurrences_of("verbose") > 0 {
         transport.verbose = true

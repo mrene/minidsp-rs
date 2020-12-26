@@ -1,17 +1,17 @@
-extern crate failure;
 extern crate hidapi;
 
 use std::convert::TryFrom;
 
+use anyhow::{anyhow, Result};
 use hidapi::{HidApi, HidError};
 
+pub use crate::commands::Gain;
 use crate::commands::{FromMemory, MasterStatus, ReadMemory, SetMute, SetSource, SetVolume};
 
 pub mod commands;
 pub mod lease;
+pub mod packet;
 pub mod transport;
-
-pub use crate::commands::Gain;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Source {
@@ -21,14 +21,14 @@ pub enum Source {
 }
 
 impl TryFrom<u8> for Source {
-    type Error = failure::Error;
+    type Error = anyhow::Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Source::Analog),
             1 => Ok(Source::Toslink),
             2 => Ok(Source::Usb),
-            _ => Err(failure::format_err!("Invalid source value")),
+            _ => Err(anyhow!("Invalid source value")),
         }
     }
 }
@@ -44,17 +44,17 @@ impl Into<u8> for Source {
 }
 
 pub struct MiniDSP {
-    pub transport: Box<dyn transport::Transport>,
+    pub transport: Box<dyn transport::OldTransport>,
 }
 
 impl MiniDSP {
-    pub fn new(transport: Box<dyn transport::Transport>) -> Self {
+    pub fn new(transport: Box<dyn transport::OldTransport>) -> Self {
         MiniDSP { transport }
     }
 }
 
 impl MiniDSP {
-    pub fn get_master_status(&mut self) -> Result<MasterStatus, failure::Error> {
+    pub fn get_master_status(&mut self) -> Result<MasterStatus> {
         let memory = ReadMemory {
             addr: 0xffd8,
             size: 4,
@@ -64,15 +64,15 @@ impl MiniDSP {
         Ok(master_status)
     }
 
-    pub fn set_master_volume(&mut self, value: Gain) -> Result<(), failure::Error> {
+    pub fn set_master_volume(&mut self, value: Gain) -> Result<()> {
         SetVolume::new(value).execute(self.transport.as_mut())
     }
 
-    pub fn set_master_mute(&mut self, value: bool) -> Result<(), failure::Error> {
+    pub fn set_master_mute(&mut self, value: bool) -> Result<()> {
         SetMute::new(value).execute(self.transport.as_mut())
     }
 
-    pub fn set_source(&mut self, source: Source) -> Result<(), failure::Error> {
+    pub fn set_source(&mut self, source: Source) -> Result<()> {
         SetSource::new(source).execute(self.transport.as_mut())
     }
 }
