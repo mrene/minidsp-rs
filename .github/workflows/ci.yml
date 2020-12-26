@@ -3,7 +3,7 @@ name: Continuous Integration
 
 jobs:
     test:
-        name: Test Suite ${{ matrix.job.os }}
+        name: Test Suite ${{ matrix.job.target }}
         runs-on: ${{ matrix.job.os }}
         strategy:
             matrix:
