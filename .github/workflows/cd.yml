@@ -25,8 +25,8 @@ jobs:
                   fi ; \
                   git submodule update --init \
                   ;'
-            - name: Install udev cargo publish (for libcec build)
-              run: sudo apt-get install libudev
+            - name: Install libudev for cargo publish. Needed by libcec build
+              run: sudo apt-get install libudev-dev
             - uses: actions-rs/toolchain@v1
               with:
                   toolchain: stable
