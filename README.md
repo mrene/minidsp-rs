@@ -3,7 +3,6 @@
 [![Crates.io](https://img.shields.io/crates/v/libcec-sys.svg)](https://crates.io/crates/libcec-sys)
 [![Docs.rs](https://docs.rs/libcec-sys/badge.svg)](https://docs.rs/libcec-sys)
 [![CI](https://github.com/ssalonen/libcec-sys/workflows/Continuous%20Integration/badge.svg)](https://github.com/ssalonen/libcec-sys/actions)
-[![Coverage Status](https://coveralls.io/repos/github/ssalonen/libcec-sys/badge.svg?branch=master)](https://coveralls.io/github/ssalonen/libcec-sys?branch=master)
 
 FFI bindings for the libcec
 
