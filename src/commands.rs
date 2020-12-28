@@ -3,6 +3,7 @@ use crate::{packet, Source};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::convert::TryInto;
+use std::str::FromStr;
 
 pub trait UnaryCommand {
     type Response: UnaryResponse;
@@ -22,6 +23,12 @@ impl UnaryResponse for () {
     fn from_packet(_packet: Bytes) -> Self {}
 }
 
+impl UnaryResponse for Bytes {
+    fn from_packet(packet: Bytes) -> Self {
+        packet
+    }
+}
+
 /// Acquire an exclusive lock to the transport,
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)
@@ -35,7 +42,7 @@ where
     let mut receiver = transport.subscribe();
     let mut sender = transport.send_lock().await;
 
-    sender.send(packet::frame(command.request_packet()))?;
+    sender.send(packet::frame(command.request_packet())).await?;
 
     while let Ok(frame) = receiver.recv().await {
         if let Ok(p) = packet::unframe(frame) {
@@ -105,6 +112,14 @@ impl From<u8> for Gain {
     }
 }
 
+impl FromStr for Gain {
+    type Err = <f32 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Gain(<f32 as FromStr>::from_str(s)?))
+    }
+}
+
 pub struct SetVolume {
     pub value: Gain,
 }
@@ -122,7 +137,7 @@ impl UnaryCommand for SetVolume {
     }
 
     fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.starts_with(&[0x42])
+        packet.is_empty()
     }
 }
 
@@ -144,7 +159,7 @@ impl UnaryCommand for SetMute {
     }
 
     fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.starts_with(&[0x17])
+        packet.is_empty()
     }
 }
 
@@ -166,7 +181,29 @@ impl UnaryCommand for SetSource {
     }
 
     fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.starts_with(&[0x34])
+        packet.is_empty()
+    }
+}
+
+pub struct CustomUnaryCommand {
+    request: Bytes,
+}
+
+impl CustomUnaryCommand {
+    pub fn new(request: Bytes) -> Self {
+        CustomUnaryCommand { request }
+    }
+}
+
+impl UnaryCommand for CustomUnaryCommand {
+    type Response = Bytes;
+
+    fn request_packet(&self) -> Bytes {
+        self.request.clone()
+    }
+
+    fn response_matches(&self, _: &[u8]) -> bool {
+        true
     }
 }
 

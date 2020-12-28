@@ -4,11 +4,12 @@ version = "0.1.1"
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 
+[features]
+default = [ "hid" ]
+hid = ["hidapi"]
+
 [dependencies]
-hidapi = "1.2.5"
-#hap = "0.0.10"
-clap = "2.33.3"
-#failure = "0.1.8"
+clap = "3.0.0-beta.2"
 tokio = { version = "1.0.1", features = ["full"] }
 hex = "0.4.2"
 futures = "0.3.8"
@@ -18,6 +19,9 @@ anyhow = "1.0.36"
 thiserror = "1.0.22"
 bytes = "1.0.0"
 async-trait = "0.1.42"
+
+# Transport dependencies
+hidapi = { version="1.2.5", optional = true }
 
 [target.arm-unknown-linux-gnueabihf]
 image = "rustembedded/cross:arm-unknown-linux-gnueabihf"

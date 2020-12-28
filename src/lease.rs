@@ -13,6 +13,7 @@ pub async fn lease_source(minidsp: Arc<Mutex<MiniDSP>>, source: Source) -> Resul
     {
         let minidsp = minidsp.clone();
         tokio::spawn(async move {
+            // Wait for the guard object to be dropped
             let _ = rx.await;
 
             let minidsp = minidsp.lock_owned().await;

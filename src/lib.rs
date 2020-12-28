@@ -1,4 +1,4 @@
-extern crate hidapi;
+// extern crate hidapi;
 pub use crate::commands::Gain;
 use crate::commands::{
     roundtrip, FromMemory, MasterStatus, ReadMemory, SetMute, SetSource, SetVolume,
@@ -10,7 +10,12 @@ use std::convert::TryFrom;
 pub mod commands;
 pub mod lease;
 pub mod packet;
+pub mod server;
 pub mod transport;
+
+use crate::transport::MiniDSPError;
+use std::str::FromStr;
+use std::sync::Arc;
 use transport::Transport;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -43,12 +48,27 @@ impl Into<u8> for Source {
     }
 }
 
+impl FromStr for Source {
+    type Err = MiniDSPError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use Source::*;
+
+        match s.to_lowercase().as_str() {
+            "analog" => Ok(Analog),
+            "toslink" => Ok(Toslink),
+            "usb" => Ok(Usb),
+            _ => Err(MiniDSPError::InvalidSource),
+        }
+    }
+}
+
 pub struct MiniDSP {
-    pub transport: Box<dyn Transport>,
+    pub transport: Arc<dyn Transport>,
 }
 
 impl MiniDSP {
-    pub fn new(transport: Box<dyn Transport>) -> Self {
+    pub fn new(transport: Arc<dyn Transport>) -> Self {
         MiniDSP { transport }
     }
 }

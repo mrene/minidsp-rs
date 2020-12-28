@@ -44,11 +44,6 @@ impl HidTransport {
         }
     }
 
-    pub async fn send(&self, frame: Bytes) -> Result<(), MiniDSPError> {
-        let mut sender = self.inner.lock().await;
-        sender.send(frame)
-    }
-
     async fn recv_loop(
         sender: broadcast::Sender<Bytes>,
         mut shutdown_rx: oneshot::Receiver<()>,
@@ -74,6 +69,8 @@ impl HidTransport {
                 // successful read
                 Ok(size) => {
                     read_buf.truncate(size);
+
+                    // println!("{:02x?}", read_buf.as_ref());
 
                     // Discard send errors, since it means there are no bound receiver
                     let _ = sender.send(read_buf.freeze());
@@ -118,8 +115,9 @@ impl Inner {
     }
 }
 
+#[async_trait]
 impl Sender for Inner {
-    fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
+    async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
         self.buf.truncate(0);
 
         // HID report id
