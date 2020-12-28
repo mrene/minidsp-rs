@@ -1,10 +1,8 @@
-use std::convert::TryInto;
-
-use anyhow::Result;
-
-use crate::transport::{MiniDSPError, OldTransport, Transport};
+use crate::transport::{MiniDSPError, Transport};
 use crate::{packet, Source};
+use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use std::convert::TryInto;
 
 pub trait UnaryCommand {
     type Response: UnaryResponse;
@@ -28,7 +26,7 @@ impl UnaryResponse for () {
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)
 pub async fn roundtrip<C>(
-    transport: Box<dyn Transport>,
+    transport: &dyn Transport,
     command: C,
 ) -> Result<C::Response, MiniDSPError>
 where
@@ -115,10 +113,6 @@ impl SetVolume {
     pub fn new(value: Gain) -> Self {
         Self { value }
     }
-    pub fn execute(&self, transport: &mut dyn OldTransport) -> Result<()> {
-        let _ = transport.roundtrip(&[0x42, self.value.into()])?;
-        Ok(())
-    }
 }
 
 impl UnaryCommand for SetVolume {
@@ -139,12 +133,6 @@ pub struct SetMute {
 impl SetMute {
     pub fn new(value: bool) -> Self {
         SetMute { value }
-    }
-
-    pub fn execute(&self, transport: &mut dyn OldTransport) -> Result<()> {
-        let value = self.value as u8;
-        let _ = transport.roundtrip(&[0x17, value])?;
-        Ok(())
     }
 }
 
@@ -167,11 +155,6 @@ pub struct SetSource {
 impl SetSource {
     pub fn new(source: Source) -> Self {
         Self { source }
-    }
-
-    pub fn execute(&self, transport: &mut dyn OldTransport) -> Result<()> {
-        let _ = transport.roundtrip(&[0x34, self.source.into()])?;
-        Ok(())
     }
 }
 
@@ -198,19 +181,6 @@ impl ReadMemory {
         let mut cmd: [u8; 4] = [0x05, 0x0, 0x0, self.size];
         cmd[1..3].copy_from_slice(self.addr.to_be_bytes().as_ref());
         cmd
-    }
-
-    pub fn execute(&self, transport: &mut dyn OldTransport) -> Result<MemoryView> {
-        let cmd = self.to_bytes();
-        let response = transport.roundtrip(&cmd)?;
-        if !&cmd[1..3].eq(&response[1..3]) {
-            Err(MiniDSPError::MalformedResponse.into())
-        } else {
-            Ok(MemoryView {
-                base: self.addr,
-                data: Bytes::from(Vec::from(&response[3..])),
-            })
-        }
     }
 }
 
@@ -281,17 +251,7 @@ impl std::ops::Index<u16> for MemoryView {
 
 #[cfg(test)]
 mod test {
-    use crate::transport::MiniDSPError;
-
     use super::*;
-
-    struct Mock(Vec<u8>);
-
-    impl OldTransport for Mock {
-        fn roundtrip(&mut self, _: &[u8]) -> Result<Vec<u8>, MiniDSPError> {
-            Ok(self.0.clone())
-        }
-    }
 
     #[test]
     fn test_read_reg() {

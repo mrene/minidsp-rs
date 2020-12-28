@@ -1,13 +1,11 @@
-use std::sync::Arc;
-
-use anyhow::Result;
-use bytes::{BufMut, Bytes, BytesMut};
-use hidapi::HidDevice;
-use tokio::sync::{broadcast, oneshot, Mutex};
-
 use super::async_wrapper::HidDeviceWrapper;
 use crate::transport::{MiniDSPError, Sender, Transport};
+use anyhow::Result;
 use async_trait::async_trait;
+use bytes::{BufMut, Bytes, BytesMut};
+use hidapi::HidDevice;
+use std::sync::Arc;
+use tokio::sync::{broadcast, oneshot, Mutex};
 
 // 65 byte wide: 1 byte report id + 64 bytes data
 const HID_PACKET_SIZE: usize = 65;

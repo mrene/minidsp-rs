@@ -2,13 +2,9 @@ use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
 use hidapi::HidError;
-use thiserror::Error;
-
-use tokio::sync::{broadcast, OwnedMutexGuard};
-
-pub use hid::HID;
 use std::ops::DerefMut;
-
+use thiserror::Error;
+use tokio::sync::{broadcast, OwnedMutexGuard};
 pub mod hid;
 pub mod net;
 
@@ -19,11 +15,6 @@ pub enum MiniDSPError {
 
     #[error("A malformed packet was received")]
     MalformedResponse,
-}
-
-/// A basic trait for a pdu transport with unary request-response semantics
-pub trait OldTransport: Send {
-    fn roundtrip(&mut self, packet: &[u8]) -> Result<Vec<u8>, MiniDSPError>;
 }
 
 impl<T> Sender for OwnedMutexGuard<T>
@@ -38,7 +29,7 @@ where
 
 /// Transport trait implemented by different backends
 #[async_trait]
-pub trait Transport: Sync {
+pub trait Transport: Send + Sync {
     // Subscribe to all received frames
     fn subscribe(&self) -> broadcast::Receiver<Bytes>;
 
@@ -52,6 +43,6 @@ pub trait Transport: Sync {
     }
 }
 
-pub trait Sender {
+pub trait Sender: Send + Sync {
     fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError>;
 }

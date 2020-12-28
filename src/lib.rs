@@ -1,17 +1,17 @@
 extern crate hidapi;
+pub use crate::commands::Gain;
+use crate::commands::{
+    roundtrip, FromMemory, MasterStatus, ReadMemory, SetMute, SetSource, SetVolume,
+};
+use anyhow::{anyhow, Result};
 
 use std::convert::TryFrom;
-
-use anyhow::{anyhow, Result};
-use hidapi::{HidApi, HidError};
-
-pub use crate::commands::Gain;
-use crate::commands::{FromMemory, MasterStatus, ReadMemory, SetMute, SetSource, SetVolume};
 
 pub mod commands;
 pub mod lease;
 pub mod packet;
 pub mod transport;
+use transport::Transport;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Source {
@@ -44,45 +44,38 @@ impl Into<u8> for Source {
 }
 
 pub struct MiniDSP {
-    pub transport: Box<dyn transport::OldTransport>,
+    pub transport: Box<dyn Transport>,
 }
 
 impl MiniDSP {
-    pub fn new(transport: Box<dyn transport::OldTransport>) -> Self {
+    pub fn new(transport: Box<dyn Transport>) -> Self {
         MiniDSP { transport }
     }
 }
 
 impl MiniDSP {
-    pub fn get_master_status(&mut self) -> Result<MasterStatus> {
-        let memory = ReadMemory {
-            addr: 0xffd8,
-            size: 4,
-        }
-        .execute(self.transport.as_mut())?;
-        let master_status = MasterStatus::from_memory(&memory)?;
-        Ok(master_status)
+    pub async fn get_master_status(&self) -> Result<MasterStatus> {
+        let memory = roundtrip(
+            self.transport.as_ref(),
+            ReadMemory {
+                addr: 0xffd8,
+                size: 4,
+            },
+        )
+        .await?;
+
+        Ok(MasterStatus::from_memory(&memory)?)
     }
 
-    pub fn set_master_volume(&mut self, value: Gain) -> Result<()> {
-        SetVolume::new(value).execute(self.transport.as_mut())
+    pub async fn set_master_volume(&self, value: Gain) -> Result<()> {
+        Ok(roundtrip(self.transport.as_ref(), SetVolume::new(value)).await?)
     }
 
-    pub fn set_master_mute(&mut self, value: bool) -> Result<()> {
-        SetMute::new(value).execute(self.transport.as_mut())
+    pub async fn set_master_mute(&self, value: bool) -> Result<()> {
+        Ok(roundtrip(self.transport.as_ref(), SetMute::new(value)).await?)
     }
 
-    pub fn set_source(&mut self, source: Source) -> Result<()> {
-        SetSource::new(source).execute(self.transport.as_mut())
+    pub async fn set_source(&self, source: Source) -> Result<()> {
+        Ok(roundtrip(self.transport.as_ref(), SetSource::new(source)).await?)
     }
-}
-
-pub fn get_minidsp_transport() -> Result<transport::HID, HidError> {
-    let hid = HidApi::new().unwrap();
-    // for device in hid.device_list() {
-    //     println!("{:?} {:?} {:?} {:?}", device.vendor_id(), device.product_id(), device.manufacturer_string(), device.product_string())
-    // }
-    let (vid, pid) = (0x2752, 0x0011);
-    let hid_device = hid.open(vid, pid)?;
-    Ok(transport::HID::new(hid_device))
 }

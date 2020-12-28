@@ -1,11 +1,11 @@
 extern crate clap;
 extern crate hidapi;
-
 use clap::{App, Arg, ArgMatches, SubCommand};
+use minidsp::transport::hid::find_minidsp;
+use minidsp::{Gain, MiniDSP, Source};
 
-use minidsp::{get_minidsp_transport, Gain, MiniDSP, Source};
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let matches = App::new("minidsp")
         .version("1.0")
         .author("Mathieu Rene")
@@ -53,30 +53,30 @@ fn main() {
         )
         .get_matches();
 
-    let result = run_command(matches);
+    let result = run_command(matches).await;
     if let Err(error) = result {
         eprintln!("{:?}", error);
     }
 }
 
-fn run_command(matches: ArgMatches) -> anyhow::Result<()> {
-    let mut transport = Box::new(get_minidsp_transport()?);
-    if matches.occurrences_of("verbose") > 0 {
-        transport.verbose = true
-    }
+async fn run_command(matches: ArgMatches<'_>) -> anyhow::Result<()> {
+    let transport = Box::new(find_minidsp()?);
+    // if matches.occurrences_of("verbose") > 0 {
+    //     transport.verbose = true
+    // }
+    //
+    // if matches.occurrences_of("log") > 0 {
+    //     transport.log = true
+    // }
 
-    if matches.occurrences_of("log") > 0 {
-        transport.log = true
-    }
-
-    let mut device = MiniDSP::new(transport);
+    let device = MiniDSP::new(transport);
 
     if let Some(matches) = matches.subcommand_matches("gain") {
         let value = matches.value_of("value").unwrap();
         let value = i8::from_str_radix(value, 10).unwrap();
 
         println!("set gain: {:?}", value);
-        Ok(device.set_master_volume(Gain(value as f32))?)
+        Ok(device.set_master_volume(Gain(value as f32)).await?)
     } else if let Some(matches) = matches.subcommand_matches("mute") {
         let value = matches.value_of("value").unwrap().to_lowercase();
         let value = match value.as_str() {
@@ -86,7 +86,7 @@ fn run_command(matches: ArgMatches) -> anyhow::Result<()> {
         };
 
         println!("mute {:?}", value);
-        Ok(device.set_master_mute(value)?)
+        Ok(device.set_master_mute(value).await?)
     } else if let Some(matches) = matches.subcommand_matches("source") {
         let source = matches.value_of("source").unwrap().to_lowercase();
         let source = match source.as_str() {
@@ -97,17 +97,17 @@ fn run_command(matches: ArgMatches) -> anyhow::Result<()> {
         };
 
         println!("set source {:?}", source);
-        Ok(device.set_source(source)?)
+        Ok(device.set_source(source).await?)
     } else if let Some(matches) = matches.subcommand_matches("send") {
         let value = matches.value_of("data").unwrap();
-        let value = hex::decode(value.replace(" ", ""))?;
+        let _value = hex::decode(value.replace(" ", ""))?;
 
-        let response = device.transport.roundtrip(value.as_ref())?;
-        println!("response: {:02x?}", response);
+        // let response = device.transport.roundtrip(value.as_ref())?;
+        // println!("response: {:02x?}", response);
 
         Ok(())
     } else {
-        let master_status = device.get_master_status()?;
+        let master_status = device.get_master_status().await?;
         println!("{:?}", master_status);
         Ok(())
     }
