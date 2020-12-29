@@ -40,8 +40,6 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
 }
 
 pub async fn serve(bind_address: String, transport: Arc<dyn Transport>) -> Result<()> {
-    env_logger::init();
-
     let listener = TcpListener::bind(bind_address).await?;
 
     loop {

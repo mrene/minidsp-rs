@@ -22,6 +22,9 @@ pub fn checksum<T: AsRef<[u8]>>(data: T) -> u8 {
 }
 
 pub fn unframe(response: Bytes) -> Result<Bytes, MiniDSPError> {
+    if response.is_empty() {
+        return Err(MalformedResponse);
+    }
     let len = response[0] as usize;
     if response.len() < len {
         Err(MalformedResponse)

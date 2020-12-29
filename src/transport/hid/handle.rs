@@ -4,6 +4,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use hidapi::HidDevice;
+use log::debug;
 use std::sync::Arc;
 use tokio::sync::{broadcast, oneshot, Mutex};
 
@@ -70,7 +71,7 @@ impl HidTransport {
                 Ok(size) => {
                     read_buf.truncate(size);
 
-                    // println!("{:02x?}", read_buf.as_ref());
+                    debug!("read: {:02x?}", read_buf.as_ref());
 
                     // Discard send errors, since it means there are no bound receiver
                     let _ = sender.send(read_buf.freeze());
@@ -118,6 +119,8 @@ impl Inner {
 #[async_trait]
 impl Sender for Inner {
     async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
+        debug!("write: {:02x?}", frame.as_ref());
+
         self.buf.truncate(0);
 
         // HID report id

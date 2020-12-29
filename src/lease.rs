@@ -3,6 +3,7 @@ use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
 
+/// Returns an RAII guard object setting the source back to what it previously was once its released
 pub async fn lease_source(minidsp: Arc<Mutex<MiniDSP>>, source: Source) -> Result<SourceLease> {
     {
         let minidsp = minidsp.lock().await;
@@ -29,6 +30,7 @@ pub async fn lease_source(minidsp: Arc<Mutex<MiniDSP>>, source: Source) -> Resul
     Ok(SourceLease { tx })
 }
 
+/// A RAII guard object causing the source to change back once it's released
 pub struct SourceLease {
     #[allow(dead_code)]
     tx: oneshot::Sender<()>,

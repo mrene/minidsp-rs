@@ -1,27 +1,41 @@
 [package]
-name = "minidsp"
-version = "0.1.1"
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
+name = "minidsp"
+version = "0.1.1"
+[dependencies]
+anyhow = "1.0.36"
+async-stream = "0.3.0"
+async-trait = "0.1.42"
+bytes = "1.0.0"
+clap = "3.0.0-beta.2"
+env_logger = "0.8.2"
+futures = "0.3.8"
+futures-sink = "*"
+futures-util = "*"
+hex = "0.4.2"
+log = "*"
+thiserror = "1.0.22"
+tokio-stream = "0.1.0"
+hexplay = "0.2.1"
+#pretty-hex = "0.2.1"
+
+[dependencies.hidapi]
+optional = true
+version = "1.2.5"
+
+[dependencies.tokio]
+features = ["full"]
+version = "1.0.1"
+
+[dependencies.tokio-util]
+features = ["full"]
+version = "0.6.0"
 
 [features]
-default = [ "hid" ]
+default = ["hid"]
 hid = ["hidapi"]
 
-[dependencies]
-clap = "3.0.0-beta.2"
-tokio = { version = "1.0.1", features = ["full"] }
-hex = "0.4.2"
-futures = "0.3.8"
-env_logger = "0.8.2"
-log = "0.4.11"
-anyhow = "1.0.36"
-thiserror = "1.0.22"
-bytes = "1.0.0"
-async-trait = "0.1.42"
-
-# Transport dependencies
-hidapi = { version="1.2.5", optional = true }
-
+[target]
 [target.arm-unknown-linux-gnueabihf]
 image = "rustembedded/cross:arm-unknown-linux-gnueabihf"

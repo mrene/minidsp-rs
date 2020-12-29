@@ -2,6 +2,7 @@ use crate::transport::{MiniDSPError, Sender, Transport};
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
+use log::debug;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -33,7 +34,7 @@ impl NetTransport {
         loop {
             let mut read_buf = BytesMut::with_capacity(64);
             stream.read_buf(&mut read_buf).await?;
-            // println!("{:02x?}", read_buf.as_ref());
+            debug!("read: {:02x?}", read_buf.as_ref());
             sender.send(read_buf.freeze())?;
         }
     }
@@ -63,6 +64,7 @@ impl Inner {
 #[async_trait]
 impl Sender for Inner {
     async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
+        debug!("write: {:02x?}", frame.as_ref());
         Ok(self.write.write_all(frame.as_ref()).await?)
     }
 }

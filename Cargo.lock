@@ -16,6 +16,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68803225a7b13e47191bab76f2687382b60d259e8cf37f6e1893658b84bb9479"
 
 [[package]]
+name = "async-stream"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3670df70cbc01729f901f94c887814b3c68db038aad1329a418bae178bc5295c"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3548b8efc9f8e8a5a0a2808c5bd8451a9031b9e5b879a79590304ae928b0a70"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -86,7 +107,7 @@ dependencies = [
  "lazy_static",
  "os_str_bytes",
  "strsim",
- "termcolor",
+ "termcolor 1.1.2",
  "textwrap",
  "unicode-width",
  "vec_map",
@@ -115,7 +136,7 @@ dependencies = [
  "humantime",
  "log",
  "regex",
- "termcolor",
+ "termcolor 1.1.2",
 ]
 
 [[package]]
@@ -244,6 +265,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
+name = "hexplay"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0962bea6731e28b5a443ba4aa00fe3e4fe7555dadf12012435efb738eeac5898"
+dependencies = [
+ "atty",
+ "termcolor 0.3.6",
+]
+
+[[package]]
 name = "hidapi"
 version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -320,16 +351,22 @@ name = "minidsp"
 version = "0.1.1"
 dependencies = [
  "anyhow",
+ "async-stream",
  "async-trait",
  "bytes",
  "clap",
  "env_logger",
  "futures",
+ "futures-sink",
+ "futures-util",
  "hex",
+ "hexplay",
  "hidapi",
  "log",
  "thiserror",
  "tokio",
+ "tokio-stream",
+ "tokio-util",
 ]
 
 [[package]]
@@ -584,6 +621,15 @@ dependencies = [
 
 [[package]]
 name = "termcolor"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adc4587ead41bf016f11af03e55a624c06568b5a19db4e90fde573d805074f83"
+dependencies = [
+ "wincolor",
+]
+
+[[package]]
+name = "termcolor"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
@@ -661,6 +707,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-stream"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f3be913b74b13210c8fe04b17ab833f5a124f45b93d0f99f59fff621f64392a"
+dependencies = [
+ "async-stream",
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36135b7e7da911f5f8b9331209f7fab4cc13498f3fff52f72a710c78187e3148"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "futures-io",
+ "futures-sink",
+ "log",
+ "pin-project-lite",
+ "slab",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "unicode-segmentation"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -720,3 +795,12 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "wincolor"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eeb06499a3a4d44302791052df005d5232b927ed1a9658146d842165c4de7767"
+dependencies = [
+ "winapi",
+]

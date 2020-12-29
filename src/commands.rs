@@ -4,7 +4,9 @@ use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::convert::TryInto;
 use std::str::FromStr;
+use thiserror::Error;
 
+/// Trait representing a command that has a bytes representation and a parsed response.
 pub trait UnaryCommand {
     type Response: UnaryResponse;
 
@@ -15,6 +17,7 @@ pub trait UnaryCommand {
     }
 }
 
+/// Parsable response type (TODO: Would `Decoder` fit here instead?)
 pub trait UnaryResponse {
     fn from_packet(packet: Bytes) -> Self;
 }
@@ -56,6 +59,7 @@ where
     Err(MiniDSPError::MalformedResponse)
 }
 
+/// Types that can be read from a contiguous memory representation
 pub trait FromMemory<T: Sized>
 where
     Self: Sized,
@@ -64,6 +68,7 @@ where
 }
 
 #[derive(Debug, Clone, PartialEq)]
+/// The current settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
     pub preset: u8,
@@ -93,6 +98,7 @@ where
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+/// A gain between the minimum and maximum allowed values
 pub struct Gain(pub f32);
 
 impl Gain {
@@ -120,6 +126,7 @@ impl FromStr for Gain {
     }
 }
 
+/// Unary command to set the master volume
 pub struct SetVolume {
     pub value: Gain,
 }
@@ -141,6 +148,7 @@ impl UnaryCommand for SetVolume {
     }
 }
 
+/// Unary command to set the master mute setting
 pub struct SetMute {
     pub value: bool,
 }
@@ -163,6 +171,7 @@ impl UnaryCommand for SetMute {
     }
 }
 
+/// Unary command to set the current source
 pub struct SetSource {
     source: Source,
 }
@@ -185,6 +194,7 @@ impl UnaryCommand for SetSource {
     }
 }
 
+/// Custom unary command used for sending custom commmands for debugging purposes
 pub struct CustomUnaryCommand {
     request: Bytes,
 }
@@ -207,17 +217,15 @@ impl UnaryCommand for CustomUnaryCommand {
     }
 }
 
-/// Reads data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
+/// Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
 pub struct ReadMemory {
     pub addr: u16,
     pub size: u8,
 }
 
 impl ReadMemory {
-    pub fn to_bytes(&self) -> [u8; 4] {
-        let mut cmd: [u8; 4] = [0x05, 0x0, 0x0, self.size];
-        cmd[1..3].copy_from_slice(self.addr.to_be_bytes().as_ref());
-        cmd
+    pub fn new(addr: u16, size: u8) -> Self {
+        ReadMemory { addr, size }
     }
 }
 
@@ -243,9 +251,98 @@ impl UnaryCommand for ReadMemory {
     }
 }
 
+/// Reads float data from a given base address. Max length is 14
+pub struct ReadFloats {
+    pub addr: u16,
+    pub len: u8,
+}
+
+impl ReadFloats {
+    pub fn new(addr: u16, len: u8) -> Self {
+        if len > 14 {
+            panic!("length too big")
+        }
+        ReadFloats { addr, len }
+    }
+}
+
+impl UnaryCommand for ReadFloats {
+    type Response = FloatView;
+
+    fn request_packet(&self) -> Bytes {
+        let mut cmd = BytesMut::with_capacity(4);
+        cmd.put_u8(0x14);
+        cmd.put_u16(self.addr);
+        cmd.put_u8(self.len);
+        cmd.freeze()
+    }
+
+    fn response_matches(&self, packet: &[u8]) -> bool {
+        if !packet.starts_with(&[0x14]) {
+            return false;
+        }
+
+        let mut b = Bytes::copy_from_slice(packet);
+        b.get_u8();
+        self.addr == b.get_u16() && self.len == ((b.remaining() as u8) / 4)
+    }
+}
+
+/// Memory views can be extended with multiple contiguous reads
+pub trait ExtendView {
+    fn extend_with(&mut self, other: Self) -> Result<(), ExtendError>;
+}
+
+#[derive(Error, Debug)]
+pub enum ExtendError {
+    #[error("the corresponding bases do not align")]
+    MismatchingBases,
+}
+
+/// A contiguous view of floats read from the device
+pub struct FloatView {
+    pub base: u16,
+    pub data: Vec<f32>,
+}
+
+impl FloatView {
+    pub fn get(&self, addr: u16) -> f32 {
+        self.data[(addr - self.base) as usize]
+    }
+}
+
+impl ExtendView for FloatView {
+    fn extend_with(&mut self, other: Self) -> Result<(), ExtendError> {
+        // Check that the `other` starts a the end of `self`
+        let expected_start = self.base + (self.data.len() as u16);
+        if other.base != expected_start {
+            return Err(ExtendError::MismatchingBases);
+        }
+
+        self.data.extend(other.data.iter());
+
+        Ok(())
+    }
+}
+
+impl UnaryResponse for FloatView {
+    fn from_packet(mut packet: Bytes) -> Self {
+        packet.get_u8(); // Discard command id 0x14
+        let base = packet.get_u16();
+        let data = packet
+            .chunks_exact(4)
+            .map(|x| x.try_into().unwrap())
+            .map(f32::from_le_bytes)
+            .collect();
+
+        FloatView { base, data }
+    }
+}
+
+/// A contiguous bytes view read from the device
 pub struct MemoryView {
     pub base: u16,
-    data: Bytes,
+    pub data: Bytes,
 }
 
 impl MemoryView {
@@ -263,10 +360,6 @@ impl MemoryView {
     pub fn read_u16(&self, addr: u16) -> u16 {
         u16::from_be_bytes(self.read_at(addr, 2).try_into().unwrap())
     }
-
-    pub fn read_f32(&self, addr: u16) -> f32 {
-        f32::from_be_bytes(self.read_at(addr, 4).try_into().unwrap())
-    }
 }
 
 impl UnaryResponse for MemoryView {
@@ -277,12 +370,67 @@ impl UnaryResponse for MemoryView {
     }
 }
 
-impl std::ops::Index<u16> for MemoryView {
-    type Output = u8;
+impl ExtendView for MemoryView {
+    fn extend_with(&mut self, other: Self) -> Result<(), ExtendError> {
+        // Check that the `other` starts a the end of `self`
+        let expected_start = self.base + (self.data.len() as u16);
+        if other.base != expected_start {
+            return Err(ExtendError::MismatchingBases);
+        }
 
-    fn index(&self, index: u16) -> &Self::Output {
-        let index = index - self.base;
-        &self.data[index as usize]
+        let mut data: BytesMut = BytesMut::with_capacity(self.data.len() + other.data.len());
+        data.extend(self.data.iter());
+        data.extend(other.data.iter());
+        self.data = data.freeze();
+
+        Ok(())
+    }
+}
+
+pub struct WriteFloat {
+    pub addr: u16,
+    pub value: f32,
+}
+
+impl UnaryCommand for WriteFloat {
+    type Response = ();
+
+    fn request_packet(&self) -> Bytes {
+        let mut b = BytesMut::with_capacity(8);
+        b.put_u8(0x13);
+        b.put_u8(0x80);
+        b.put_u16(self.addr);
+        b.put_f32_le(self.value);
+
+        b.freeze()
+    }
+
+    fn response_matches(&self, packet: &[u8]) -> bool {
+        packet.is_empty()
+    }
+}
+
+pub struct WriteBiquad {
+    pub addr: u8,
+    pub data: [f32; 5],
+}
+
+impl UnaryCommand for WriteBiquad {
+    type Response = ();
+
+    fn request_packet(&self) -> Bytes {
+        let mut b = BytesMut::with_capacity(64);
+        b.put_slice(&[0x30, 0x80, 0x20]);
+        b.put_u8(self.addr);
+        b.put_u16(0x0000);
+        for f in self.data {
+            b.put_f32_le(f);
+        }
+        b.freeze()
+    }
+
+    fn response_matches(&self, packet: &[u8]) -> bool {
+        packet.is_empty()
     }
 }
 
@@ -309,10 +457,6 @@ mod test {
 
         assert_eq!(data, &[0x1, 0x2, 0x3, 0x4]);
         assert_eq!(memory.read_u16(0xFFDA), 0x0102);
-        assert!(
-            (memory.read_f32(0xFFDA) - f32::from_be_bytes([0x01, 0x02, 0x03, 0x04])).abs()
-                < f32::EPSILON
-        );
     }
 
     #[test]
@@ -340,5 +484,53 @@ mod test {
                 mute: false,
             }
         );
+    }
+
+    #[test]
+    fn test_combine() {
+        let mut f1 = FloatView {
+            base: 0,
+            data: (0u16..10).map(|x| x.into()).collect(),
+        };
+
+        let f2 = FloatView {
+            base: 10,
+            data: (10u16..20).map(|x| x.into()).collect(),
+        };
+
+        f1.extend_with(f2).unwrap();
+        assert_eq!(f1.base, 0);
+        assert_eq!(f1.data.len(), 20);
+        assert!(f1
+            .data
+            .into_iter()
+            .eq((0u16..20).into_iter().map(|x| x.into())));
+
+        let mut m1 = MemoryView {
+            base: 0,
+            data: (0u8..10).collect(),
+        };
+
+        let m2 = MemoryView {
+            base: 10,
+            data: (10u8..20).collect(),
+        };
+
+        m1.extend_with(m2).unwrap();
+        assert_eq!(m1.base, 0);
+        assert_eq!(m1.data.len(), 20);
+        assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
+    }
+
+    #[test]
+    fn biquad_test() {
+        let b = WriteBiquad {
+            addr: 0,
+            data: [1.0, 0.1, 0.2, 0.3, 0.4],
+        };
+
+        for (i, f) in b.data.iter().enumerate() {
+            println!("{}: {} {:02x?}", i, f, f.to_le_bytes().as_ref())
+        }
     }
 }
