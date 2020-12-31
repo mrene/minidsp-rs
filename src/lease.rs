@@ -4,7 +4,10 @@ use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
 
 /// Returns an RAII guard object setting the source back to what it previously was once its released
-pub async fn lease_source(minidsp: Arc<Mutex<MiniDSP>>, source: Source) -> Result<SourceLease> {
+pub async fn lease_source(
+    minidsp: Arc<Mutex<MiniDSP<'static>>>,
+    source: Source,
+) -> Result<SourceLease> {
     {
         let minidsp = minidsp.lock().await;
         minidsp.set_source(source).await?;

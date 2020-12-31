@@ -2,9 +2,9 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use minidsp::commands::{roundtrip, CustomUnaryCommand, ReadFloats, ReadMemory};
-use minidsp::discovery;
 use minidsp::transport::net::NetTransport;
 use minidsp::transport::Transport;
+use minidsp::{device, discovery};
 use minidsp::{server, Gain, MiniDSP, Source};
 use std::net::Ipv4Addr;
 use std::num::ParseIntError;
@@ -147,7 +147,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let device = MiniDSP::new(transport);
+    let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
 
     match opts.subcmd {
         Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,

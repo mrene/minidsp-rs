@@ -11,7 +11,9 @@ pub trait UnaryCommand {
     type Response: UnaryResponse;
 
     fn request_packet(&self) -> Bytes;
-    fn response_matches(&self, packet: &[u8]) -> bool;
+    fn response_matches(&self, _packet: &[u8]) -> bool {
+        true
+    }
     fn parse_response(&self, packet: Bytes) -> Self::Response {
         Self::Response::from_packet(packet)
     }
@@ -126,7 +128,7 @@ impl FromStr for Gain {
     }
 }
 
-/// Unary command to set the master volume
+/// [0x42] Unary command to set the master volume
 pub struct SetVolume {
     pub value: Gain,
 }
@@ -142,13 +144,9 @@ impl UnaryCommand for SetVolume {
     fn request_packet(&self) -> Bytes {
         Bytes::from(vec![0x42, self.value.into()])
     }
-
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.is_empty()
-    }
 }
 
-/// Unary command to set the master mute setting
+/// [0x17] Unary command to set the master mute setting
 pub struct SetMute {
     pub value: bool,
 }
@@ -165,13 +163,31 @@ impl UnaryCommand for SetMute {
     fn request_packet(&self) -> Bytes {
         Bytes::from(vec![0x17, self.value as u8])
     }
+}
 
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.is_empty()
+pub struct SetConfig {
+    config: u8,
+    reset: bool,
+}
+
+impl SetConfig {
+    pub fn new(config: u8) -> Self {
+        SetConfig {
+            config,
+            reset: true,
+        }
     }
 }
 
-/// Unary command to set the current source
+impl UnaryCommand for SetConfig {
+    type Response = ();
+
+    fn request_packet(&self) -> Bytes {
+        Bytes::from(vec![0x25, self.config, self.reset as u8])
+    }
+}
+
+/// [0x34] Unary command to set the current source
 pub struct SetSource {
     source: Source,
 }
@@ -187,10 +203,6 @@ impl UnaryCommand for SetSource {
 
     fn request_packet(&self) -> Bytes {
         Bytes::from(vec![0x34, self.source.into()])
-    }
-
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.is_empty()
     }
 }
 
@@ -211,13 +223,9 @@ impl UnaryCommand for CustomUnaryCommand {
     fn request_packet(&self) -> Bytes {
         self.request.clone()
     }
-
-    fn response_matches(&self, _: &[u8]) -> bool {
-        true
-    }
 }
 
-/// Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
+/// [0x05] Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
 pub struct ReadMemory {
     pub addr: u16,
     pub size: u8,
@@ -251,7 +259,7 @@ impl UnaryCommand for ReadMemory {
     }
 }
 
-/// Reads float data from a given base address. Max length is 14
+/// [0x14] Reads float data from a given base address. Max length is 14
 pub struct ReadFloats {
     pub addr: u16,
     pub len: u8,
@@ -387,9 +395,16 @@ impl ExtendView for MemoryView {
     }
 }
 
+// [0x13] Write float data
 pub struct WriteFloat {
     pub addr: u16,
     pub value: f32,
+}
+
+impl WriteFloat {
+    pub fn new(addr: u16, value: f32) -> Self {
+        WriteFloat { addr, value }
+    }
 }
 
 impl UnaryCommand for WriteFloat {
@@ -404,15 +419,44 @@ impl UnaryCommand for WriteFloat {
 
         b.freeze()
     }
+}
 
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.is_empty()
+// [0x13] Write bool value
+pub struct WriteBool {
+    pub addr: u16,
+    pub value: bool,
+}
+
+impl WriteBool {
+    pub fn new(addr: u16, value: bool) -> Self {
+        WriteBool { addr, value }
     }
 }
 
+impl UnaryCommand for WriteBool {
+    type Response = ();
+
+    fn request_packet(&self) -> Bytes {
+        let mut b = BytesMut::with_capacity(16);
+        b.put_slice(&[0x13, 0x80]);
+        b.put_u16(self.addr);
+        let value = if self.value { 2 } else { 1 };
+        b.put_u8(value);
+        b.put_slice(&[0x00, 0x00, 0x00]);
+        b.freeze()
+    }
+}
+
+// [0x30] Write biquad data
 pub struct WriteBiquad {
     pub addr: u8,
     pub data: [f32; 5],
+}
+
+impl WriteBiquad {
+    pub fn new(addr: u8, data: [f32; 5]) -> Self {
+        WriteBiquad { addr, data }
+    }
 }
 
 impl UnaryCommand for WriteBiquad {
@@ -423,14 +467,35 @@ impl UnaryCommand for WriteBiquad {
         b.put_slice(&[0x30, 0x80, 0x20]);
         b.put_u8(self.addr);
         b.put_u16(0x0000);
-        for f in self.data {
-            b.put_f32_le(f);
+        for f in self.data.iter() {
+            b.put_f32_le(*f);
         }
         b.freeze()
     }
+}
 
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        packet.is_empty()
+// [0x19] Write biquad data
+pub struct WriteBiquadBypass {
+    pub addr: u8,
+    pub value: bool,
+}
+
+impl WriteBiquadBypass {
+    pub fn new(addr: u8, value: bool) -> Self {
+        WriteBiquadBypass { addr, value }
+    }
+}
+
+impl UnaryCommand for WriteBiquadBypass {
+    type Response = ();
+
+    fn request_packet(&self) -> Bytes {
+        let mut p = BytesMut::with_capacity(16);
+        p.put_u8(0x19);
+        p.put_u8(if self.value { 0x80 } else { 0x00 });
+        p.put_u8(0x20);
+        p.put_u8(self.addr);
+        p.freeze()
     }
 }
 
@@ -532,5 +597,8 @@ mod test {
         for (i, f) in b.data.iter().enumerate() {
             println!("{}: {} {:02x?}", i, f, f.to_le_bytes().as_ref())
         }
+
+        println!("{:?}", f32::from_le_bytes([0x01, 0x00, 0x00, 0x00]));
+        println!("{:?}", f32::from_le_bytes([0x02, 0x00, 0x00, 0x00]));
     }
 }

@@ -1,13 +1,15 @@
 // extern crate hidapi;
 pub use crate::commands::Gain;
 use crate::commands::{
-    roundtrip, FromMemory, MasterStatus, ReadFloats, ReadMemory, SetMute, SetSource, SetVolume,
+    roundtrip, FromMemory, MasterStatus, ReadFloats, ReadMemory, SetConfig, SetMute, SetSource,
+    SetVolume, WriteBiquad, WriteBiquadBypass, WriteBool, WriteFloat,
 };
 use anyhow::{anyhow, Result};
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 pub mod commands;
+pub mod device;
 pub mod discovery;
 pub mod lease;
 pub mod packet;
@@ -65,17 +67,18 @@ impl FromStr for Source {
 }
 
 /// High-level device struct issuing commands to a transport
-pub struct MiniDSP {
+pub struct MiniDSP<'a> {
     pub transport: Arc<dyn Transport>,
+    pub device: &'a device::Device,
 }
 
-impl MiniDSP {
-    pub fn new(transport: Arc<dyn Transport>) -> Self {
-        MiniDSP { transport }
+impl<'a> MiniDSP<'a> {
+    pub fn new(transport: Arc<dyn Transport>, device: &'a device::Device) -> Self {
+        MiniDSP { transport, device }
     }
 }
 
-impl MiniDSP {
+impl MiniDSP<'_> {
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let memory = roundtrip(self.transport.as_ref(), ReadMemory::new(0xffd8, 4)).await?;
@@ -109,8 +112,106 @@ impl MiniDSP {
     pub async fn set_source(&self, source: Source) -> Result<()> {
         Ok(roundtrip(self.transport.as_ref(), SetSource::new(source)).await?)
     }
+
+    /// Sets the active configuration
+    pub async fn set_config(&self, index: u8) -> Result<()> {
+        Ok(roundtrip(self.transport.as_ref(), SetConfig::new(index)).await?)
+    }
+
+    pub fn input(&self, index: u16) -> Input {
+        let addr = 0x1a + index;
+        Input {
+            dsp: &self,
+            index,
+            addr,
+        }
+    }
 }
 
-// TODO: Device spec
-// Map available inputs per hwid+dspversion
-// Number of in/outs and their addresses in float space
+pub struct Input<'a> {
+    dsp: &'a MiniDSP<'a>,
+    index: u16,
+    addr: u16,
+}
+
+impl<'a> Input<'a> {
+    /// Sets the input mute setting
+    pub async fn set_mute(&self, value: bool) -> Result<()> {
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            // The underlying value controls whether the channel is enabled. If it is disabled,
+            // it is considered muted since no signal can go through.
+            WriteBool::new(self.index, !value),
+        )
+        .await?)
+    }
+
+    /// Sets the input gain setting
+    pub async fn set_gain(&self, value: Gain) -> Result<()> {
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            WriteFloat::new(self.addr, value.0),
+        )
+        .await?)
+    }
+
+    /// Sets whether this input is routed to the given output
+    pub async fn set_output_enable(&self, output_index: usize, value: bool) -> Result<()> {
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            WriteBool::new(self.spec().routing[output_index].enable, value),
+        )
+        .await?)
+    }
+
+    /// Sets the routing matrix gain for this [input, output_index] pair
+    pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            WriteFloat::new(self.spec().routing[output_index].gain, gain.0),
+        )
+        .await?)
+    }
+
+    pub async fn peq(&self, index: usize) -> BiquadFilter<'_> {
+        BiquadFilter::new(self.dsp, self.spec().peq[index])
+    }
+
+    fn spec(&self) -> &'a device::Input {
+        &self.dsp.device.inputs[self.index as usize]
+    }
+}
+
+/// Helper object for controlling an on-device biquad filter
+pub struct BiquadFilter<'a> {
+    dsp: &'a MiniDSP<'a>,
+    addr: u8,
+}
+
+impl<'a> BiquadFilter<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, addr: u8) -> Self {
+        BiquadFilter { dsp, addr }
+    }
+}
+
+impl<'a> BiquadFilter<'a> {
+    pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
+        if coefficients.len() != 5 {
+            panic!("biquad coefficients are always 5 floating point values")
+        }
+
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            WriteBiquad::new(self.addr, coefficients.try_into().unwrap()),
+        )
+        .await?)
+    }
+
+    pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
+        Ok(roundtrip(
+            self.dsp.transport.as_ref(),
+            WriteBiquadBypass::new(self.addr, bypass),
+        )
+        .await?)
+    }
+}
