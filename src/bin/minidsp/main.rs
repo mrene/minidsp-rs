@@ -1,24 +1,20 @@
 //! MiniDSP Control Program
 
-use std::{net::Ipv4Addr, num::ParseIntError, str::FromStr, sync::Arc, time::Duration};
-
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
-use tokio::net::TcpStream;
-use tokio_stream::StreamExt;
-
-use debug::{run_debug, DebugCommands};
-use input::{run_input, run_output};
-
+use debug::DebugCommands;
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP, Source,
 };
+use std::{num::ParseIntError, str::FromStr, sync::Arc};
+use tokio::net::TcpStream;
+use tokio_stream::StreamExt;
 
 mod debug;
-mod input;
+mod handlers;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.1.0", author = "Mathieu Rene")]
@@ -167,11 +163,13 @@ enum OutputCommand {
 
 #[derive(Clap, Debug)]
 enum PEQCommand {
+    /// Set biquad coefficients
     Set {
         /// Biquad coefficients
         coeff: Vec<f32>,
     },
 
+    /// Sets the bypass toggle
     Bypass {
         #[clap(parse(try_from_str = on_or_off))]
         value: bool,
@@ -206,7 +204,6 @@ impl FromStr for ProductId {
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
-
     let opts: Opts = Opts::parse();
 
     if let Some(SubCommand::Discover) = opts.subcmd {
@@ -247,48 +244,9 @@ async fn main() -> Result<()> {
     };
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
+    handlers::run_command(&device, opts.subcmd).await?;
 
-    match opts.subcmd {
-        // Master
-        Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
-        Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
-        Some(SubCommand::Source { value }) => device.set_source(value).await?,
-        Some(SubCommand::Input { input_index, cmd }) => {
-            run_input(&device, cmd, input_index).await?
-        }
-        Some(SubCommand::Output { output_index, cmd }) => {
-            run_output(&device, output_index, cmd).await?
-        }
-
-        // Other tools
-        Some(SubCommand::Server {
-            bind_address,
-            advertise,
-            ip,
-        }) => {
-            if let Some(hostname) = advertise {
-                let mut packet = discovery::DiscoveryPacket {
-                    mac_address: [10, 20, 30, 40, 50, 60],
-                    ip_address: Ipv4Addr::new(192, 168, 1, 33),
-                    hwid: 0,
-                    typ: 0,
-                    sn: 0,
-                    hostname,
-                };
-                if let Some(ip) = ip {
-                    packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
-                }
-                let interval = Duration::from_secs(1);
-                tokio::spawn(discovery::server::advertise_packet(packet, interval));
-            }
-            server::serve(bind_address, device.transport.clone()).await?
-        }
-        // Handled earlier
-        Some(SubCommand::Discover) => return Ok(()),
-        Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
-        None => {}
-    }
-
+    // Always output the current master status and input/output levels
     let master_status = device.get_master_status().await?;
     println!("{:?}", master_status);
 
