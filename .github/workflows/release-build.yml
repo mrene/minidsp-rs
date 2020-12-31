@@ -23,15 +23,15 @@ jobs:
       - name: Create binary
         run: |
           mkdir archive
-          cp target/arm-unknown-linux-gnueabihf/release/${{ matrix.pair.bin }} archive
+          cp target/arm-linux-gnueabihf-rpi/release/minidsp archive
           cd archive/
-          tar -czf ../minidsp.arm-unknown-linux-gnueabihf.tar.gz *
+          tar -czf ../minidsp.arm-linux-gnueabihf-rpi.tar.gz *
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.1
         with:
-          name: arm-unknown-linux-gnueabihf-artifact
-          path: minidsp.arm-unknown-linux-gnueabihf.tar.gz
+          name: arm-linux-gnueabihf-rpi-artifact
+          path: minidsp.arm-linux-gnueabihf-rpi.tar.gz
           if-no-files-found: error
   build_all:
     strategy:
