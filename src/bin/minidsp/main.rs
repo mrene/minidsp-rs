@@ -17,7 +17,7 @@ mod debug;
 mod handlers;
 
 #[derive(Clap, Debug)]
-#[clap(version = "1.1.0", author = "Mathieu Rene")]
+#[clap(version = "2.0.0-pre1", author = "Mathieu Rene")]
 struct Opts {
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", long)]
