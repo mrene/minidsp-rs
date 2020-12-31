@@ -1,15 +1,15 @@
+mod debug;
+
+use crate::debug::run_debug;
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
-use minidsp::commands::{roundtrip, CustomUnaryCommand, ReadFloats, ReadMemory};
-use minidsp::transport::net::NetTransport;
-use minidsp::transport::Transport;
-use minidsp::{device, discovery};
-use minidsp::{server, Gain, MiniDSP, Source};
-use std::net::Ipv4Addr;
-use std::num::ParseIntError;
-use std::str::FromStr;
-use std::sync::Arc;
+use minidsp::{
+    device, discovery, server,
+    transport::{net::NetTransport, Transport},
+    Gain, MiniDSP, Source,
+};
+use std::{net::Ipv4Addr, num::ParseIntError, str::FromStr, sync::Arc, time::Duration};
 use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
 
@@ -170,60 +170,14 @@ async fn main() -> Result<()> {
                 if let Some(ip) = ip {
                     packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
                 }
-                let interval = tokio::time::Duration::from_secs(1);
+                let interval = Duration::from_secs(1);
                 tokio::spawn(discovery::server::advertise_packet(packet, interval));
             }
             server::serve(bind_address, device.transport.clone()).await?
         }
         // Handled earlier
         Some(SubCommand::Discover) => return Ok(()),
-
-        Some(SubCommand::Debug(debug)) => {
-            match debug {
-                DebugCommands::Send { value, watch } => {
-                    let response =
-                        roundtrip(device.transport.as_ref(), CustomUnaryCommand::new(value))
-                            .await?;
-                    println!("response: {:02x?}", response.as_ref());
-                    let mut sub = device.transport.subscribe();
-                    if watch {
-                        // Print out all received packets
-                        while let Ok(packet) = sub.recv().await {
-                            println!("> {:02x?}", packet.as_ref());
-                        }
-                    }
-                }
-                DebugCommands::Dump { addr } => {
-                    let view =
-                        roundtrip(device.transport.as_ref(), ReadMemory { addr, size: 60 }).await?;
-
-                    use hexplay::HexViewBuilder;
-                    let view = HexViewBuilder::new(view.data.as_ref())
-                        .address_offset(view.base as usize)
-                        .row_width(16)
-                        .finish();
-                    view.print().unwrap();
-                }
-
-                DebugCommands::DumpFloat { addr } => {
-                    let len = 14;
-                    let view = roundtrip(
-                        device.transport.as_ref(),
-                        ReadFloats {
-                            addr,
-                            len: len as u8,
-                        },
-                    )
-                    .await?;
-                    for i in addr..(addr + len) {
-                        let val = view.get(i);
-                        println!("{:04x?}: {:?}", i, val);
-                    }
-                }
-            }
-            return Ok(());
-        }
-
+        Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
         None => {}
     }
 

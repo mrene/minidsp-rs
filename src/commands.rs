@@ -421,27 +421,40 @@ impl UnaryCommand for WriteFloat {
     }
 }
 
-// [0x13] Write bool value
-pub struct WriteBool {
+// [0x13] Write an integer value
+pub struct WriteInt {
     pub addr: u16,
-    pub value: bool,
+    pub value: u8,
 }
 
-impl WriteBool {
-    pub fn new(addr: u16, value: bool) -> Self {
-        WriteBool { addr, value }
+impl WriteInt {
+    pub const DISABLED: u8 = 1;
+    pub const ENABLED: u8 = 2;
+    pub const BYPASSED: u8 = 3;
+
+    pub fn new(addr: u16, value: u8) -> Self {
+        WriteInt { addr, value }
+    }
+
+    pub fn mute(addr: u16, value: bool) -> Self {
+        let value = if value {
+            WriteInt::DISABLED
+        } else {
+            WriteInt::ENABLED
+        };
+
+        WriteInt { addr, value }
     }
 }
 
-impl UnaryCommand for WriteBool {
+impl UnaryCommand for WriteInt {
     type Response = ();
 
     fn request_packet(&self) -> Bytes {
         let mut b = BytesMut::with_capacity(16);
         b.put_slice(&[0x13, 0x80]);
         b.put_u16(self.addr);
-        let value = if self.value { 2 } else { 1 };
-        b.put_u8(value);
+        b.put_u8(self.value);
         b.put_slice(&[0x00, 0x00, 0x00]);
         b.freeze()
     }
