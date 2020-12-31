@@ -19,4 +19,4 @@ jobs:
       - name: Setup cross environment
         run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
       - name: Run build
-        run: docker run --rm -ti --entrypoint=/bin/bash -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
+        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
