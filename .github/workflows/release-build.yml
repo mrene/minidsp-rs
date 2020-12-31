@@ -23,7 +23,7 @@ jobs:
       - name: Create binary
         run: |
           mkdir archive
-          cp target/arm-linux-gnueabihf-rpi/release/minidsp archive
+          cp target/arm-unknown-linux-gnueabihf/release/minidsp archive
           cd archive/
           tar -czf ../minidsp.arm-linux-gnueabihf-rpi.tar.gz *
 
