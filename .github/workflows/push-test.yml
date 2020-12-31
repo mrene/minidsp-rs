@@ -29,6 +29,9 @@ jobs:
 
       - name: Clippy & check
         uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
 
       - name: Tests
         uses: actions-rs/cargo@v1
