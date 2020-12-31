@@ -50,6 +50,10 @@ jobs:
           target: ${{ matrix.pair.target }}
           override: true
 
+      - name: Install native packages
+        run: sudo apt-get install libhidapi-dev libhidapi-libusb0 libusb-1.0-0 libusb-1.0-0-dev
+        if: ${{ runner.os == "Linux" }}
+
       - uses: actions-rs/cargo@v1
         with:
           use-cross: ${{ matrix.pair.cross }}
