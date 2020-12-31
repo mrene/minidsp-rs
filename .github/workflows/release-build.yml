@@ -12,15 +12,27 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  # build_rpi:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2.3.4
-  #     - name: Setup cross environment
-  #       run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
-  #     - name: Run build
-  #       run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
+  build_rpi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup cross environment
+        run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
+      - name: Run build
+        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
+      - name: Create binary
+        run: |
+          mkdir archive
+          cp target/arm-unknown-linux-gnueabihf/release/${{ matrix.pair.bin }} archive
+          cd archive/
+          tar -czf ../minidsp.arm-unknown-linux-gnueabihf.tar.gz *
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: arm-unknown-linux-gnueabihf-artifact
+          path: minidsp.arm-unknown-linux-gnueabihf.tar.gz
+          if-no-files-found: error
   build_all:
     strategy:
       fail-fast: true
@@ -73,3 +85,29 @@ jobs:
           name: ${{ matrix.pair.target }}-artifact
           path: minidsp.${{ matrix.pair.target }}.tar.gz
           if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build_all, build_rpi]
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: |
+          ls -R artifacts/**/*
+      - name: Create release with artifacts
+        run: |
+          set -x
+          assets=()
+          for asset in ./artifacts/*/*.tar.gz; do
+            assets+=("-a" "$asset")
+          done
+          TAG="${GITHUB_REF##*/}"
+          hub release create "${assets[@]}" --draft --message "$TAG" "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
