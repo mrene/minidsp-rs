@@ -449,12 +449,12 @@ impl UnaryCommand for WriteBool {
 
 // [0x30] Write biquad data
 pub struct WriteBiquad {
-    pub addr: u8,
+    pub addr: u16,
     pub data: [f32; 5],
 }
 
 impl WriteBiquad {
-    pub fn new(addr: u8, data: [f32; 5]) -> Self {
+    pub fn new(addr: u16, data: [f32; 5]) -> Self {
         WriteBiquad { addr, data }
     }
 }
@@ -464,8 +464,8 @@ impl UnaryCommand for WriteBiquad {
 
     fn request_packet(&self) -> Bytes {
         let mut b = BytesMut::with_capacity(64);
-        b.put_slice(&[0x30, 0x80, 0x20]);
-        b.put_u8(self.addr);
+        b.put_slice(&[0x30, 0x80]);
+        b.put_u16(self.addr);
         b.put_u16(0x0000);
         for f in self.data.iter() {
             b.put_f32_le(*f);
@@ -476,12 +476,12 @@ impl UnaryCommand for WriteBiquad {
 
 // [0x19] Write biquad data
 pub struct WriteBiquadBypass {
-    pub addr: u8,
+    pub addr: u16,
     pub value: bool,
 }
 
 impl WriteBiquadBypass {
-    pub fn new(addr: u8, value: bool) -> Self {
+    pub fn new(addr: u16, value: bool) -> Self {
         WriteBiquadBypass { addr, value }
     }
 }
@@ -493,8 +493,7 @@ impl UnaryCommand for WriteBiquadBypass {
         let mut p = BytesMut::with_capacity(16);
         p.put_u8(0x19);
         p.put_u8(if self.value { 0x80 } else { 0x00 });
-        p.put_u8(0x20);
-        p.put_u8(self.addr);
+        p.put_u16(self.addr);
         p.freeze()
     }
 }

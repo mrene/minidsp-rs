@@ -1,7 +1,5 @@
 pub const DEVICE_2X4HD: Device = Device {
     source_names: &["Analog", "TOSLINK", "USB"],
-    num_inputs: 2,
-    num_outputs: 4,
     inputs: &[
         Input {
             index: 0,
@@ -9,7 +7,10 @@ pub const DEVICE_2X4HD: Device = Device {
                 enable: 0x00,
                 gain: 0x1a,
             },
-            peq: &[0x85, 0x80, 0x7b, 0x76, 0x71, 0x6c, 0x67, 0x62, 0x5d, 0x58],
+            peq: PEQ {
+                high: 0x2085,
+                len: 10,
+            },
             routing: &[
                 Gate {
                     enable: 0x06,
@@ -35,7 +36,10 @@ pub const DEVICE_2X4HD: Device = Device {
                 enable: 0x01,
                 gain: 0x1b,
             },
-            peq: &[0xb7, 0xb2, 0xad, 0xa8, 0xa3, 0x9e, 0x99, 0x94, 0x8f, 0x8a],
+            peq: PEQ {
+                high: 0x20b7,
+                len: 10,
+            },
             routing: &[
                 Gate {
                     enable: 0x0a,
@@ -56,22 +60,68 @@ pub const DEVICE_2X4HD: Device = Device {
             ],
         },
     ],
-    outputs: &[Output {
-        index: 0,
-        gate: Gate { enable: 0, gain: 0 },
-        delay_addr: 0,
-        invert_addr: 0,
-        peq: &[],
-        xover: &[],
-        fir_coeff_addr: 0,
-        fir_bypass_addr: 0,
-    }],
+    outputs: &[
+        Output {
+            index: 0,
+            gate: Gate {
+                enable: 0x02,
+                gain: 0x1c,
+            },
+            delay_addr: 0x40,
+            invert_addr: 0x50,
+            peq: PEQ {
+                high: 0x20e9,
+                len: 10,
+            },
+            fir_bypass_addr: 0x0e,
+        },
+        Output {
+            index: 1,
+            gate: Gate {
+                enable: 0x03,
+                gain: 0x1d,
+            },
+            delay_addr: 0x41,
+            invert_addr: 0x51,
+            peq: PEQ {
+                high: 0x211b,
+                len: 10,
+            },
+            fir_bypass_addr: 0x0f,
+        },
+        Output {
+            index: 2,
+            gate: Gate {
+                enable: 0x04,
+                gain: 0x1e,
+            },
+            delay_addr: 0x42,
+            invert_addr: 0x52,
+            peq: PEQ {
+                high: 0x214d,
+                len: 10,
+            },
+            fir_bypass_addr: 0x10,
+        },
+        Output {
+            index: 3,
+            gate: Gate {
+                enable: 0x5,
+                gain: 0x1f,
+            },
+            delay_addr: 0x43,
+            invert_addr: 0x53,
+            peq: PEQ {
+                high: 0x217f,
+                len: 10,
+            },
+            fir_bypass_addr: 0x11,
+        },
+    ],
 };
 
 pub struct Device {
     pub source_names: &'static [&'static str],
-    pub num_inputs: usize,
-    pub num_outputs: usize,
     pub inputs: &'static [Input],
     pub outputs: &'static [Output],
 }
@@ -79,7 +129,7 @@ pub struct Device {
 pub struct Input {
     pub index: usize,
     pub gate: Gate,
-    pub peq: &'static [u8],
+    pub peq: PEQ,
     pub routing: &'static [Gate],
 }
 
@@ -88,10 +138,11 @@ pub struct Output {
     pub gate: Gate,
     pub delay_addr: u16,
     pub invert_addr: u16,
-    pub peq: &'static [u16],
-    pub xover: &'static [u16],
+    pub peq: PEQ,
+    // TODO: Xover
     // TODO: Compressor
-    pub fir_coeff_addr: u16,
+    // pub fir_coeff_addr: u16,
+    /// XXX: TODO: active=2 bypass=3 via 0x13 0x80
     pub fir_bypass_addr: u16,
 }
 
@@ -102,4 +153,41 @@ pub struct Gate {
 
     /// Address where the gain is controlled
     pub gain: u16,
+}
+
+/// A range of biquad filter address part of a single parametric eq
+pub struct PEQ {
+    /// Higher bound address
+    pub high: u16,
+
+    /// Number of filters available
+    pub len: usize,
+}
+
+impl PEQ {
+    /// Get the address for a specific filter
+    /// To be compatible with the app's ordering, the first filter
+    /// is the highest address while the last filter is the lowest one.
+    pub fn at(&self, index: usize) -> u16 {
+        if index >= self.len {
+            panic!("out of bounds peq access index={} len={}", index, self.len);
+        }
+        self.high - (index * 5) as u16
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_peq() {
+        let addrs = &[0xb7, 0xb2, 0xad, 0xa8, 0xa3, 0x9e, 0x99, 0x94, 0x8f, 0x8a];
+        let peq = PEQ {
+            high: addrs[0],
+            len: 10,
+        };
+        let peq_addrs: Vec<_> = (0..10).map(|x| peq.at(x)).collect();
+        assert!(peq_addrs.into_iter().eq(addrs.iter().cloned()));
+    }
 }

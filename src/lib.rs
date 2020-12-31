@@ -174,7 +174,7 @@ impl<'a> Input<'a> {
     }
 
     pub async fn peq(&self, index: usize) -> BiquadFilter<'_> {
-        BiquadFilter::new(self.dsp, self.spec().peq[index])
+        BiquadFilter::new(self.dsp, self.spec().peq.at(index))
     }
 
     fn spec(&self) -> &'a device::Input {
@@ -185,11 +185,11 @@ impl<'a> Input<'a> {
 /// Helper object for controlling an on-device biquad filter
 pub struct BiquadFilter<'a> {
     dsp: &'a MiniDSP<'a>,
-    addr: u8,
+    addr: u16,
 }
 
 impl<'a> BiquadFilter<'a> {
-    pub fn new(dsp: &'a MiniDSP<'a>, addr: u8) -> Self {
+    pub fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
         BiquadFilter { dsp, addr }
     }
 }
