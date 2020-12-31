@@ -11,6 +11,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
         Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
         Some(SubCommand::Source { value }) => device.set_source(value).await?,
+        Some(SubCommand::Config { value }) => device.set_config(value).await?,
         Some(SubCommand::Input { input_index, cmd }) => {
             run_input(&device, cmd, input_index).await?
         }

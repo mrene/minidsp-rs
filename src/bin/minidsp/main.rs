@@ -35,6 +35,7 @@ struct Opts {
 enum SubCommand {
     /// Set the master output gain [-127, 0]
     Gain { value: Gain },
+
     /// Set the master mute status
     Mute {
         #[clap(parse(try_from_str = on_or_off))]
@@ -42,6 +43,9 @@ enum SubCommand {
     },
     /// Set the active input source
     Source { value: Source },
+
+    /// Set the current active configuration,
+    Config { value: u8 },
 
     /// Control settings regarding input channels
     Input {
