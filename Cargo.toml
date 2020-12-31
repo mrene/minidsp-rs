@@ -23,6 +23,8 @@ hexplay = "0.2.1"
 [dependencies.hidapi]
 optional = true
 version = "1.2.5"
+features = ["linux-static-libusb"]
+default_features = false
 
 [dependencies.tokio]
 features = ["full"]
@@ -36,6 +38,5 @@ version = "0.6.0"
 default = ["hid"]
 hid = ["hidapi"]
 
-[target]
 [target.arm-unknown-linux-gnueabihf]
-image = "rustembedded/cross:arm-unknown-linux-gnueabihf"
+linker="gcc-sysroot"
