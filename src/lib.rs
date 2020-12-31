@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! This crate provides a high level API for accessing and configuring a MiniDSP device.
 //! To get started, start by instantiating the right transport. If the device is locally
 //! connected via USB, use [`transport::hid::find_minidsp`]. If using the `WI-DG` or connecting to
@@ -32,7 +30,7 @@
 //!     // Mute the last output channel
 //!     dsp.output(3).set_mute(true).await?;
 //!
-//!     Ok(())     
+//!     Ok(())
 //! }
 //!
 //!

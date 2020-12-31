@@ -1,5 +1,9 @@
-use super::DebugCommands;
+//! This contain command line utilities for debugging and inspecting lower level protocol commands
 use anyhow::Result;
+use bytes::Bytes;
+use clap::Clap;
+
+use super::{parse_hex, parse_hex_u16};
 use minidsp::commands::{roundtrip, CustomUnaryCommand, ReadFloats, ReadMemory};
 use minidsp::MiniDSP;
 
@@ -27,7 +31,6 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
                 .finish();
             view.print().unwrap();
         }
-
         DebugCommands::DumpFloat { addr } => {
             let len = 14;
             let view = roundtrip(
@@ -45,4 +48,27 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
         }
     }
     return Ok(());
+}
+
+#[derive(Clap, Debug)]
+pub enum DebugCommands {
+    /// Send a hex-encoded command
+    Send {
+        #[clap(parse(try_from_str = parse_hex))]
+        value: Bytes,
+        #[clap(long, short)]
+        watch: bool,
+    },
+
+    /// Dumps memory starting at a given address
+    Dump {
+        #[clap(parse(try_from_str = parse_hex_u16))]
+        addr: u16,
+    },
+
+    /// Dumps contiguous float data starting at a given address
+    DumpFloat {
+        #[clap(parse(try_from_str = parse_hex_u16))]
+        addr: u16,
+    },
 }

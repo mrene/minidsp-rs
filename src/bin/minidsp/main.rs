@@ -1,19 +1,24 @@
 //! MiniDSP Control Program
 
-mod debug;
+use std::{net::Ipv4Addr, num::ParseIntError, str::FromStr, sync::Arc, time::Duration};
 
-use crate::debug::run_debug;
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
+use tokio::net::TcpStream;
+use tokio_stream::StreamExt;
+
+use debug::{run_debug, DebugCommands};
+use input::{run_input, run_output};
+
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP, Source,
 };
-use std::{net::Ipv4Addr, num::ParseIntError, str::FromStr, sync::Arc, time::Duration};
-use tokio::net::TcpStream;
-use tokio_stream::StreamExt;
+
+mod debug;
+mod input;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.1.0", author = "Mathieu Rene")]
@@ -33,19 +38,34 @@ struct Opts {
 #[derive(Clap, Debug)]
 enum SubCommand {
     /// Set the master output gain [-127, 0]
-    Gain {
-        value: Gain,
-    },
+    Gain { value: Gain },
     /// Set the master mute status
     Mute {
         #[clap(parse(try_from_str = on_or_off))]
         value: bool,
     },
     /// Set the active input source
-    Source {
-        value: Source,
+    Source { value: Source },
+
+    /// Control settings regarding input channels
+    Input {
+        /// Index of the input channel, starting at 0
+        input_index: usize,
+
+        #[clap(subcommand)]
+        cmd: InputCommand,
     },
 
+    /// Control settings regarding output channels
+    Output {
+        /// Index of the output channel, starting at 0
+        output_index: usize,
+
+        #[clap(subcommand)]
+        cmd: OutputCommand,
+    },
+
+    /// Launch a server usable with `--tcp`, the mobile application, and the official client
     Server {
         #[clap(default_value = "0.0.0.0:5333")]
         bind_address: String,
@@ -54,30 +74,107 @@ enum SubCommand {
         #[clap(long)]
         ip: Option<String>,
     },
+
+    /// Look for existing devices on the network
     Discover,
+
+    /// Low-level debug utilities
     Debug(DebugCommands),
 }
 
 #[derive(Clap, Debug)]
-enum DebugCommands {
-    /// Send a hex-encoded command
-    Send {
-        #[clap(parse(try_from_str = parse_hex))]
-        value: Bytes,
-        #[clap(long, short)]
-        watch: bool,
+enum InputCommand {
+    /// Set the input gain for this channel
+    Gain {
+        /// Gain in dB
+        value: Gain,
     },
 
-    /// Dumps memory starting at a given address
-    Dump {
-        #[clap(parse(try_from_str = parse_hex_u16))]
-        addr: u16,
+    /// Set the master mute status
+    Mute {
+        #[clap(parse(try_from_str = on_or_off))]
+        value: bool,
     },
 
-    /// Dumps contiguous float data starting at a given address
-    DumpFloat {
-        #[clap(parse(try_from_str = parse_hex_u16))]
-        addr: u16,
+    /// Controls signal routing from this input
+    Routing {
+        /// Index of the output channel starting at 0
+        output_index: usize,
+
+        #[clap(subcommand)]
+        cmd: RoutingCommand,
+    },
+
+    /// Control the parametric equalizer
+    PEQ {
+        /// Parametric EQ index
+        index: usize,
+
+        #[clap(subcommand)]
+        cmd: PEQCommand,
+    },
+}
+
+#[derive(Clap, Debug)]
+enum RoutingCommand {
+    /// Controls whether the output matrix for this input is enabled for the given output index
+    Enable {
+        #[clap(parse(try_from_str = on_or_off))]
+        /// Whether this input is enabled for the given output channel
+        value: bool,
+    },
+    Gain {
+        /// Output gain in dB
+        value: Gain,
+    },
+}
+
+#[derive(Clap, Debug)]
+enum OutputCommand {
+    /// Set the input gain for this channel
+    Gain {
+        /// Output gain in dB
+        value: Gain,
+    },
+
+    /// Set the master mute status
+    Mute {
+        #[clap(parse(try_from_str = on_or_off))]
+        value: bool,
+    },
+
+    /// Set the delay associated to this channel
+    Delay {
+        /// Delay in milliseconds
+        delay: f32,
+    },
+
+    /// Set phase inversion on this channel
+    Invert {
+        #[clap(parse(try_from_str = on_or_off))]
+        value: bool,
+    },
+
+    /// Control the parametric equalizer
+    PEQ {
+        /// Parametric EQ index
+        index: usize,
+
+        #[clap(subcommand)]
+        cmd: PEQCommand,
+    },
+}
+
+#[derive(Clap, Debug)]
+enum PEQCommand {
+    Set {
+        /// Biquad coefficients
+        coeff: Vec<f32>,
+    },
+
+    Bypass {
+        #[clap(parse(try_from_str = on_or_off))]
+        value: bool,
     },
 }
 
@@ -152,9 +249,18 @@ async fn main() -> Result<()> {
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
 
     match opts.subcmd {
+        // Master
         Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
         Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
         Some(SubCommand::Source { value }) => device.set_source(value).await?,
+        Some(SubCommand::Input { input_index, cmd }) => {
+            run_input(&device, cmd, input_index).await?
+        }
+        Some(SubCommand::Output { output_index, cmd }) => {
+            run_output(&device, output_index, cmd).await?
+        }
+
+        // Other tools
         Some(SubCommand::Server {
             bind_address,
             advertise,
