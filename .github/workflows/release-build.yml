@@ -1,0 +1,22 @@
+name: Release build
+
+on:
+  push:
+    tags:
+      - 'v0.*'
+      - 'v1.*'
+      - 'v2.*'
+    branches:    
+      - '**'
+      
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build_rpi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup cross environment
+        run: docker build -t rpirust -f Dockerfile.rpi scripts/
+      - name: Run build
+        run: docker run --rm -ti --entrypoint=/bin/bash -v (pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
