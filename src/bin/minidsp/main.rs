@@ -1,3 +1,5 @@
+//! MiniDSP Control Program
+
 mod debug;
 
 use crate::debug::run_debug;

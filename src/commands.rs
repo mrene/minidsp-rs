@@ -165,6 +165,7 @@ impl UnaryCommand for SetMute {
     }
 }
 
+/// [0x25] Sets the current configuration
 pub struct SetConfig {
     config: u8,
     reset: bool,
@@ -395,7 +396,7 @@ impl ExtendView for MemoryView {
     }
 }
 
-// [0x13] Write float data
+/// [0x13] Write float data
 pub struct WriteFloat {
     pub addr: u16,
     pub value: f32,
@@ -421,7 +422,7 @@ impl UnaryCommand for WriteFloat {
     }
 }
 
-// [0x13] Write an integer value
+/// [0x13] Write an integer value
 pub struct WriteInt {
     pub addr: u16,
     pub value: u8,
@@ -460,7 +461,7 @@ impl UnaryCommand for WriteInt {
     }
 }
 
-// [0x30] Write biquad data
+/// [0x30] Write biquad data
 pub struct WriteBiquad {
     pub addr: u16,
     pub data: [f32; 5],
@@ -487,7 +488,7 @@ impl UnaryCommand for WriteBiquad {
     }
 }
 
-// [0x19] Write biquad data
+/// [0x19] Toggle biquad filter bypass
 pub struct WriteBiquadBypass {
     pub addr: u16,
     pub value: bool,

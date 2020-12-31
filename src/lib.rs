@@ -1,4 +1,43 @@
-// extern crate hidapi;
+#![warn(missing_docs)]
+
+//! This crate provides a high level API for accessing and configuring a MiniDSP device.
+//! To get started, start by instantiating the right transport. If the device is locally
+//! connected via USB, use [`transport::hid::find_minidsp`]. If using the `WI-DG` or connecting to
+//! an instance of this program running the `server` component, see [`transport::net::NetTransport::new`].
+//!
+//! ```no_run
+//! use minidsp::{MiniDSP, device::DEVICE_2X4HD, transport, Channel, Gain};
+//! use anyhow::Result;
+//! use std::sync::Arc;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<()> {
+//!     // Find a locally connected minidsp using usb hid, with the default vendor and product id.
+//!     let transport =  Arc::new(transport::hid::find_minidsp(None, None)?);
+//!
+//!     // Instantiate a 2x4HD handler for this device.
+//!     let dsp = MiniDSP::new(transport, &DEVICE_2X4HD);
+//!     
+//!     let status = dsp.get_master_status().await?;
+//!     println!("Master volume: {:.1}", status.volume.0);
+//!
+//!     // Activate a different configuration
+//!     dsp.set_config(2).await?;
+//!
+//!     // Set the input gain for both input channels
+//!     for i in 0..2 {
+//!         dsp.input(i).set_gain(Gain(-10.)).await?;
+//!     }
+//!
+//!     // Mute the last output channel
+//!     dsp.output(3).set_mute(true).await?;
+//!
+//!     Ok(())     
+//! }
+//!
+//!
+//! ```   
+
 pub use crate::commands::Gain;
 use crate::commands::{
     roundtrip, FromMemory, MasterStatus, ReadFloats, ReadMemory, SetConfig, SetMute, SetSource,

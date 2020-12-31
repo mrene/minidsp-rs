@@ -2,7 +2,6 @@ pub const DEVICE_2X4HD: Device = Device {
     source_names: &["Analog", "TOSLINK", "USB"],
     inputs: &[
         Input {
-            index: 0,
             gate: Gate {
                 enable: 0x00,
                 gain: 0x1a,
@@ -31,7 +30,6 @@ pub const DEVICE_2X4HD: Device = Device {
             ],
         },
         Input {
-            index: 1,
             gate: Gate {
                 enable: 0x01,
                 gain: 0x1b,
@@ -62,7 +60,6 @@ pub const DEVICE_2X4HD: Device = Device {
     ],
     outputs: &[
         Output {
-            index: 0,
             gate: Gate {
                 enable: 0x02,
                 gain: 0x1c,
@@ -76,7 +73,6 @@ pub const DEVICE_2X4HD: Device = Device {
             fir_bypass_addr: 0x0e,
         },
         Output {
-            index: 1,
             gate: Gate {
                 enable: 0x03,
                 gain: 0x1d,
@@ -90,7 +86,6 @@ pub const DEVICE_2X4HD: Device = Device {
             fir_bypass_addr: 0x0f,
         },
         Output {
-            index: 2,
             gate: Gate {
                 enable: 0x04,
                 gain: 0x1e,
@@ -104,7 +99,6 @@ pub const DEVICE_2X4HD: Device = Device {
             fir_bypass_addr: 0x10,
         },
         Output {
-            index: 3,
             gate: Gate {
                 enable: 0x5,
                 gain: 0x1f,
@@ -120,29 +114,41 @@ pub const DEVICE_2X4HD: Device = Device {
     ],
 };
 
+/// Defines how the high level api should interact with the device based on its memory layout
 pub struct Device {
+    /// The name of the input sources
     pub source_names: &'static [&'static str],
+    /// The definitions for all input channels
     pub inputs: &'static [Input],
+    /// The definitions for all output channels
     pub outputs: &'static [Output],
 }
 
+/// Defines an input channel and its features
 pub struct Input {
-    pub index: usize,
+    /// Mute and Gain
     pub gate: Gate,
+    /// Parametric Equalizers
     pub peq: PEQ,
+    /// Routing matrix, one entry per output channel connected to this input
     pub routing: &'static [Gate],
 }
 
+/// Defines an output channel and its features
 pub struct Output {
-    pub index: usize,
+    /// Mute and Gain
     pub gate: Gate,
+    /// Address of the delay value
     pub delay_addr: u16,
+    /// Address of the invert toggle
     pub invert_addr: u16,
+    /// Parametric equalizers
     pub peq: PEQ,
     // TODO: Xover
     // TODO: Compressor
     // pub fir_coeff_addr: u16,
-    /// XXX: TODO: active=2 bypass=3 via 0x13 0x80
+    // XXX: TODO: active=2 bypass=3 via 0x13 0x80
+    /// Address of the FIR bypass toggle
     pub fir_bypass_addr: u16,
 }
 
@@ -168,6 +174,7 @@ impl PEQ {
     /// Get the address for a specific filter
     /// To be compatible with the app's ordering, the first filter
     /// is the highest address while the last filter is the lowest one.
+    /// For the 2x4HD, this would span from `.at(0)` to `.at(9)`
     pub fn at(&self, index: usize) -> u16 {
         if index >= self.len {
             panic!("out of bounds peq access index={} len={}", index, self.len);
