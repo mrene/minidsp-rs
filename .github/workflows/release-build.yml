@@ -58,7 +58,7 @@ jobs:
         with:
           use-cross: ${{ matrix.pair.cross }}
           command: build
-          args: --bin minidsp --target ${{ matrix.pair.target }}
+          args: --bin minidsp --release --target ${{ matrix.pair.target }}
 
       - name: Create binary
         run: |
