@@ -55,11 +55,27 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
         }
 
         DebugCommands::Id => {
+            #[cfg(feature = "hid")]
+            {
+                use minidsp::transport::hid;
+                // Probe for local usb devices
+                println!("Probing local hid devices:");
+                let devices = hid::discover()?;
+                if devices.is_empty() {
+                    println!("No matching local USB devices detected.")
+                } else {
+                    for device in &devices {
+                        println!("Found: {}", device);
+                    }
+                }
+                println!()
+            }
+
             let id = roundtrip(device.transport.as_ref(), ReadHardwareId {}).await?;
             println!("HW ID Response: {:02x?}", id.as_ref());
 
             let device_info = device.get_device_info().await?;
-            println!("HW ID: {} DSP Version: {}", device_info.hw_id, device_info.dsp_version);
+            println!("HW ID: {}\nDSP Version: {}", device_info.hw_id, device_info.dsp_version);
 
             let sources = source::Source::mapping(&device_info);
             println!("Detected sources: {:?}", sources);
