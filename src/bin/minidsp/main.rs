@@ -22,7 +22,7 @@ use minidsp::transport::Openable;
 use std::time::Duration;
 
 #[derive(Clap, Debug)]
-#[clap(version = "0.0.1-pre1", author = "Mathieu Rene")]
+#[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]

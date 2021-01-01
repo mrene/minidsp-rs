@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 name = "minidsp"
-version = "0.0.1-pre1"
+version = "0.0.1-pre2"
 license = "MIT"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
