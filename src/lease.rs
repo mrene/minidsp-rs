@@ -1,6 +1,6 @@
 //! Helper module to control the minidsp's source and volume based on an RAII guard
 //!
-use crate::{Gain, MiniDSP, Source};
+use crate::{Gain, MiniDSP};
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
@@ -8,11 +8,11 @@ use tokio::sync::{oneshot, Mutex};
 /// Returns an RAII guard object setting the source back to what it previously was once its released
 pub async fn lease_source(
     minidsp: Arc<Mutex<MiniDSP<'static>>>,
-    source: Source,
+    source: String,
 ) -> Result<SourceLease> {
     {
         let minidsp = minidsp.lock().await;
-        minidsp.set_source(source).await?;
+        minidsp.set_source(&source).await?;
     }
 
     let (tx, rx) = oneshot::channel::<()>();
@@ -23,7 +23,7 @@ pub async fn lease_source(
             let _ = rx.await;
 
             let minidsp = minidsp.lock_owned().await;
-            if let Err(e) = minidsp.set_source(Source::Toslink).await {
+            if let Err(e) = minidsp.set_source("toslink").await {
                 eprintln!("Failed to set source back: {:?}", e)
             }
             if let Err(e) = minidsp.set_master_volume(Gain(-40.)).await {

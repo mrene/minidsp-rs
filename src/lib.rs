@@ -41,12 +41,12 @@ use crate::commands::{
     roundtrip, FromMemory, MasterStatus, ReadFloats, ReadMemory, SetConfig, SetMute, SetSource,
     SetVolume, UnaryCommand, WriteBiquad, WriteBiquadBypass, WriteFloat, WriteInt,
 };
-use anyhow::anyhow;
 use async_trait::async_trait;
+use commands::ReadHardwareId;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
-use std::convert::{TryFrom, TryInto};
+use std::{cell::Cell, convert::TryInto};
 
 pub mod commands;
 pub mod device;
@@ -54,69 +54,28 @@ pub mod discovery;
 pub mod lease;
 pub mod packet;
 pub mod server;
+pub mod source;
 pub mod transport;
 
 use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
-use std::str::FromStr;
+pub use source::Source;
 use std::sync::Arc;
 use tokio::time::Duration;
+use tokio::sync::Mutex;
 use transport::Transport;
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Source {
-    Analog,
-    Toslink,
-    Usb,
-}
-
-impl TryFrom<u8> for Source {
-    type Error = anyhow::Error;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Source::Analog),
-            1 => Ok(Source::Toslink),
-            2 => Ok(Source::Usb),
-            _ => Err(anyhow!("Invalid source value")),
-        }
-    }
-}
-
-impl Into<u8> for Source {
-    fn into(self) -> u8 {
-        match self {
-            Source::Analog => 0,
-            Source::Toslink => 1,
-            Source::Usb => 2,
-        }
-    }
-}
-
-impl FromStr for Source {
-    type Err = MiniDSPError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use Source::*;
-
-        match s.to_lowercase().as_str() {
-            "analog" => Ok(Analog),
-            "toslink" => Ok(Toslink),
-            "usb" => Ok(Usb),
-            _ => Err(MiniDSPError::InvalidSource),
-        }
-    }
-}
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
     pub transport: Arc<dyn Transport>,
     pub device: &'a device::Device,
+
+    device_info: Mutex<Cell<Option<DeviceInfo>>>,
 }
 
 impl<'a> MiniDSP<'a> {
     pub fn new(transport: Arc<dyn Transport>, device: &'a device::Device) -> Self {
-        MiniDSP { transport, device }
+        MiniDSP { transport, device, device_info: Mutex::new(Cell::new(None)) }
     }
 }
 
@@ -130,8 +89,9 @@ impl MiniDSP<'_> {
 
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
+        let device_info = self.get_device_info().await?;
         let memory = self.roundtrip(ReadMemory::new(0xffd8, 4)).await?;
-        Ok(MasterStatus::from_memory(&memory).map_err(|_| MiniDSPError::MalformedResponse)?)
+        Ok(MasterStatus::from_memory(&device_info, &memory).map_err(|_| MiniDSPError::MalformedResponse)?)
     }
 
     /// Gets the current input levels
@@ -157,8 +117,12 @@ impl MiniDSP<'_> {
     }
 
     /// Sets the current input source
-    pub async fn set_source(&self, source: Source) -> Result<()> {
-        self.roundtrip(SetSource::new(source)).await
+    pub async fn set_source(&self, source: &str) -> Result<()> {
+        use std::str::FromStr;
+        let device_info = self.get_device_info().await?;
+        let source: Source = Source::from_str(source).map_err(|_| MiniDSPError::InvalidSource)?;
+
+        self.roundtrip(SetSource::new(source.to_id(&device_info))).await
     }
 
     /// Sets the active configuration
@@ -174,17 +138,42 @@ impl MiniDSP<'_> {
         }
     }
 
+    /// Gets an object wrapping an output channel
     pub fn output(&self, index: usize) -> Output {
         Output {
             dsp: &self,
             spec: &self.device.outputs[index],
         }
     }
+
+    /// Gets the hardware id and dsp version, used internally to determine per-device configuration
+    pub async fn get_device_info(&self) -> Result<DeviceInfo> {
+        let self_device_info = self.device_info.lock().await;
+        if let Some(info) = self_device_info.get() {
+            return Ok(info)
+        }
+
+        let hardware_id = self.roundtrip(ReadHardwareId{}).await?;
+        let view = self.roundtrip(ReadMemory::new(0xffa1,1 )).await?;
+        let info = DeviceInfo{
+            hw_id: hardware_id[3],
+            dsp_version: view.read_u8(0xffa1),
+        };
+        self_device_info.set(Some(info));
+        Ok(info)
+    }
+}
+
+/// Hardware id and dsp version
+#[derive(Clone, Copy, Debug)]
+pub struct DeviceInfo {
+    pub hw_id: u8,
+    pub dsp_version: u8,
 }
 
 #[async_trait]
 pub trait Channel {
-    /// \[internal\] Returns the address for this channel to include mute/gain functions
+    /// internal: Returns the address for this channel to include mute/gain functions
     #[doc(hidden)]
     fn _channel(&self) -> (&MiniDSP, &device::Gate, &device::PEQ);
 
@@ -279,10 +268,13 @@ pub struct BiquadFilter<'a> {
 }
 
 impl<'a> BiquadFilter<'a> {
-    pub fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
+    pub(crate) fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
         BiquadFilter { dsp, addr }
     }
 
+    /// Sets the biquad coefficient for this filter.
+    /// The coefficients should be in the following order:
+    /// [ b0, b1, b2, a1, a2 ]
     pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
         if coefficients.len() != 5 {
             panic!("biquad coefficients are always 5 floating point values")
@@ -296,6 +288,7 @@ impl<'a> BiquadFilter<'a> {
             .await
     }
 
+    /// Sets whether this filter is bypassed
     pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
         self.dsp
             .roundtrip(WriteBiquadBypass::new(self.addr, bypass))

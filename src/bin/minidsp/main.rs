@@ -4,11 +4,11 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use minidsp::transport::net;
+use minidsp::{transport::net};
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},
-    Gain, MiniDSP, Source,
+    Gain, MiniDSP,
 };
 use std::{num::ParseIntError, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
@@ -51,7 +51,7 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { value: Source },
+    Source { value: String },
 
     /// Set the current active configuration,
     Config { value: u8 },

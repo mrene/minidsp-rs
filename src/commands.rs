@@ -7,7 +7,7 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::transport::{MiniDSPError, Transport};
+use crate::{DeviceInfo, transport::{MiniDSPError, Transport}};
 use crate::{packet, Source};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -75,7 +75,7 @@ pub trait FromMemory<T: Sized>
 where
     Self: Sized,
 {
-    fn from_memory(view: &MemoryView) -> Result<Self>;
+    fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -98,10 +98,10 @@ impl FromMemory<MasterStatus> for MasterStatus
 where
     Self: Sized,
 {
-    fn from_memory(view: &MemoryView) -> Result<Self> {
+    fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
         Ok(Self {
             preset: view.read_u8(0xffd8),
-            source: view.read_u8(0xffd9).try_into()?,
+            source: Source::from_id(view.read_u8(0xffd9), device_info),
             volume: view.read_u8(0xffda).into(),
             mute: view.read_u8(0xffdb) == 1,
         })
@@ -113,8 +113,8 @@ where
 pub struct Gain(pub f32);
 
 impl Gain {
-    pub const MIN: f32 = -127f32;
-    pub const MAX: f32 = 0f32;
+    pub const MIN: f32 = -127.;
+    pub const MAX: f32 = 0.;
 }
 
 impl Into<u8> for Gain {
@@ -125,7 +125,7 @@ impl Into<u8> for Gain {
 
 impl From<u8> for Gain {
     fn from(val: u8) -> Self {
-        Self(-1. * (val as f32) / 2.)
+        Self(-0.5 * (val as f32))
     }
 }
 
@@ -199,11 +199,11 @@ impl UnaryCommand for SetConfig {
 
 /// 0x34: Unary command to set the current source
 pub struct SetSource {
-    source: Source,
+    source: u8,
 }
 
 impl SetSource {
-    pub fn new(source: Source) -> Self {
+    pub fn new(source: u8) -> Self {
         Self { source }
     }
 }
@@ -212,7 +212,7 @@ impl UnaryCommand for SetSource {
     type Response = ();
 
     fn request_packet(&self) -> Bytes {
-        Bytes::from(vec![0x34, self.source.into()])
+        Bytes::from(vec![0x34, self.source])
     }
 }
 
@@ -578,7 +578,8 @@ mod test {
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
         let memory = cmd.parse_response(response);
-        let status = MasterStatus::from_memory(&memory).unwrap();
+        let device_info = DeviceInfo{hw_id:10, dsp_version:100};
+        let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
         assert_eq!(
             status,
             MasterStatus {
