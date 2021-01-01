@@ -8,7 +8,7 @@ use minidsp::transport::net;
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},
-    Gain, MiniDSP, Source,
+    Gain, MiniDSP,
 };
 use std::{num::ParseIntError, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
@@ -25,11 +25,11 @@ use std::time::Duration;
 #[clap(version = "0.0.1-pre1", author = "Mathieu Rene")]
 struct Opts {
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
-    #[clap(name = "usb", long)]
+    #[clap(name = "usb", env = "MINIDSP_USB", long)]
     #[cfg(feature = "hid")]
     hid_option: Option<hid::Device>,
 
-    #[clap(name = "tcp", long)]
+    #[clap(name = "tcp", env = "MINIDSP_TCP", long)]
     /// The target address of the server component
     tcp_option: Option<String>,
 
@@ -51,7 +51,7 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { value: Source },
+    Source { value: String },
 
     /// Set the current active configuration,
     Config { value: u8 },

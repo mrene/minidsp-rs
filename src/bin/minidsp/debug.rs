@@ -4,11 +4,14 @@ use bytes::Bytes;
 use clap::Clap;
 
 use super::{parse_hex, parse_hex_u16};
-use minidsp::commands::{
-    roundtrip, CustomUnaryCommand, ExtendView, FloatView, MemoryView, ReadFloats, ReadHardwareId,
-    ReadMemory,
-};
 use minidsp::MiniDSP;
+use minidsp::{
+    commands::{
+        roundtrip, CustomUnaryCommand, ExtendView, FloatView, MemoryView, ReadFloats,
+        ReadHardwareId, ReadMemory,
+    },
+    source,
+};
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
     match debug {
@@ -16,8 +19,8 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             let response =
                 roundtrip(device.transport.as_ref(), CustomUnaryCommand::new(value)).await?;
             println!("response: {:02x?}", response.as_ref());
-            let mut sub = device.transport.subscribe();
             if watch {
+                let mut sub = device.transport.subscribe();
                 // Print out all received packets
                 while let Ok(packet) = sub.recv().await {
                     println!("> {:02x?}", packet.as_ref());
@@ -34,7 +37,6 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
                 let v =
                     roundtrip(device.transport.as_ref(), ReadMemory { addr: i, size: 59 }).await?;
                 view.extend_with(v)?;
-                print!(".")
             }
             println!("\n");
             dump_memory(&view);
@@ -56,12 +58,33 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
         }
 
         DebugCommands::Id => {
-            let id = roundtrip(device.transport.as_ref(), ReadHardwareId {}).await?;
+            #[cfg(feature = "hid")]
+            {
+                use minidsp::transport::hid;
+                // Probe for local usb devices
+                println!("Probing local hid devices:");
+                let devices = hid::discover()?;
+                if devices.is_empty() {
+                    println!("No matching local USB devices detected.")
+                } else {
+                    for device in &devices {
+                        println!("Found: {}", device);
+                    }
+                }
+                println!()
+            }
 
+            let id = roundtrip(device.transport.as_ref(), ReadHardwareId {}).await?;
             println!("HW ID Response: {:02x?}", id.as_ref());
 
-            let flash = roundtrip(device.transport.as_ref(), ReadMemory::new(0xffa1, 1)).await?;
-            println!("DSP Version: {}", flash.read_u8(0xffa1));
+            let device_info = device.get_device_info().await?;
+            println!(
+                "HW ID: {}\nDSP Version: {}",
+                device_info.hw_id, device_info.dsp_version
+            );
+
+            let sources = source::Source::mapping(&device_info);
+            println!("Detected sources: {:?}", sources);
 
             println!("\nDumping memory:");
             let mut view =
@@ -81,7 +104,6 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
     }
 
     std::process::exit(0);
-    // return Ok(());
 }
 
 fn dump_memory(view: &MemoryView) {

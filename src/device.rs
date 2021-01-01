@@ -2,8 +2,11 @@
 //!
 //! This is where support for other devices should be added
 //!
+
+use super::Source::{self as Source, *};
+
 pub const DEVICE_2X4HD: Device = Device {
-    source_names: &["Analog", "TOSLINK", "USB"],
+    sources: &[Analog, Toslink, Usb],
     inputs: &[
         Input {
             gate: Gate {
@@ -121,7 +124,7 @@ pub const DEVICE_2X4HD: Device = Device {
 /// Defines how the high level api should interact with the device based on its memory layout
 pub struct Device {
     /// The name of the input sources
-    pub source_names: &'static [&'static str],
+    pub sources: &'static [Source],
     /// The definitions for all input channels
     pub inputs: &'static [Input],
     /// The definitions for all output channels
