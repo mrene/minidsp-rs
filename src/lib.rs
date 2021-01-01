@@ -11,7 +11,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
 //!     // Find a locally connected minidsp using usb hid, with the default vendor and product id.
-//!     let transport =  Arc::new(transport::hid::find_minidsp(None, None)?);
+//!     let transport =  Arc::new(transport::hid::HidTransport::with_product_id(0x2752, 0x0011)?);
 //!
 //!     // Instantiate a 2x4HD handler for this device.
 //!     let dsp = MiniDSP::new(transport, &DEVICE_2X4HD);

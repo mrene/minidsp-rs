@@ -30,7 +30,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
                 use std::net::Ipv4Addr;
                 let mut packet = discovery::DiscoveryPacket {
                     mac_address: [10, 20, 30, 40, 50, 60],
-                    ip_address: Ipv4Addr::new(192, 168, 1, 33),
+                    ip_address: Ipv4Addr::UNSPECIFIED,
                     hwid: 0,
                     typ: 0,
                     sn: 0,
@@ -46,7 +46,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
             server::serve(bind_address, device.transport.clone()).await?
         }
         // Handled earlier
-        Some(SubCommand::Discover) => return Ok(()),
+        Some(SubCommand::Probe) => return Ok(()),
         Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
         None => {}
     };

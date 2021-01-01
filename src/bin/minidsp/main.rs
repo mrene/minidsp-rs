@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
+use minidsp::transport::net;
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},
@@ -11,17 +12,22 @@ use minidsp::{
 };
 use std::{num::ParseIntError, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
-use tokio_stream::StreamExt;
 
 mod debug;
 mod handlers;
 
+#[cfg(feature = "hid")]
+use minidsp::transport::hid;
+use minidsp::transport::Openable;
+use std::time::Duration;
+
 #[derive(Clap, Debug)]
-#[clap(version = "2.0.0-pre1", author = "Mathieu Rene")]
+#[clap(version = "0.0.0-pre1", author = "Mathieu Rene")]
 struct Opts {
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", long)]
-    hid_option: Option<Option<ProductId>>,
+    #[cfg(feature = "hid")]
+    hid_option: Option<hid::Device>,
 
     #[clap(name = "tcp", long)]
     /// The target address of the server component
@@ -33,6 +39,9 @@ struct Opts {
 
 #[derive(Clap, Debug)]
 enum SubCommand {
+    /// Try to find reachable devices
+    Probe,
+
     /// Set the master output gain [-127, 0]
     Gain { value: Gain },
 
@@ -74,9 +83,6 @@ enum SubCommand {
         #[clap(long)]
         ip: Option<String>,
     },
-
-    /// Look for existing devices on the network
-    Discover,
 
     /// Low-level debug utilities
     Debug(DebugCommands),
@@ -205,47 +211,72 @@ impl FromStr for ProductId {
     }
 }
 
+async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
+    if let Some(tcp) = &opts.tcp_option {
+        let stream = TcpStream::connect(tcp).await?;
+        return Ok(Arc::new(NetTransport::new(stream)));
+    }
+
+    #[cfg(feature = "hid")]
+    {
+        if let Some(device) = &opts.hid_option {
+            return Ok(Arc::new(device.open().await?));
+        }
+
+        // If no device was passed, do a best effort to figure out the right device to open
+        let hid_devices = hid::discover()?;
+        if hid_devices.len() == 1 {
+            return Ok(Arc::new(hid_devices[0].open().await?));
+        } else if !hid_devices.is_empty() {
+            eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
+            for device in &hid_devices {
+                eprintln!("{}", device)
+            }
+            return Err(anyhow!("Multiple candidate usb devices are detected."));
+        }
+    }
+
+    return Err(anyhow!("Couldn't find any MiniDSP devices"));
+}
+
+async fn run_probe() -> Result<()> {
+    #[cfg(feature = "hid")]
+    {
+        // Probe for local usb devices
+        let devices = hid::discover()?;
+        if devices.is_empty() {
+            println!("No matching local USB devices detected.")
+        } else {
+            for device in &devices {
+                println!("Found: {}", device);
+            }
+        }
+    }
+
+    println!("Probing for network devices...");
+    let devices = net::discover(Duration::from_secs(2)).await?;
+    if devices.is_empty() {
+        println!("No network devices detected")
+    } else {
+        for device in &devices {
+            println!("Found: {}", device);
+        }
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
     let opts: Opts = Opts::parse();
 
-    if let Some(SubCommand::Discover) = opts.subcmd {
-        use discovery::client::discover;
-        let mut s = Box::new(discover().await?);
-        while let Some(Ok((packet, _addr))) = s.next().await {
-            println!("{:?}", packet);
-        }
+    if let Some(SubCommand::Probe) = opts.subcmd {
+        run_probe().await?;
+        return Ok(());
     }
 
-    let transport: Arc<dyn Transport> = {
-        if let Some(tcp) = opts.tcp_option {
-            let stream = TcpStream::connect(tcp).await?;
-            Arc::new(NetTransport::new(stream))
-        } else if let Some(usb_options) = opts.hid_option {
-            let mut vid: Option<u16> = None;
-            let mut pid: Option<u16> = None;
-
-            if let Some(addr) = usb_options {
-                vid = Some(addr.vid);
-                pid = addr.pid;
-            }
-
-            #[cfg(feature = "hid")]
-            {
-                use minidsp::transport::hid::find_minidsp;
-                Arc::new(find_minidsp(vid, pid)?)
-            }
-            #[cfg(not(feature = "hid"))]
-            {
-                let _ = vid;
-                let _ = pid;
-                return Err(anyhow!("no transport configured"));
-            }
-        } else {
-            return Err(anyhow!("no transport configured (use --usb or --tcp)"));
-        }
-    };
+    let transport: Arc<dyn Transport> = get_transport(&opts).await?;
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
     handlers::run_command(&device, opts.subcmd).await?;

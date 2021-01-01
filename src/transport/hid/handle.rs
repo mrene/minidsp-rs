@@ -3,8 +3,9 @@ use crate::transport::{MiniDSPError, Sender, Transport};
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
-use hidapi::HidDevice;
+use hidapi::{HidApi, HidDevice, HidError};
 use log::debug;
+use std::ffi::CString;
 use std::sync::Arc;
 use tokio::sync::{broadcast, oneshot, Mutex};
 
@@ -43,6 +44,18 @@ impl HidTransport {
             receiver_tx: recv_send,
             inner: Arc::new(Mutex::new(Inner::new(device))),
         }
+    }
+
+    pub fn with_path(path: String) -> Result<Self, HidError> {
+        let hid = HidApi::new()?;
+        let path = CString::new(path.into_bytes()).unwrap();
+        Ok(HidTransport::new(hid.open_path(&path)?))
+    }
+
+    pub fn with_product_id(vid: u16, pid: u16) -> Result<Self, HidError> {
+        let hid = HidApi::new()?;
+        let hid_device = hid.open(vid, pid)?;
+        Ok(HidTransport::new(hid_device))
     }
 
     async fn recv_loop(

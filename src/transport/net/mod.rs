@@ -1,13 +1,20 @@
-use crate::transport::{MiniDSPError, Sender, Transport};
+use crate::discovery;
+use crate::transport::{MiniDSPError, Openable, Sender, Transport};
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
 use log::debug;
+use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Formatter;
+use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, Mutex};
+use tokio_stream::StreamExt;
 
 pub struct NetTransport {
     /// The sending side of a broadcast channel used for received messages
@@ -67,4 +74,46 @@ impl Sender for Inner {
         debug!("write: {:02x?}", frame.as_ref());
         Ok(self.write.write_all(frame.as_ref()).await?)
     }
+}
+
+pub struct Device {
+    pub packet: discovery::DiscoveryPacket,
+    pub ip: SocketAddr,
+}
+
+impl fmt::Display for Device {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:5333 {}", self.ip.ip(), self.packet.hostname)
+    }
+}
+
+#[async_trait]
+impl Openable for Device {
+    type Transport = NetTransport;
+
+    async fn open(&self) -> Result<Self::Transport, MiniDSPError> {
+        Ok(NetTransport::new(
+            TcpStream::connect(SocketAddr::new(self.ip.ip(), 5333)).await?,
+        ))
+    }
+}
+
+/// Gather discovery packets during the timeout period and return a de-duplicated list by ip
+pub async fn discover(timeout: Duration) -> Result<Vec<Device>, anyhow::Error> {
+    let mut devices = Box::new(HashMap::new());
+    let mut stream = discovery::client::discover().await?;
+
+    let timeout = tokio::time::sleep(timeout);
+    tokio::pin!(timeout);
+
+    loop {
+        tokio::select! {
+            Some(Ok((packet, ip))) = stream.next() => {
+                devices.insert(ip, Device { packet, ip });
+            },
+            _ = &mut timeout => break,
+        }
+    }
+
+    Ok(devices.drain().map(|(_, v)| v).collect())
 }

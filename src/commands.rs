@@ -542,10 +542,10 @@ mod test {
         let mut req_packet = cmd.request_packet();
         assert_eq!(req_packet.get_u8(), 0x05);
         assert_eq!(req_packet.get_u16(), 0xffda);
-        assert_eq!(req_packet.get_u8(), 4);
+        assert_eq!(req_packet.get_u8(), 5);
         assert_eq!(req_packet.remaining(), 0);
 
-        let response = Bytes::from_static(&[0x5, 0xff, 0xda, 0x1, 0x2, 0x3, 0x4]);
+        let response = Bytes::from_static(&[0x5, 0xff, 0xda, 0x1, 0x2, 0x3, 0x4, 0x0]);
         let memory = cmd.parse_response(response);
         let data = memory.read_at(0xffda, 4);
 
@@ -563,10 +563,10 @@ mod test {
         let mut req_packet = cmd.request_packet();
         assert_eq!(req_packet.get_u8(), 0x05);
         assert_eq!(req_packet.get_u16(), 0xffd8);
-        assert_eq!(req_packet.get_u8(), 4);
+        assert_eq!(req_packet.get_u8(), 5);
         assert_eq!(req_packet.remaining(), 0);
 
-        let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0]);
+        let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
         let memory = cmd.parse_response(response);
         let status = MasterStatus::from_memory(&memory).unwrap();
         assert_eq!(

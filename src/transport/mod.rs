@@ -27,6 +27,15 @@ pub enum MiniDSPError {
 
     #[error("This source was not recognized. Supported types are: 'toslink', 'usb', 'analog'")]
     InvalidSource,
+
+    #[error("Internal error")]
+    InternalError(#[from] anyhow::Error),
+}
+
+#[async_trait]
+pub trait Openable {
+    type Transport;
+    async fn open(&self) -> Result<Self::Transport, MiniDSPError>;
 }
 
 #[async_trait]
