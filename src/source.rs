@@ -1,8 +1,8 @@
 //! Utilities to get a mapping from the source name to the source id
 //! Most of this logic was translated from the cordova app
 
-use std::fmt::{self, Debug};
 use super::DeviceInfo;
+use std::fmt::{self, Debug};
 
 #[enumeration(case_insensitive)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, enum_utils::FromStr)]
@@ -65,6 +65,6 @@ impl Source {
                 return *src_id;
             }
         }
-        0   
+        0
     }
 }

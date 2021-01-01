@@ -7,8 +7,11 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::{DeviceInfo, transport::{MiniDSPError, Transport}};
 use crate::{packet, Source};
+use crate::{
+    transport::{MiniDSPError, Transport},
+    DeviceInfo,
+};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::convert::TryInto;
@@ -578,7 +581,10 @@ mod test {
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
         let memory = cmd.parse_response(response);
-        let device_info = DeviceInfo{hw_id:10, dsp_version:100};
+        let device_info = DeviceInfo {
+            hw_id: 10,
+            dsp_version: 100,
+        };
         let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
         assert_eq!(
             status,

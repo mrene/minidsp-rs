@@ -4,11 +4,14 @@ use bytes::Bytes;
 use clap::Clap;
 
 use super::{parse_hex, parse_hex_u16};
-use minidsp::{commands::{
-    roundtrip, CustomUnaryCommand, ExtendView, FloatView, MemoryView, ReadFloats, ReadHardwareId,
-    ReadMemory,
-}, source};
 use minidsp::MiniDSP;
+use minidsp::{
+    commands::{
+        roundtrip, CustomUnaryCommand, ExtendView, FloatView, MemoryView, ReadFloats,
+        ReadHardwareId, ReadMemory,
+    },
+    source,
+};
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
     match debug {
@@ -75,7 +78,10 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             println!("HW ID Response: {:02x?}", id.as_ref());
 
             let device_info = device.get_device_info().await?;
-            println!("HW ID: {}\nDSP Version: {}", device_info.hw_id, device_info.dsp_version);
+            println!(
+                "HW ID: {}\nDSP Version: {}",
+                device_info.hw_id, device_info.dsp_version
+            );
 
             let sources = source::Source::mapping(&device_info);
             println!("Detected sources: {:?}", sources);

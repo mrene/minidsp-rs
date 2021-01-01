@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use minidsp::{transport::net};
+use minidsp::transport::net;
 use minidsp::{
     device, discovery, server,
     transport::{net::NetTransport, Transport},

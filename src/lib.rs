@@ -61,8 +61,8 @@ use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
 pub use source::Source;
 use std::sync::Arc;
-use tokio::time::Duration;
 use tokio::sync::Mutex;
+use tokio::time::Duration;
 use transport::Transport;
 
 /// High-level MiniDSP Control API
@@ -75,7 +75,11 @@ pub struct MiniDSP<'a> {
 
 impl<'a> MiniDSP<'a> {
     pub fn new(transport: Arc<dyn Transport>, device: &'a device::Device) -> Self {
-        MiniDSP { transport, device, device_info: Mutex::new(Cell::new(None)) }
+        MiniDSP {
+            transport,
+            device,
+            device_info: Mutex::new(Cell::new(None)),
+        }
     }
 }
 
@@ -91,7 +95,8 @@ impl MiniDSP<'_> {
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
         let memory = self.roundtrip(ReadMemory::new(0xffd8, 4)).await?;
-        Ok(MasterStatus::from_memory(&device_info, &memory).map_err(|_| MiniDSPError::MalformedResponse)?)
+        Ok(MasterStatus::from_memory(&device_info, &memory)
+            .map_err(|_| MiniDSPError::MalformedResponse)?)
     }
 
     /// Gets the current input levels
@@ -122,7 +127,8 @@ impl MiniDSP<'_> {
         let device_info = self.get_device_info().await?;
         let source: Source = Source::from_str(source).map_err(|_| MiniDSPError::InvalidSource)?;
 
-        self.roundtrip(SetSource::new(source.to_id(&device_info))).await
+        self.roundtrip(SetSource::new(source.to_id(&device_info)))
+            .await
     }
 
     /// Sets the active configuration
@@ -150,12 +156,12 @@ impl MiniDSP<'_> {
     pub async fn get_device_info(&self) -> Result<DeviceInfo> {
         let self_device_info = self.device_info.lock().await;
         if let Some(info) = self_device_info.get() {
-            return Ok(info)
+            return Ok(info);
         }
 
-        let hardware_id = self.roundtrip(ReadHardwareId{}).await?;
-        let view = self.roundtrip(ReadMemory::new(0xffa1,1 )).await?;
-        let info = DeviceInfo{
+        let hardware_id = self.roundtrip(ReadHardwareId {}).await?;
+        let view = self.roundtrip(ReadMemory::new(0xffa1, 1)).await?;
+        let info = DeviceInfo {
             hw_id: hardware_id[3],
             dsp_version: view.read_u8(0xffa1),
         };
