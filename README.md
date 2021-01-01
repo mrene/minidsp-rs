@@ -12,9 +12,6 @@ cargo install minidsp
 
 ## Usage
 ```shell
-minidsp 1.1.0
-Mathieu Rene
-
 USAGE:
     minidsp [OPTIONS] [SUBCOMMAND]
 
@@ -27,15 +24,17 @@ OPTIONS:
         --usb <usb>...    The USB vendor and product id (2752:0011 for the 2x4HD)
 
 SUBCOMMANDS:
-    discover    Look for existing devices on the network
-    gain        Set the master output gain [-127, 0]
-    help        Prints this message or the help of the given subcommand(s)
-    input       Control settings regarding input channels
-    mute        Set the master mute status
-    output      Control settings regarding output channels
-    server      Launch a server usable with `--tcp`, the mobile application, and the official
-                client
-    source      Set the active input source
+    config    Set the current active configuration,
+    debug     Low-level debug utilities
+    gain      Set the master output gain [-127, 0]
+    help      Prints this message or the help of the given subcommand(s)
+    input     Control settings regarding input channels
+    mute      Set the master mute status
+    output    Control settings regarding output channels
+    probe     Try to find reachable devices
+    server    Launch a server usable with `--tcp`, the mobile application, and the official
+              client
+    source    Set the active input sourcee
 ```
 
 #### Running without arguments will print information about the current state:

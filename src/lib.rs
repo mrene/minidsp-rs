@@ -185,6 +185,7 @@ impl MiniDSP<'_> {
 #[async_trait]
 pub trait Channel {
     /// \[internal\] Returns the address for this channel to include mute/gain functions
+    #[doc(hidden)]
     fn _channel(&self) -> (&MiniDSP, &device::Gate, &device::PEQ);
 
     /// Sets the current mute setting

@@ -1,1 +1,5 @@
-/target
+target/
+*.deb
+.dockerignore
+.idea/
+
