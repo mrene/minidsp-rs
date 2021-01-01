@@ -6,9 +6,6 @@ on:
       - 'v0.*'
       - 'v1.*'
       - 'v2.*'
-    branches:    
-      - '**'
-      
 env:
   CARGO_TERM_COLOR: always
 jobs:
