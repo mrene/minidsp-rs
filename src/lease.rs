@@ -1,3 +1,5 @@
+//! Helper module to control the minidsp's source and volume based on an RAII guard
+//!
 use crate::{Gain, MiniDSP, Source};
 use anyhow::Result;
 use std::sync::Arc;

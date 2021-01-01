@@ -1,3 +1,5 @@
+//! Enables discovery and advertisement of tcp servers.
+//! The packet format is compatible with the official apps.
 use anyhow::{anyhow, Result};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::convert::TryInto;

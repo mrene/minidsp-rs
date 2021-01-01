@@ -1,7 +1,8 @@
+//! Functions for framing and unframing packets, and computing their checksums
 use crate::transport::{MiniDSPError, MiniDSPError::MalformedResponse};
 use bytes::{BufMut, Bytes, BytesMut};
 
-// Formats an hid command
+/// Formats an hid command
 pub fn frame<T: AsRef<[u8]>>(packet: T) -> Bytes {
     let mut buf = BytesMut::with_capacity(65);
 
@@ -17,10 +18,12 @@ pub fn frame<T: AsRef<[u8]>>(packet: T) -> Bytes {
     buf.freeze()
 }
 
+/// Computes a packet's checksums
 pub fn checksum<T: AsRef<[u8]>>(data: T) -> u8 {
     (data.as_ref().iter().map(|&x| x as u32).sum::<u32>() & 0xFF) as u8
 }
 
+/// Extracts the packet's data by looking at its first byte for its length
 pub fn unframe(response: Bytes) -> Result<Bytes, MiniDSPError> {
     if response.is_empty() {
         return Err(MalformedResponse);

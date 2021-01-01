@@ -1,3 +1,7 @@
+//! Static device definitions
+//!
+//! This is where support for other devices should be added
+//!
 pub const DEVICE_2X4HD: Device = Device {
     source_names: &["Analog", "TOSLINK", "USB"],
     inputs: &[

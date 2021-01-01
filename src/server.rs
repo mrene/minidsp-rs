@@ -1,3 +1,4 @@
+//! TCP server compatible with the official mobile and desktop application
 // #[macro_use]
 extern crate log;
 use crate::transport::Transport;
@@ -7,6 +8,9 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
+/// Forwards the given tcp stream to a transport.
+/// This lets multiple users talk to the same device simultaneously, which depending on the
+/// user could be problematic.
 async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
     let mut device_receiver = handle.subscribe();
 
@@ -36,6 +40,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
     }
 }
 
+/// Listen and forward every incoming tcp connection to the given transport
 pub async fn serve(bind_address: String, transport: Arc<dyn Transport>) -> Result<()> {
     let listener = TcpListener::bind(bind_address).await?;
 

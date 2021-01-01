@@ -1,3 +1,5 @@
+//! Transport base traits for talking to devices
+//!
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;

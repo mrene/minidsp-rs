@@ -1,3 +1,12 @@
+//! Commands sent to the device and their responses
+//!
+//! This module contains structs that can be serialized into commands being sent to the device.
+//! Each command implements the `UnaryCommand` trait which specifies the response type as an
+//! associated type.
+//!
+//! It's typical to use the [roundtrip] method in order to send the command to a transport and
+//! obtained its parsed response.
+//!
 use crate::transport::{MiniDSPError, Transport};
 use crate::{packet, Source};
 use anyhow::Result;
@@ -19,7 +28,7 @@ pub trait UnaryCommand {
     }
 }
 
-/// Parsable response type (TODO: Would `Decoder` fit here instead?)
+/// Parsable response type
 pub trait UnaryResponse {
     fn from_packet(packet: Bytes) -> Self;
 }
@@ -128,7 +137,7 @@ impl FromStr for Gain {
     }
 }
 
-/// [0x42] Unary command to set the master volume
+/// 0x42: Unary command to set the master volume
 pub struct SetVolume {
     pub value: Gain,
 }
@@ -146,7 +155,7 @@ impl UnaryCommand for SetVolume {
     }
 }
 
-/// [0x17] Unary command to set the master mute setting
+/// 0x17 Unary command to set the master mute setting
 pub struct SetMute {
     pub value: bool,
 }
@@ -165,7 +174,7 @@ impl UnaryCommand for SetMute {
     }
 }
 
-/// [0x25] Sets the current configuration
+/// 0x25: Sets the current configuration
 pub struct SetConfig {
     config: u8,
     reset: bool,
@@ -188,7 +197,7 @@ impl UnaryCommand for SetConfig {
     }
 }
 
-/// [0x34] Unary command to set the current source
+/// 0x34: Unary command to set the current source
 pub struct SetSource {
     source: Source,
 }
@@ -226,7 +235,7 @@ impl UnaryCommand for CustomUnaryCommand {
     }
 }
 
-/// [0x05] Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
+/// 0x05: Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
 pub struct ReadMemory {
     pub addr: u16,
     pub size: u8,
@@ -260,7 +269,7 @@ impl UnaryCommand for ReadMemory {
     }
 }
 
-/// [0x14] Reads float data from a given base address. Max length is 14
+/// 0x14: Reads float data from a given base address. Max length is 14
 pub struct ReadFloats {
     pub addr: u16,
     pub len: u8,
@@ -403,7 +412,7 @@ impl ExtendView for MemoryView {
     }
 }
 
-/// [0x13] Write float data
+/// 0x13: Write float data
 pub struct WriteFloat {
     pub addr: u16,
     pub value: f32,
@@ -429,7 +438,7 @@ impl UnaryCommand for WriteFloat {
     }
 }
 
-/// [0x13] Write an integer value
+/// 0x13: Write an integer value
 pub struct WriteInt {
     pub addr: u16,
     pub value: u8,
@@ -468,7 +477,7 @@ impl UnaryCommand for WriteInt {
     }
 }
 
-/// [0x30] Write biquad data
+/// 0x30: Write biquad data
 pub struct WriteBiquad {
     pub addr: u16,
     pub data: [f32; 5],
@@ -495,7 +504,7 @@ impl UnaryCommand for WriteBiquad {
     }
 }
 
-/// [0x19] Toggle biquad filter bypass
+/// 0x19: Toggle biquad filter bypass
 pub struct WriteBiquadBypass {
     pub addr: u16,
     pub value: bool,
@@ -519,6 +528,7 @@ impl UnaryCommand for WriteBiquadBypass {
     }
 }
 
+/// 0x31: Read hardware id
 pub struct ReadHardwareId {}
 impl UnaryCommand for ReadHardwareId {
     type Response = Bytes;

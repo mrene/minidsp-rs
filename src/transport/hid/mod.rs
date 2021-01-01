@@ -1,3 +1,4 @@
+//! HID transport for local USB devices
 use crate::transport::{MiniDSPError, Openable};
 use anyhow::anyhow;
 use anyhow::Result;

@@ -1,7 +1,7 @@
 //! This crate provides a high level API for accessing and configuring a MiniDSP device.
 //! To get started, start by instantiating the right transport. If the device is locally
-//! connected via USB, use [`transport::hid::find_minidsp`]. If using the `WI-DG` or connecting to
-//! an instance of this program running the `server` component, see [`transport::net::NetTransport::new`].
+//! connected via USB, use [`transport::hid::HidTransport`]. If using the `WI-DG` or connecting to
+//! an instance of this program running the `server` component, see [`transport::net::NetTransport`].
 //!
 //! ```no_run
 //! use minidsp::{MiniDSP, device::DEVICE_2X4HD, transport, Channel, Gain};
@@ -184,7 +184,7 @@ impl MiniDSP<'_> {
 
 #[async_trait]
 pub trait Channel {
-    /// [internal] Returns the address for this channel to include mute/gain functions
+    /// \[internal\] Returns the address for this channel to include mute/gain functions
     fn _channel(&self) -> (&MiniDSP, &device::Gate, &device::PEQ);
 
     /// Sets the current mute setting
@@ -206,6 +206,7 @@ pub trait Channel {
     }
 }
 
+/// Input channel control
 pub struct Input<'a> {
     dsp: &'a MiniDSP<'a>,
     spec: &'a device::Input,
@@ -239,6 +240,7 @@ impl Channel for Input<'_> {
     }
 }
 
+/// Output channel control
 pub struct Output<'a> {
     dsp: &'a MiniDSP<'a>,
     spec: &'a device::Output,

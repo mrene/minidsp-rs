@@ -1,3 +1,4 @@
+//! Allows talking with the [crate::server] component
 use crate::discovery;
 use crate::transport::{MiniDSPError, Openable, Sender, Transport};
 use anyhow::Result;
