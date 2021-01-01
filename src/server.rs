@@ -18,7 +18,6 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                     Err(_) => { return Ok(()) },
                     Ok(read_buf) => {
                         let read_size = read_buf[0] as usize;
-                        println!("from device: {:?} {:02x?}", read_size, &read_buf[..read_size]);
                         tcp.write_all(&read_buf[..read_size]).await?;
                     }
                 }
@@ -28,8 +27,6 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                 if recv_size == 0 {
                     return Ok(())
                 }
-
-                println!("to device: {:?} {:02x?}", recv_size, &tcp_recv_buf);
 
                 handle.send(tcp_recv_buf.freeze())
                     .await

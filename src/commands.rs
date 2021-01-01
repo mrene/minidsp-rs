@@ -245,7 +245,7 @@ impl UnaryCommand for ReadMemory {
         let mut cmd = BytesMut::with_capacity(4);
         cmd.put_u8(0x05);
         cmd.put_u16(self.addr);
-        cmd.put_u8(self.size);
+        cmd.put_u8(self.size + 1); // we loose 1 byte when decoding
         cmd.freeze()
     }
 
@@ -256,7 +256,7 @@ impl UnaryCommand for ReadMemory {
 
         let mut b = Bytes::copy_from_slice(packet);
         b.get_u8();
-        self.addr == b.get_u16() && self.size == (b.remaining() as u8)
+        self.addr == b.get_u16()
     }
 }
 
@@ -375,6 +375,9 @@ impl UnaryResponse for MemoryView {
     fn from_packet(mut packet: Bytes) -> Self {
         packet.get_u8(); // Discard command id 0x5
         let base = packet.get_u16();
+
+        // Last byte seems to be a counter of some sort.
+        packet.truncate(packet.len() - 1);
         MemoryView { base, data: packet }
     }
 }
@@ -390,6 +393,10 @@ impl ExtendView for MemoryView {
         let mut data: BytesMut = BytesMut::with_capacity(self.data.len() + other.data.len());
         data.extend(self.data.iter());
         data.extend(other.data.iter());
+
+        // Truncate anything past 0xFFFF since it's probably garbabe
+        data.truncate((u16::MAX as usize) - (self.base as usize));
+
         self.data = data.freeze();
 
         Ok(())
@@ -509,6 +516,15 @@ impl UnaryCommand for WriteBiquadBypass {
         p.put_u8(if self.value { 0x80 } else { 0x00 });
         p.put_u16(self.addr);
         p.freeze()
+    }
+}
+
+pub struct ReadHardwareId {}
+impl UnaryCommand for ReadHardwareId {
+    type Response = Bytes;
+
+    fn request_packet(&self) -> Bytes {
+        Bytes::from_static(&[0x31])
     }
 }
 
