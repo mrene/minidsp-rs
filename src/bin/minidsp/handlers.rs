@@ -87,7 +87,7 @@ pub(crate) async fn run_output(
         OutputCommand::Gain { value } => output.set_gain(value).await?,
         Mute { value } => output.set_mute(value).await?,
         Delay { delay } => {
-            let delay = Duration::from_secs_f32(delay * 1000.);
+            let delay = Duration::from_secs_f32(delay / 1000.);
             output.set_delay(delay).await?
         }
         Invert { value } => output.set_invert(value).await?,

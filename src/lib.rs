@@ -64,6 +64,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
 use transport::Transport;
+use anyhow::anyhow;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -186,7 +187,7 @@ pub trait Channel {
     /// Sets the current mute setting
     async fn set_mute(&self, value: bool) -> Result<()> {
         let (dsp, gate, _) = self._channel();
-        dsp.roundtrip(WriteInt::mute(gate.enable, !value)).await
+        dsp.roundtrip(WriteInt::mute(gate.enable, value)).await
     }
 
     /// Sets the current gain setting
@@ -251,11 +252,20 @@ impl<'a> Output<'a> {
     }
 
     /// Sets the output gain setting
+
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
+        // Each delay increment is 0.010 ms
+        // let value = value / Duration::from_micros(10);
+        let value = value.as_micros() / 10;
+        if value > 80 {
+            return Err(MiniDSPError::InternalError(anyhow!("Delay should be within [0, 80], was {:?}", value)))
+        }
+        let value = value as u8;
+
         self.dsp
-            .roundtrip(WriteFloat::new(
-                self.spec.gate.gain,
-                value.as_secs_f32() / 1e3,
+            .roundtrip(WriteInt::new(
+                self.spec.delay_addr,
+                value,
             ))
             .await
     }
