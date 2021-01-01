@@ -1,0 +1,113 @@
+name: Release build
+
+on:
+  push:
+    tags:
+      - 'v0.*'
+      - 'v1.*'
+      - 'v2.*'
+    branches:    
+      - '**'
+      
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build_rpi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup cross environment
+        run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
+      - name: Run build
+        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
+      - name: Create binary
+        run: |
+          mkdir archive
+          cp target/arm-unknown-linux-gnueabihf/release/minidsp archive
+          cd archive/
+          tar -czf ../minidsp.arm-linux-gnueabihf-rpi.tar.gz *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: arm-linux-gnueabihf-rpi-artifact
+          path: minidsp.arm-linux-gnueabihf-rpi.tar.gz
+          if-no-files-found: error
+  build_all:
+    strategy:
+      fail-fast: true
+      matrix:
+        pair:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            bin: minidsp
+            cross: false
+          - target: x86_64-apple-darwin
+            os: macOS-latest
+            bin: minidsp
+            cross: false
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            bin: minidsp.exe
+            cross: false
+
+    runs-on: ${{ matrix.pair.os }}
+
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.pair.target }}
+          override: true
+
+      - name: Install native packages
+        if: runner.os == 'Linux'
+        run: sudo apt-get install libhidapi-dev libhidapi-libusb0 libusb-1.0-0 libusb-1.0-0-dev
+
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.pair.cross }}
+          command: build
+          args: --bin minidsp --release --target ${{ matrix.pair.target }}
+
+      - name: Create binary
+        run: |
+          mkdir archive
+          cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
+          cd archive/
+          tar -czf ../minidsp.${{ matrix.pair.target }}.tar.gz *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: ${{ matrix.pair.target }}-artifact
+          path: minidsp.${{ matrix.pair.target }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build_all, build_rpi]
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: |
+          ls -R artifacts/**/*
+      - name: Create release with artifacts
+        run: |
+          set -x
+          assets=()
+          for asset in ./artifacts/*/*.tar.gz; do
+            assets+=("-a" "$asset")
+          done
+          TAG="${GITHUB_REF##*/}"
+          hub release create "${assets[@]}" --draft --message "$TAG" "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

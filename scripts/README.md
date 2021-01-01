@@ -7,7 +7,7 @@ To my knowledge it should also work in later versions, but open an issue if you 
 docker build -t rpirust -f Dockerfile.rpi .
 
 # From the project's root
-docker run --rm -ti --entrypoint=/bin/bash -v (pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh 
+docker run --rm -v (pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh 
 
 # The binary will be in ./target/arm-unknown-linux-gnueabihf/release/minidsp
 ```

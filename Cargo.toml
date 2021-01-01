@@ -40,3 +40,8 @@ hid = ["hidapi"]
 
 [target.arm-unknown-linux-gnueabihf]
 linker="gcc-sysroot"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
