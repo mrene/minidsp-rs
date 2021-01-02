@@ -1,0 +1,34 @@
+[package]
+name = 'libcec-sys'
+version = '1.0.8-dev'
+authors = ['Sami Salonen']
+edition = '2018'
+license = 'GPL-2.0'
+description = 'FFI bindings to libcec'
+documentation = 'https://docs.rs/libcec-sys'
+readme = 'README.md'
+include = [
+    '/README.md',
+    '/LICENSE',
+    '/Cargo.toml',
+    '/src/*.rs',
+    '/vendor',
+    '/build.rs',
+]
+keywords = [
+    'libcec',
+    'cec',
+    'hdmi',
+]
+categories = ['external-ffi-bindings']
+homepage = 'https://github.com/ssalonen/libcec-sys'
+repository = 'https://github.com/ssalonen/libcec-sys'
+build = 'build.rs'
+
+[dependencies]
+
+[build-dependencies]
+cmake = '0.1.45'
+copy_dir = '0.1.2'
+[badges.maintenance]
+status = 'passively-maintained'
