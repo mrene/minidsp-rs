@@ -15,6 +15,7 @@ use tokio::net::TcpStream;
 
 mod debug;
 mod handlers;
+mod cec;
 
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
