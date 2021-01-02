@@ -41,6 +41,9 @@ version = "1.0.1"
 features = ["full"]
 version = "0.6.0"
 
+[dev-dependencies]
+assert_approx_eq = "1.1.0"
+
 [features]
 default = ["hid", "cec"]
 hid = ["hidapi"]
@@ -49,10 +52,10 @@ cec = ["cec-rs"]
 [target.arm-unknown-linux-gnueabihf]
 linker="gcc-sysroot"
 
-[profile.release]
-lto = true
-codegen-units = 1
-opt-level = 3
+# [profile.release]
+# lto = true
+# codegen-units = 1
+# opt-level = 3
 
 [patch.crates-io]
 libcec-sys = {path="./vendor/libcec_sys"}

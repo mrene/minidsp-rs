@@ -95,4 +95,4 @@ rm -f $SYSROOT/lib/libstdc++*
 ln -sf $SYSROOT/usr/lib/arm-linux-gnueabihf/libstdc++* $SYSROOT/lib/
 
 # Build
-cargo build --release --target arm-unknown-linux-gnueabihf
+cargo build --target arm-unknown-linux-gnueabihf "$@"
