@@ -115,10 +115,11 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
 
     let cfg = CecConnectionCfgBuilder::default()
         .port("RPI".into())
-        .device_name("Hifiberry".into())
+        .device_name("MiniDSP".into())
         .key_press_callback(Box::new(on_key_press))
         .command_received_callback(Box::new(on_command_received))
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
+        .activate_source(false)
         .build()
         .unwrap();
     let connection: CecConnection = cfg.open().unwrap();

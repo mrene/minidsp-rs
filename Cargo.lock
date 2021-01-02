@@ -525,8 +525,6 @@ checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 [[package]]
 name = "libcec-sys"
 version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3835b58a414ab897d73e866371ca6a45fa056fdfa8fc33a306cd01baf665c65"
 dependencies = [
  "cmake",
  "copy_dir",
@@ -575,7 +573,6 @@ dependencies = [
  "hex",
  "hexplay",
  "hidapi",
- "libcec-sys",
  "log",
  "thiserror",
  "tokio",

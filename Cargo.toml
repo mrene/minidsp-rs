@@ -25,7 +25,6 @@ tokio-stream = "0.1.0"
 hexplay = "0.2.1"
 enum-utils = "0.1.2"
 cec-rs = {version="2.2.0",optional=true}
-libcec-sys = {version="1.0.7",optional=true}
 arrayvec = "0.5.2"
 
 [dependencies.hidapi]
@@ -45,7 +44,7 @@ version = "0.6.0"
 [features]
 default = ["hid", "cec"]
 hid = ["hidapi"]
-cec = ["cec-rs","libcec-sys"]
+cec = ["cec-rs"]
 
 [target.arm-unknown-linux-gnueabihf]
 linker="gcc-sysroot"
@@ -54,3 +53,6 @@ linker="gcc-sysroot"
 lto = true
 codegen-units = 1
 opt-level = 3
+
+[patch.crates-io]
+libcec-sys = {path="./vendor/libcec_sys"}

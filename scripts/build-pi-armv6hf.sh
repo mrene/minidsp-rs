@@ -11,9 +11,35 @@ LIBUSB_VER="1.0.22-2"
 LIBUDEV_VER="241-7~deb10u5+rpi1"
 LIBC_VER="2.28-10+rpi1"
 LIBRPI_VER="1.20201201-1"
+LIBCEC_VER="4.0.4+dfsg1-2+rpi1"
 DEPS=( \
-  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi0_${LIBRPI_VER}_armhf.deb"
-  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi-dev_${LIBRPI_VER}_armhf.deb"
+
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/raspberrypi-bootloader_1.20201201-1_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi0_1.20201201-1_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/libc/libcec/libcec4_4.0.4+dfsg1-2+rpi1+rpt1_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/libc/libcec/libcec-dev_4.0.4+dfsg1-2+rpi1+rpt1_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/raspberrypi-kernel_1.20201201-1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/g/gcc-8/gcc-8-base_8.3.0-6+rpi1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/g/gcc-8/libgcc1_8.3.0-6+rpi1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/g/glibc/libc6_2.28-10+rpi1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libb/libbsd/libbsd0_0.9.1-2_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/g/gcc-8/libstdc++6_8.3.0-6+rpi1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/p/p8-platform/libp8-platform2_2.1.0.1+dfsg1-2_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/s/systemd/libudev1_241-7~deb10u5+rpi1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxau/libxau6_1.0.8-1+b2_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxdmcp/libxdmcp6_1.1.2-3_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxcb/libxcb1_1.13.1-2_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libx11/libx11-data_1.6.7-1+deb10u1_all.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libx11/libx11-6_1.6.7-1+deb10u1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxext/libxext6_1.3.3-1+b2_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxrender/libxrender1_0.9.10-1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libx/libxrandr/libxrandr2_1.5.1-1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libu/libunistring/libunistring2_0.9.10-1_armhf.deb" \
+  "http://raspbian.raspberrypi.org/raspbian/pool/main/libi/libidn2/libidn2-0_2.0.5-1+deb10u1_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi0_${LIBRPI_VER}_armhf.deb" \
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi-dev_${LIBRPI_VER}_armhf.deb" \
+  "http://mirrordirector.raspbian.org/raspbian/pool/main/libc/libcec/libcec-dev_${LIBCEC_VER}_armhf.deb" \
+  "http://mirrordirector.raspbian.org/raspbian/pool/main/libc/libcec/libcec4_${LIBCEC_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-libusb0_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-dev_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/libu/libusb-1.0/libusb-1.0-0_${LIBUSB_VER}_armhf.deb" \
@@ -65,6 +91,8 @@ export RUSTFLAGS="-C linker=gcc-sysroot"
 # Overwrite libc and libpthread with the new ones since the sysroot ones are outdated
 cp $SYSROOT/lib/arm-linux-gnueabihf/libc-2.28.so $SYSROOT/lib/libc.so.6
 cp $SYSROOT/lib/arm-linux-gnueabihf/libpthread-2.28.so $SYSROOT/lib/libpthread.so.0
+rm -f $SYSROOT/lib/libstdc++*
+ln -sf $SYSROOT/usr/lib/arm-linux-gnueabihf/libstdc++* $SYSROOT/lib/
 
 # Build
 cargo build --release --target arm-unknown-linux-gnueabihf
