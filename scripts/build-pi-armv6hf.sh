@@ -10,7 +10,10 @@ HIDAPI_VER="0.8.0~rc1+git20140818.d17db57+dfsg-2"
 LIBUSB_VER="1.0.22-2"
 LIBUDEV_VER="241-7~deb10u5+rpi1"
 LIBC_VER="2.28-10+rpi1"
+LIBRPI_VER="1.20201201-1"
 DEPS=( \
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi0_${LIBRPI_VER}_armhf.deb"
+  "http://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/libraspberrypi-dev_${LIBRPI_VER}_armhf.deb"
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-libusb0_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-dev_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/libu/libusb-1.0/libusb-1.0-0_${LIBUSB_VER}_armhf.deb" \
@@ -22,6 +25,7 @@ DEPS=( \
 
 # Collect Paths
 SYSROOT="/pi-tools/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/sysroot"
+CMAKE_SYSROOT=${SYSROOT}
 GCC="/pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin"
 GCC_SYSROOT="$GCC/gcc-sysroot"
 

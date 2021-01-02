@@ -84,6 +84,8 @@ enum SubCommand {
         ip: Option<String>,
     },
 
+    Cec,
+
     /// Low-level debug utilities
     Debug(DebugCommands),
 }

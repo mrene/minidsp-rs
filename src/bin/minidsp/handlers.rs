@@ -1,6 +1,7 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::debug::run_debug;
 use crate::{PEQCommand, RoutingCommand, SubCommand};
+use arrayvec::ArrayVec;
 use minidsp::{BiquadFilter, Channel};
 use std::str::FromStr;
 use std::time::Duration;
@@ -48,6 +49,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         // Handled earlier
         Some(SubCommand::Probe) => return Ok(()),
         Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
+        Some(SubCommand::Cec) => run_cec(&device).await?,
         None => {}
     };
 
@@ -106,4 +108,51 @@ pub(crate) async fn run_peq(peq: BiquadFilter<'_>, cmd: PEQCommand) -> Result<()
         Bypass { value } => peq.set_bypass(value).await?,
     }
     Ok(())
+}
+
+pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
+    use cec_rs::{CecConnectionCfgBuilder, CecDeviceType, CecDeviceTypeVec, CecConnection, CecCommand, CecOpcode,  CecDatapacket, CecLogicalAddress};
+
+    let cfg = CecConnectionCfgBuilder::default()
+        .port("RPI".into())
+        .device_name("Hifiberry".into())
+        .key_press_callback(Box::new(on_key_press))
+        .command_received_callback(Box::new(on_command_received))
+        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
+        .build()
+        .unwrap();
+    let connection: CecConnection = cfg.open().unwrap();
+    println!("Active source: {:?}", connection.get_active_source());
+
+    for i in 0..100 {
+
+        let mut parameters = ArrayVec::new();
+        parameters.push(i as u8);
+    
+        let audio_report = CecCommand {
+            initiator: CecLogicalAddress::Audiosystem,
+            destination: CecLogicalAddress::Tv,
+            ack: false,
+            eom: true,
+            opcode: CecOpcode::GiveAudioStatus,
+            parameters: CecDatapacket(parameters.clone()),
+            opcode_set: true,
+            transmit_timeout: Duration::from_secs(1),
+        };
+        connection.transmit(audio_report.into()).unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+    }
+
+    Ok(())
+}
+
+fn on_command_received(command: cec_rs::CecCommand) {
+    println!(
+        "initiator={:?} destination={:?} op={:?} params={:?}",
+        command.initiator, command.destination, command.opcode, command.parameters
+    );
+}
+
+fn on_key_press(keypress: cec_rs::CecKeypress) {
+    println!("{:?}", keypress);
 }
