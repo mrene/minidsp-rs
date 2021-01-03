@@ -25,7 +25,7 @@ jobs:
           args: --all -- --check
 
       - name: Install native packages
-        run: sudo apt-get install libhidapi-dev libhidapi-libusb0 libusb-1.0-0 libusb-1.0-0-dev
+        run: sudo apt-get install libhidapi-dev libhidapi-libusb0 libusb-1.0-0 libusb-1.0-0-dev libcec-dev
 
       - name: Clippy & check
         uses: actions-rs/clippy-check@v1

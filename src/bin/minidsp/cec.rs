@@ -5,7 +5,7 @@ use cec_rs::{
     CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
     CecDeviceTypeVec, CecLogicalAddress, CecOpcode, CecUserControlCode,
 };
-use log::trace;
+use log::{error, info, trace};
 use tokio::sync::broadcast;
 use super::{MiniDSP,Gain};
 
@@ -47,9 +47,11 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
             opcode: CecOpcode::ReportAudioStatus,
             parameters: CecDatapacket(parameters.clone()),
             opcode_set: true,
-            transmit_timeout: Duration::from_secs(1),
+            transmit_timeout: Duration::from_millis(200),
         };
-        connection.transmit(audio_report.into()).unwrap();
+        if let Err(e) = connection.transmit(audio_report.into()) {
+            error!("cec transmit: {:?}", e);
+        }
     };
 
     let mut vol_slider = VolumeSlider::new(-55., -5., 0);
@@ -59,28 +61,30 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
 
     loop {
         if let Ok(keypress) = keypress_rx.recv().await {
-            trace!("keypress: {:?}", keypress);
+            if keypress.duration.as_millis() == 0 {
+                trace!("ignore zero-duration keypress: {:?}", keypress);
+                continue;
+            }
             match keypress.keycode {
-                CecUserControlCode::VolumeUp => {
-                    if let Ok(ms) = dsp.get_master_status().await {
+                CecUserControlCode::VolumeUp | CecUserControlCode::VolumeDown | CecUserControlCode::Mute => {
+                    if let Ok(mut ms) = dsp.get_master_status().await {
                         vol_slider.set_gain(ms.volume);
-                        vol_slider.inc();
+                        match keypress.keycode {
+                            CecUserControlCode::VolumeUp => {
+                                vol_slider.inc();
+                            }
+                            CecUserControlCode::VolumeDown => {
+                                vol_slider.dec();
+                            },
+                            CecUserControlCode::Mute => {
+                                ms.mute = !ms.mute;
+                                let _ = dsp.set_master_mute(ms.mute).await;
+                                info!("set mute: {:?}", ms.mute);
+                            },
+                            _ => {},
+                        }
                         let _ = dsp.set_master_volume(vol_slider.to_gain()).await;
-                        report_status(ms.mute, vol_slider.percent);
-                    }
-                }
-                CecUserControlCode::VolumeDown => {
-                    if let Ok(ms) = dsp.get_master_status().await {
-                        vol_slider.set_gain(ms.volume);
-                        vol_slider.dec();
-                        let _ = dsp.set_master_volume(vol_slider.to_gain()).await;
-                        report_status(ms.mute, vol_slider.percent);
-                    }
-                }
-                CecUserControlCode::Mute => {
-                    if let Ok(ms) = dsp.get_master_status().await {
-                        vol_slider.set_gain(ms.volume);
-                        let _ = dsp.set_master_mute(!ms.mute).await;
+                        info!("set volume: {:?}", vol_slider.to_gain());
                         report_status(ms.mute, vol_slider.percent);
                     }
                 }
@@ -97,10 +101,15 @@ fn on_command_received(command: cec_rs::CecCommand) {
     );
 }
 
+#[derive(Debug, Clone, Copy)]
 struct VolumeSlider {
+    /// Minimum gain value
     pub min: f32,
+
+    /// Maximum gain value
     pub max: f32,
 
+    /// Percentage value within [0, 100]
     pub percent: u8,
 }
 
@@ -117,7 +126,7 @@ impl VolumeSlider {
     }
 
     pub fn inc(&mut self) {
-        self.percent += 1;
+        self.percent += 2;
         if self.percent > 100 {
             self.percent = 100
         }
@@ -125,7 +134,7 @@ impl VolumeSlider {
 
     pub fn dec(&mut self) {
         if self.percent > 0 {
-            self.percent -= 1;
+            self.percent -= 2;
         }
     }
 }
@@ -147,6 +156,7 @@ mod test {
         assert_eq!(50, s.percent);
         assert_approx_eq!(50., s.to_gain().0);
 
+
         let mut s = VolumeSlider::new(-30., 0.,0);
         s.set_gain(Gain(-15.));
         assert_eq!(50, s.percent);
@@ -157,5 +167,35 @@ mod test {
 
         s.percent = 100;
         assert_eq!(0., s.to_gain().0);
+
+        let g = Gain(-24.999998);
+        s.set_gain(g);
+        println!("{:?} {:?}", s, s.to_gain());
+        s.dec();
+        println!("{:?} {:?}", s, s.to_gain());
+
+        const MIN: f32 = -30.;
+        const MAX: f32 = -15.;
+        let mut s = VolumeSlider::new(MIN, MAX,0);
+
+        s.percent = 0;
+        for _ in 0..100 {
+            let prev = s.to_gain();
+            s.inc();
+            let next = s.to_gain();
+
+            assert!((next.0 - prev.0) < 2.);
+            assert!(next.0 < 0.);
+        }
+
+        s.percent = 0;
+        for _ in 0..100 {
+            let prev = s.to_gain();
+            s.dec();
+            let next = s.to_gain();
+
+            assert!((prev.0 - next.0) < 2.);
+            assert!(next.0 < 0.);
+        }
     }
 }
