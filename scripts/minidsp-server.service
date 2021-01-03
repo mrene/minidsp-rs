@@ -1,0 +1,12 @@
+[Unit]
+Description=MiniDSP Server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin//minidsp server --advertise "Living Room" --ip 192.168.0.10
+KillMode=process
+Restart=on-abnormal
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
