@@ -1,10 +1,10 @@
 //! TCP server compatible with the official mobile and desktop application
 // #[macro_use]
 extern crate log;
-use crate::transport::Transport;
+use crate::{decoder::Decoder, transport::Transport};
 use anyhow::{anyhow, Result};
-use bytes::BytesMut;
-use std::sync::Arc;
+use bytes::{Bytes, BytesMut};
+use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -14,6 +14,15 @@ use tokio::net::{TcpListener, TcpStream};
 async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
     let mut device_receiver = handle.subscribe();
 
+    let decoder = {
+        use termcolor::{ColorChoice, StandardStream};
+        let writer = StandardStream::stderr(ColorChoice::Always);
+        Arc::new(Mutex::new(Decoder {
+            w: Box::new(writer),
+            quiet: true,
+        }))
+    };
+
     loop {
         let mut tcp_recv_buf = BytesMut::with_capacity(65);
         tokio::select! {
@@ -22,6 +31,9 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                     Err(_) => { return Ok(()) },
                     Ok(read_buf) => {
                         let read_size = read_buf[0] as usize;
+                        {
+                            decoder.lock().unwrap().feed_recv(&Bytes::copy_from_slice(&read_buf[..read_size]));
+                        }
                         tcp.write_all(&read_buf[..read_size]).await?;
                     }
                 }
@@ -32,7 +44,11 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                     return Ok(())
                 }
 
-                handle.send(tcp_recv_buf.freeze())
+                let tcp_recv_buf = tcp_recv_buf.freeze();
+                {
+                    decoder.lock().unwrap().feed_sent(&tcp_recv_buf);
+                }
+                handle.send(tcp_recv_buf)
                     .await
                     .map_err(|_| anyhow!("send error"))?;
             },
