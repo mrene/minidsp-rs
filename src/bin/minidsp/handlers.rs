@@ -48,7 +48,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         // Handled earlier
         Some(SubCommand::Probe) => return Ok(()),
         Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
-        Some(SubCommand::Cec) => {super::cec::run_cec(&device).await?},
+        Some(SubCommand::Cec) => super::cec::run_cec(&device).await?,
         None => {}
     };
 

@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use super::{Gain, MiniDSP};
 use arrayvec::ArrayVec;
 use cec_rs::{
     CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
@@ -7,10 +8,8 @@ use cec_rs::{
 };
 use log::{error, info, trace};
 use tokio::sync::broadcast;
-use super::{MiniDSP,Gain};
 
 pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
-
     // If the capacity is too high, we could endlessly queue up a bunch of `volume up` that would be all applied at once
     let (keypress_tx, mut keypress_rx) = broadcast::channel::<cec_rs::CecKeypress>(2);
 
@@ -66,7 +65,9 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
                 continue;
             }
             match keypress.keycode {
-                CecUserControlCode::VolumeUp | CecUserControlCode::VolumeDown | CecUserControlCode::Mute => {
+                CecUserControlCode::VolumeUp
+                | CecUserControlCode::VolumeDown
+                | CecUserControlCode::Mute => {
                     if let Ok(mut ms) = dsp.get_master_status().await {
                         vol_slider.set_gain(ms.volume);
                         match keypress.keycode {
@@ -75,13 +76,13 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
                             }
                             CecUserControlCode::VolumeDown => {
                                 vol_slider.dec();
-                            },
+                            }
                             CecUserControlCode::Mute => {
                                 ms.mute = !ms.mute;
                                 let _ = dsp.set_master_mute(ms.mute).await;
                                 info!("set mute: {:?}", ms.mute);
-                            },
-                            _ => {},
+                            }
+                            _ => {}
                         }
                         let _ = dsp.set_master_volume(vol_slider.to_gain()).await;
                         info!("set volume: {:?}", vol_slider.to_gain());
@@ -97,7 +98,10 @@ pub(crate) async fn run_cec(dsp: &MiniDSP<'_>) -> Result<(), anyhow::Error> {
 fn on_command_received(command: cec_rs::CecCommand) {
     trace!(
         "initiator={:?} destination={:?} op={:?} params={:?}",
-        command.initiator, command.destination, command.opcode, command.parameters
+        command.initiator,
+        command.destination,
+        command.opcode,
+        command.parameters
     );
 }
 
@@ -115,14 +119,14 @@ struct VolumeSlider {
 
 impl VolumeSlider {
     pub fn new(min: f32, max: f32, percent: u8) -> Self {
-        return VolumeSlider{min,max,percent}
+        return VolumeSlider { min, max, percent };
     }
     pub fn set_gain(&mut self, gain: Gain) {
-        self.percent = (100.*(gain.0 - self.min)/(self.max - self.min)) as u8
+        self.percent = (100. * (gain.0 - self.min) / (self.max - self.min)) as u8
     }
 
     pub fn to_gain(&self) -> Gain {
-        Gain((self.percent as f32 / 100.) * (self.max-self.min) + self.min)
+        Gain((self.percent as f32 / 100.) * (self.max - self.min) + self.min)
     }
 
     pub fn inc(&mut self) {
@@ -146,18 +150,17 @@ impl Into<Gain> for VolumeSlider {
 
 #[cfg(test)]
 mod test {
-    use assert_approx_eq::assert_approx_eq;
     use super::*;
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_slider() {
-        let mut s = VolumeSlider::new(0., 100.,0);
+        let mut s = VolumeSlider::new(0., 100., 0);
         s.set_gain(Gain(50.));
         assert_eq!(50, s.percent);
         assert_approx_eq!(50., s.to_gain().0);
 
-
-        let mut s = VolumeSlider::new(-30., 0.,0);
+        let mut s = VolumeSlider::new(-30., 0., 0);
         s.set_gain(Gain(-15.));
         assert_eq!(50, s.percent);
         assert_approx_eq!(-15., s.to_gain().0);
@@ -176,7 +179,7 @@ mod test {
 
         const MIN: f32 = -30.;
         const MAX: f32 = -15.;
-        let mut s = VolumeSlider::new(MIN, MAX,0);
+        let mut s = VolumeSlider::new(MIN, MAX, 0);
 
         s.percent = 0;
         for _ in 0..100 {

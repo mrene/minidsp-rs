@@ -59,12 +59,12 @@ pub mod transport;
 
 use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
+use anyhow::anyhow;
 pub use source::Source;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
 use transport::Transport;
-use anyhow::anyhow;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -258,15 +258,15 @@ impl<'a> Output<'a> {
         // let value = value / Duration::from_micros(10);
         let value = value.as_micros() / 10;
         if value > 80 {
-            return Err(MiniDSPError::InternalError(anyhow!("Delay should be within [0, 80], was {:?}", value)))
+            return Err(MiniDSPError::InternalError(anyhow!(
+                "Delay should be within [0, 80], was {:?}",
+                value
+            )));
         }
         let value = value as u8;
 
         self.dsp
-            .roundtrip(WriteInt::new(
-                self.spec.delay_addr,
-                value,
-            ))
+            .roundtrip(WriteInt::new(self.spec.delay_addr, value))
             .await
     }
 }

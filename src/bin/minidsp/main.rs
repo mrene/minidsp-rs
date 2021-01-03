@@ -13,9 +13,9 @@ use minidsp::{
 use std::{num::ParseIntError, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
 
+mod cec;
 mod debug;
 mod handlers;
-mod cec;
 
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
@@ -44,7 +44,9 @@ enum SubCommand {
     Probe,
 
     /// Set the master output gain [-127, 0]
-    Gain { value: Gain },
+    Gain {
+        value: Gain,
+    },
 
     /// Set the master mute status
     Mute {
@@ -52,10 +54,14 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { value: String },
+    Source {
+        value: String,
+    },
 
     /// Set the current active configuration,
-    Config { value: u8 },
+    Config {
+        value: u8,
+    },
 
     /// Control settings regarding input channels
     Input {
