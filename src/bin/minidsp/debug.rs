@@ -12,6 +12,7 @@ use minidsp::{
     },
     source,
 };
+use std::ops::Deref;
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
     match debug {
@@ -63,7 +64,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
                 use minidsp::transport::hid;
                 // Probe for local usb devices
                 println!("Probing local hid devices:");
-                let devices = hid::discover()?;
+                let devices = hid::discover(hid::initialize_api()?.deref())?;
                 if devices.is_empty() {
                     println!("No matching local USB devices detected.")
                 } else {

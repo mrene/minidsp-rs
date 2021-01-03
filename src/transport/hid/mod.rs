@@ -3,11 +3,14 @@ use crate::transport::{MiniDSPError, Openable};
 use anyhow::anyhow;
 use anyhow::Result;
 use async_trait::async_trait;
+use atomic_refcell::AtomicRefCell;
 pub use handle::HidTransport;
-use hidapi::{HidApi, HidError};
+use hidapi::{HidApi, HidError, HidResult};
 use std::fmt;
 use std::fmt::Formatter;
+use std::ops::Deref;
 use std::str::FromStr;
+use std::sync::Arc;
 
 mod async_wrapper;
 pub mod handle;
@@ -68,9 +71,16 @@ impl Openable for Device {
 
     async fn open(&self) -> Result<Self::Transport, MiniDSPError> {
         if let Some(path) = &self.path {
-            Ok(HidTransport::with_path(path.to_string())?)
+            Ok(HidTransport::with_path(
+                initialize_api()?.deref(),
+                path.to_string(),
+            )?)
         } else if let Some((vid, pid)) = &self.id {
-            Ok(HidTransport::with_product_id(*vid, *pid)?)
+            Ok(HidTransport::with_product_id(
+                initialize_api()?.deref(),
+                *vid,
+                *pid,
+            )?)
         } else {
             Err(MiniDSPError::InternalError(anyhow!(
                 "invalid device, no path or id"
@@ -79,8 +89,7 @@ impl Openable for Device {
     }
 }
 
-pub fn discover() -> Result<Vec<Device>, HidError> {
-    let hid = HidApi::new()?;
+pub fn discover(hid: &HidApi) -> Result<Vec<Device>, HidError> {
     Ok(hid
         .device_list()
         .filter(|di| di.vendor_id() == VID_MINIDSP)
@@ -91,22 +100,15 @@ pub fn discover() -> Result<Vec<Device>, HidError> {
         .collect())
 }
 
-#[cfg(test)]
-mod test {
-    use anyhow::Result;
-    use hidapi::HidApi;
+static HIDAPI_INSTANCE: AtomicRefCell<Option<Arc<HidApi>>> = AtomicRefCell::new(None);
 
-    #[test]
-    fn discover() -> Result<()> {
-        let hid = HidApi::new()?;
-        for device in hid.device_list() {
-            println!(
-                "{:04x} {:04x} {}",
-                device.vendor_id(),
-                device.product_id(),
-                device.path().to_string_lossy()
-            );
-        }
-        Ok(())
+/// Initializes a global instance of HidApi
+pub fn initialize_api() -> HidResult<Arc<HidApi>> {
+    if let Some(x) = HIDAPI_INSTANCE.borrow().deref() {
+        return Ok(x.clone());
     }
+
+    let api = Arc::new(HidApi::new()?);
+    HIDAPI_INSTANCE.borrow_mut().replace(api.clone());
+    Ok(api)
 }

@@ -46,14 +46,12 @@ impl HidTransport {
         }
     }
 
-    pub fn with_path(path: String) -> Result<Self, HidError> {
-        let hid = HidApi::new()?;
+    pub fn with_path(hid: &HidApi, path: String) -> Result<Self, HidError> {
         let path = CString::new(path.into_bytes()).unwrap();
         Ok(HidTransport::new(hid.open_path(&path)?))
     }
 
-    pub fn with_product_id(vid: u16, pid: u16) -> Result<Self, HidError> {
-        let hid = HidApi::new()?;
+    pub fn with_product_id(hid: &HidApi, vid: u16, pid: u16) -> Result<Self, HidError> {
         let hid_device = hid.open(vid, pid)?;
         Ok(HidTransport::new(hid_device))
     }

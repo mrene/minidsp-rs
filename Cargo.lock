@@ -63,6 +63,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic_refcell"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bc31dce067eab974c815a9deb95f6217806de7b53685d7fc31f8ccf3fb2539f"
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -421,6 +427,7 @@ dependencies = [
  "anyhow",
  "async-stream",
  "async-trait",
+ "atomic_refcell",
  "bytes",
  "clap",
  "enum-utils",
@@ -431,6 +438,7 @@ dependencies = [
  "hex",
  "hexplay",
  "hidapi",
+ "lazy_static",
  "log",
  "thiserror",
  "tokio",

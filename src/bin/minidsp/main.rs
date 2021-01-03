@@ -19,6 +19,7 @@ mod handlers;
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
+use std::ops::Deref;
 use std::time::Duration;
 
 #[derive(Clap, Debug)]
@@ -224,7 +225,7 @@ async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
         }
 
         // If no device was passed, do a best effort to figure out the right device to open
-        let hid_devices = hid::discover()?;
+        let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
         if hid_devices.len() == 1 {
             return Ok(Arc::new(hid_devices[0].open().await?));
         } else if !hid_devices.is_empty() {
@@ -243,7 +244,7 @@ async fn run_probe() -> Result<()> {
     #[cfg(feature = "hid")]
     {
         // Probe for local usb devices
-        let devices = hid::discover()?;
+        let devices = hid::discover(hid::initialize_api()?.deref())?;
         if devices.is_empty() {
             println!("No matching local USB devices detected.")
         } else {

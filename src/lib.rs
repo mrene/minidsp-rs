@@ -10,8 +10,9 @@
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
+//!     let hid_api = transport::hid::initialize_api()?;
 //!     // Find a locally connected minidsp using usb hid, with the default vendor and product id.
-//!     let transport =  Arc::new(transport::hid::HidTransport::with_product_id(0x2752, 0x0011)?);
+//!     let transport =  Arc::new(transport::hid::HidTransport::with_product_id(&hid_api, 0x2752, 0x0011)?);
 //!
 //!     // Instantiate a 2x4HD handler for this device.
 //!     let dsp = MiniDSP::new(transport, &DEVICE_2X4HD);
@@ -59,12 +60,12 @@ pub mod transport;
 
 use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
+use anyhow::anyhow;
 pub use source::Source;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
 use transport::Transport;
-use anyhow::anyhow;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -258,15 +259,15 @@ impl<'a> Output<'a> {
         // let value = value / Duration::from_micros(10);
         let value = value.as_micros() / 10;
         if value > 80 {
-            return Err(MiniDSPError::InternalError(anyhow!("Delay should be within [0, 80], was {:?}", value)))
+            return Err(MiniDSPError::InternalError(anyhow!(
+                "Delay should be within [0, 80], was {:?}",
+                value
+            )));
         }
         let value = value as u8;
 
         self.dsp
-            .roundtrip(WriteInt::new(
-                self.spec.delay_addr,
-                value,
-            ))
+            .roundtrip(WriteInt::new(self.spec.delay_addr, value))
             .await
     }
 }
