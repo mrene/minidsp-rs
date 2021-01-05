@@ -30,7 +30,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             println!("response: {:02x?}", response);
 
             if watch {
-                let mut sub = device.transport.subscribe();
+                let mut sub = device.transport.subscribe()?;
                 // Print out all received packets
                 while let Ok(packet) = sub.recv().await {
                     println!("> {:02x?}", packet.as_ref());

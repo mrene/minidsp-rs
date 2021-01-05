@@ -38,6 +38,9 @@ pub enum MiniDSPError {
     #[error("Transport error")]
     TransportError(#[from] broadcast::error::RecvError),
 
+    #[error("Transport has closed")]
+    TransportClosed,
+
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
 }
@@ -63,7 +66,7 @@ where
 #[async_trait]
 pub trait Transport: Send + Sync {
     // Subscribe to all received frames
-    fn subscribe(&self) -> broadcast::Receiver<Bytes>;
+    fn subscribe(&self) -> Result<broadcast::Receiver<Bytes>, MiniDSPError>;
 
     // Acquire an exclusive lock for sending frames on this device
     async fn send_lock(&self) -> Box<dyn Sender>;

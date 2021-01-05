@@ -502,7 +502,7 @@ pub async fn roundtrip(
     command: Commands,
     expect: Option<u8>,
 ) -> Result<Responses, MiniDSPError> {
-    let mut receiver = transport.subscribe();
+    let mut receiver = transport.subscribe()?;
     let mut sender = transport.send_lock().await;
 
     sender.send(packet::frame(command.to_bytes())).await?;
