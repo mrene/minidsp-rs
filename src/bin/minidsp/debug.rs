@@ -4,22 +4,31 @@ use bytes::Bytes;
 use clap::Clap;
 
 use super::{parse_hex, parse_hex_u16};
-use minidsp::MiniDSP;
 use minidsp::{
-    commands::{
-        roundtrip, CustomUnaryCommand, ExtendView, FloatView, MemoryView, ReadFloats,
-        ReadHardwareId, ReadMemory,
-    },
+    commands::{read_floats, read_memory, roundtrip, ExtendView, FloatView, MemoryView},
     source,
+};
+use minidsp::{
+    commands::{BytesWrap, Commands},
+    MiniDSP,
 };
 use std::ops::Deref;
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
     match debug {
         DebugCommands::Send { value, watch } => {
-            let response =
-                roundtrip(device.transport.as_ref(), CustomUnaryCommand::new(value)).await?;
-            println!("response: {:02x?}", response.as_ref());
+            let response = roundtrip(
+                device.transport.as_ref(),
+                Commands::Unknown {
+                    cmd_id: value[0],
+                    payload: BytesWrap(value.slice(1..)),
+                },
+                None,
+            )
+            .await?;
+
+            println!("response: {:02x?}", response);
+
             if watch {
                 let mut sub = device.transport.subscribe();
                 // Print out all received packets
@@ -35,9 +44,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             };
             let end_addr = end_addr.unwrap_or(59);
             for i in (addr..end_addr).step_by(59) {
-                let v =
-                    roundtrip(device.transport.as_ref(), ReadMemory { addr: i, size: 59 }).await?;
-                view.extend_with(v)?;
+                view.extend_with(read_memory(device.transport.as_ref(), i, 59).await?)?;
             }
             println!("\n");
             dump_memory(&view);
@@ -46,18 +53,10 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             let len = 14;
             let end_addr = end_addr.unwrap_or(14);
             for i in (addr..end_addr).step_by(14) {
-                let view = roundtrip(
-                    device.transport.as_ref(),
-                    ReadFloats {
-                        addr: i,
-                        len: len as u8,
-                    },
-                )
-                .await?;
+                let view = read_floats(device.transport.as_ref(), i, len as u8).await?;
                 dump_floats(&view);
             }
         }
-
         DebugCommands::Id => {
             #[cfg(feature = "hid")]
             {
@@ -75,9 +74,6 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
                 println!()
             }
 
-            let id = roundtrip(device.transport.as_ref(), ReadHardwareId {}).await?;
-            println!("HW ID Response: {:02x?}", id.as_ref());
-
             let device_info = device.get_device_info().await?;
             println!(
                 "HW ID: {}\nDSP Version: {}",
@@ -88,17 +84,14 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             println!("Detected sources: {:?}", sources);
 
             println!("\nDumping memory:");
-            let mut view =
-                roundtrip(device.transport.as_ref(), ReadMemory::new(0xffa0, 59)).await?;
-            view.extend_with(
-                roundtrip(device.transport.as_ref(), ReadMemory::new(0xffa0 + 59, 59)).await?,
-            )?;
+            let mut view = read_memory(device.transport.as_ref(), 0xffa0, 59).await?;
+
+            view.extend_with(read_memory(device.transport.as_ref(), 0xffa0 + 59, 59).await?)?;
             dump_memory(&view);
 
             println!("\n\nDumping readable floats:");
             for addr in (0x00..0xff).step_by(14) {
-                let floats =
-                    roundtrip(device.transport.as_ref(), ReadFloats::new(addr, 14)).await?;
+                let floats = read_floats(device.transport.as_ref(), addr, 14).await?;
                 dump_floats(&floats);
             }
         }

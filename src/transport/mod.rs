@@ -13,6 +13,8 @@ pub mod hid;
 #[cfg(feature = "hid")]
 use hidapi::HidError;
 
+use crate::commands;
+
 pub mod net;
 
 #[derive(Error, Debug)]
@@ -29,6 +31,12 @@ pub enum MiniDSPError {
 
     #[error("This source was not recognized. Supported types are: 'toslink', 'usb', 'analog'")]
     InvalidSource,
+
+    #[error("Parse error")]
+    ParseError(#[from] commands::ParseError),
+
+    #[error("Transport error")]
+    TransportError(#[from] broadcast::error::RecvError),
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),

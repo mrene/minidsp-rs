@@ -440,6 +440,7 @@ dependencies = [
  "hidapi",
  "lazy_static",
  "log",
+ "termcolor 1.1.2",
  "thiserror",
  "tokio",
  "tokio-stream",
