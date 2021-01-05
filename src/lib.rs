@@ -37,33 +37,33 @@
 //!
 //! ```   
 
+use std::sync::Arc;
+use std::{cell::Cell, convert::TryInto};
+
+use anyhow::anyhow;
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::Duration;
+
+use commands::{read_floats, read_memory};
+pub use source::Source;
+use transport::Transport;
+
 pub use crate::commands::Gain;
 use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Value};
-use async_trait::async_trait;
-use commands::{read_floats, read_memory};
+use crate::device::{Gate, PEQ};
+use crate::transport::MiniDSPError;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
-use std::{cell::Cell, convert::TryInto};
-
 pub mod commands;
-mod decoder;
 pub mod device;
 pub mod discovery;
-pub mod lease;
 pub mod packet;
 pub mod server;
 pub mod source;
 pub mod transport;
-
-use crate::device::{Gate, PEQ};
-use crate::transport::MiniDSPError;
-use anyhow::anyhow;
-pub use source::Source;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::Duration;
-use transport::Transport;
+pub mod utils;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {

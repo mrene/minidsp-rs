@@ -1,12 +1,16 @@
 //! TCP server compatible with the official mobile and desktop application
 // #[macro_use]
 extern crate log;
-use crate::{decoder::Decoder, transport::Transport, MiniDSPError};
+
+use std::sync::{Arc, Mutex};
+
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
-use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
+
+use crate::utils::decoder::Decoder;
+use crate::{transport::Transport, MiniDSPError};
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the

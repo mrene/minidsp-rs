@@ -40,6 +40,68 @@ impl Deref for BytesWrap {
     }
 }
 
+#[derive(Clone)]
+pub enum Value {
+    Unknown(Bytes),
+    Float(f32),
+    Int(u16),
+}
+
+impl Value {
+    pub fn into_bytes(self) -> Bytes {
+        match self {
+            Value::Unknown(b) => b,
+            Value::Float(f) => Bytes::copy_from_slice(&f.to_le_bytes()),
+            Value::Int(i) => {
+                let mut b = BytesMut::with_capacity(4);
+                b.put_u16_le(i);
+                b.put_u16(0x00);
+                b.freeze()
+            }
+        }
+    }
+
+    pub fn from_bytes(mut b: Bytes) -> Self {
+        if b.len() < 4 {
+            Value::Unknown(b)
+        } else if (b[0] != 0 || b[1] != 0) && (b[2] == 0 && b[3] == 0) {
+            Value::Int(b.get_u16_le())
+        } else {
+            Value::Float(b.get_f32_le())
+        }
+    }
+}
+
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let b = self.clone().into_bytes();
+        match self {
+            Value::Unknown(u) => {
+                let float = b.clone().get_f32_le();
+                let i = b[0];
+                write!(
+                    f,
+                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?}) }}",
+                    u.as_ref(),
+                    i,
+                    float
+                )
+            }
+            Value::Float(val) => {
+                write!(
+                    f,
+                    "Value {{ Float: {:?} (Bytes: {:x?}) }}",
+                    *val,
+                    b.as_ref()
+                )
+            }
+            Value::Int(val) => {
+                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", *val, b.as_ref())
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Commands {
     /// 0x31: Read hardware id
@@ -102,19 +164,18 @@ pub enum Commands {
         value: Value,
     },
 
-    // 0x39: Start FIR load
+    /// 0x39: Start FIR load
     FirLoadStart {
         index: u8,
     },
 
-    // 0x3a: FIR Data
-    // 60 bytes pure float le (all 15 of them)
+    /// 0x3a: FIR Data
     FirLoadData {
         index: u8,
         data: Vec<f32>, // Max 15 floats
     },
 
-    // 0x3b: FIR Data Completed
+    /// 0x3b: FIR Data Completed
     FirLoadEnd,
 
     // Speculative commands
@@ -127,68 +188,6 @@ pub enum Commands {
         cmd_id: u8,
         payload: BytesWrap,
     },
-}
-
-#[derive(Clone)]
-pub enum Value {
-    Unknown(Bytes),
-    Float(f32),
-    Int(u16),
-}
-
-impl Value {
-    pub fn into_bytes(self) -> Bytes {
-        match self {
-            Value::Unknown(b) => b,
-            Value::Float(f) => Bytes::copy_from_slice(&f.to_le_bytes()),
-            Value::Int(i) => {
-                let mut b = BytesMut::with_capacity(4);
-                b.put_u16_le(i);
-                b.put_u16(0x00);
-                b.freeze()
-            }
-        }
-    }
-
-    pub fn from_bytes(mut b: Bytes) -> Self {
-        if b.len() < 4 {
-            Value::Unknown(b)
-        } else if (b[0] != 0 || b[1] != 0) && (b[2] == 0 && b[3] == 0) {
-            Value::Int(b.get_u16_le())
-        } else {
-            Value::Float(b.get_f32_le())
-        }
-    }
-}
-
-impl fmt::Debug for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let b = self.clone().into_bytes();
-        match self {
-            Value::Unknown(u) => {
-                let float = b.clone().get_f32_le();
-                let i = b[0];
-                write!(
-                    f,
-                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?}) }}",
-                    u.as_ref(),
-                    i,
-                    float
-                )
-            }
-            Value::Float(val) => {
-                write!(
-                    f,
-                    "Value {{ Float: {:?} (Bytes: {:x?}) }}",
-                    *val,
-                    b.as_ref()
-                )
-            }
-            Value::Int(val) => {
-                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", *val, b.as_ref())
-            }
-        }
-    }
 }
 
 impl Commands {
@@ -416,6 +415,7 @@ impl Responses {
             },
         })
     }
+
     pub fn to_bytes(&self) -> Bytes {
         let mut f = BytesMut::with_capacity(64);
         match self {
