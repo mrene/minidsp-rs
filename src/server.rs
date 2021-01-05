@@ -1,18 +1,18 @@
 //! TCP server compatible with the official mobile and desktop application
 // #[macro_use]
 extern crate log;
-use crate::{decoder::Decoder, transport::Transport};
+use crate::{decoder::Decoder, transport::Transport, MiniDSPError};
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
 async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
-    let mut device_receiver = handle.subscribe();
+    let mut device_receiver = handle.subscribe()?;
 
     let decoder = {
         use termcolor::{ColorChoice, StandardStream};
@@ -57,21 +57,31 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
 }
 
 /// Listen and forward every incoming tcp connection to the given transport
-pub async fn serve(bind_address: String, transport: Arc<dyn Transport>) -> Result<()> {
+pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<dyn Transport>) -> Result<()> {
     let listener = TcpListener::bind(bind_address).await?;
+    let mut rx = transport.subscribe()?;
 
     loop {
-        let (stream, addr) = listener.accept().await?;
-        let handle = transport.clone();
-        eprintln!("New connection: {:?}", addr);
-        tokio::spawn(async move {
-            let result: Result<()> = async { forward(handle, stream).await }.await;
+        tokio::select! {
+           result = listener.accept() => {
+                let (stream, addr) = result?;
+                let handle = transport.clone();
+                eprintln!("New connection: {:?}", addr);
+                tokio::spawn(async move {
+                    let result: Result<()> = async { forward(handle, stream).await }.await;
 
-            if let Err(e) = result {
-                eprintln!("err: {:?}", e);
-            }
+                    if let Err(e) = result {
+                        eprintln!("err: {:?}", e);
+                    }
 
-            eprintln!("Closed: {:?}", addr);
-        });
+                    eprintln!("Closed: {:?}", addr);
+                });
+           },
+           result = rx.recv() => {
+                if result.is_err() {
+                    return Err(MiniDSPError::TransportClosed.into())
+                }
+           }
+        }
     }
 }

@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
 use std::net::SocketAddr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as SyncMutex};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -19,7 +19,7 @@ use tokio_stream::StreamExt;
 
 pub struct NetTransport {
     /// The sending side of a broadcast channel used for received messages
-    receiver_tx: broadcast::Sender<Bytes>,
+    receiver_tx: Arc<SyncMutex<Option<broadcast::Sender<Bytes>>>>,
 
     /// Inner struct wrapping the device handle, ensuring only one sender exists simultaneously
     /// The Arc is used to be able to hold a lock guard as 'static
@@ -30,12 +30,20 @@ impl NetTransport {
     pub fn new(stream: TcpStream) -> Self {
         let (recv_send, _) = broadcast::channel::<Bytes>(10);
         let (rx, tx) = stream.into_split();
-        tokio::spawn(NetTransport::recv_loop(recv_send.clone(), rx));
 
-        NetTransport {
-            receiver_tx: recv_send,
+        let transport = NetTransport {
+            receiver_tx: Arc::new(SyncMutex::new(Some(recv_send.clone()))),
             inner: Arc::new(Mutex::new(Inner::new(tx))),
-        }
+        };
+
+        let receiver_tx = transport.receiver_tx.clone();
+        tokio::spawn(async move {
+            let _ = NetTransport::recv_loop(recv_send, rx).await;
+            let mut tx = receiver_tx.lock().unwrap();
+            tx.take();
+        });
+
+        transport
     }
 
     async fn recv_loop(sender: broadcast::Sender<Bytes>, mut stream: OwnedReadHalf) -> Result<()> {
@@ -50,8 +58,12 @@ impl NetTransport {
 
 #[async_trait]
 impl Transport for NetTransport {
-    fn subscribe(&self) -> broadcast::Receiver<Bytes> {
-        self.receiver_tx.subscribe()
+    fn subscribe(&self) -> Result<broadcast::Receiver<Bytes>, MiniDSPError> {
+        let receiver = self.receiver_tx.lock().unwrap();
+        match receiver.as_ref() {
+            Some(tx) => Ok(tx.subscribe()),
+            None => Err(MiniDSPError::TransportClosed),
+        }
     }
 
     async fn send_lock(&'_ self) -> Box<dyn Sender> {
