@@ -9,8 +9,9 @@ use bytes::{Bytes, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 
-use crate::utils::decoder::Decoder;
+use crate::utils::{decoder::Decoder, recorder::Recorder};
 use crate::{transport::Transport, MiniDSPError};
+use tokio::fs::File;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
@@ -27,6 +28,8 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
         }))
     };
 
+    let mut recorder = { Recorder::new(File::create("/tmp/log.txt").await?) };
+
     loop {
         let mut tcp_recv_buf = BytesMut::with_capacity(65);
         tokio::select! {
@@ -36,7 +39,9 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                     Ok(read_buf) => {
                         let read_size = read_buf[0] as usize;
                         {
-                            decoder.lock().unwrap().feed_recv(&Bytes::copy_from_slice(&read_buf[..read_size]));
+                            let buf = Bytes::copy_from_slice(&read_buf[..read_size]);
+                            decoder.lock().unwrap().feed_recv(&buf);
+                            recorder.feed_recv(&buf);
                         }
                         tcp.write_all(&read_buf[..read_size]).await?;
                     }
@@ -51,6 +56,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                 let tcp_recv_buf = tcp_recv_buf.freeze();
                 {
                     decoder.lock().unwrap().feed_sent(&tcp_recv_buf);
+                    recorder.feed_sent(&tcp_recv_buf);
                 }
                 handle.send(tcp_recv_buf)
                     .await

@@ -466,7 +466,7 @@ impl Responses {
 
     pub fn into_hardware_id(self) -> Result<u8, MiniDSPError> {
         match self {
-            Responses::HardwareId { payload } => Ok(payload[3]),
+            Responses::HardwareId { payload } => Ok(payload[2]),
             _ => Err(MiniDSPError::MalformedResponse),
         }
     }
