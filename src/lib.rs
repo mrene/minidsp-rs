@@ -57,6 +57,7 @@ use crate::transport::MiniDSPError;
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod commands;
+pub mod config;
 pub mod device;
 pub mod discovery;
 pub mod packet;

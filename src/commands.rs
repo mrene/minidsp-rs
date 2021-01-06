@@ -816,7 +816,7 @@ mod test {
         assert!(f1
             .data
             .into_iter()
-            .eq((0u16..20).into_iter().map(|x| x.into())));
+            .eq((0u16..20).into_iter().map(|x| -> f32 { x.into() })));
 
         let mut m1 = MemoryView {
             base: 0,
