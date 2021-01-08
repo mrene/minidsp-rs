@@ -179,8 +179,24 @@ pub enum Commands {
     FirLoadEnd,
 
     // Speculative commands
-    /// Seen when restoring a configuration
-    MaybeBulkLoad {
+    /// 0x12: Seen when restoring a configuration
+    BulkLoad {
+        // Initial payload:
+        // 04 88 97 13 0f 00 00
+        // 04: 4 | (Addr&0x0F0000 >> 12)
+        // 88: (Addr&0xFF00 >> 8)
+        // 97: (Addr&0xFF)
+        // 13: constant
+        // 0f: constant
+        // 00: constant
+        // 00: constant
+        payload: BytesWrap,
+    },
+
+    /// 0x06: Seen after 0x12 in configuration restore
+    BulkLoadFilterData {
+        // Initial packet:
+        // 06 02 05 (size+3 u16)
         payload: BytesWrap,
     },
 
@@ -201,7 +217,10 @@ impl Commands {
                 addr: frame.get_u16(),
                 size: frame.get_u8(),
             },
-            0x12 => Commands::MaybeBulkLoad {
+            0x06 => Commands::BulkLoadFilterData {
+                payload: BytesWrap(frame),
+            },
+            0x12 => Commands::BulkLoad {
                 payload: BytesWrap(frame),
             },
             0x13 => {
@@ -261,8 +280,8 @@ impl Commands {
             0x42 => Commands::SetVolume {
                 value: frame.get_u8().into(),
             },
-            x => Commands::Unknown {
-                cmd_id: x,
+            cmd_id => Commands::Unknown {
+                cmd_id,
                 payload: BytesWrap(frame),
             },
         })
@@ -340,8 +359,12 @@ impl Commands {
             Commands::FirLoadEnd => {
                 f.put_u8(0x3b);
             }
-            Commands::MaybeBulkLoad { payload } => {
+            Commands::BulkLoad { payload } => {
                 f.put_u8(0x12);
+                f.put(payload.0.clone());
+            }
+            Commands::BulkLoadFilterData { payload } => {
+                f.put_u8(0x06);
                 f.put(payload.0.clone());
             }
             Commands::Unknown { cmd_id, payload } => {

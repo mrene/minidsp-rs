@@ -1,5 +1,5 @@
 //! Utilities for dealing with xml configuration files
-use bytes::{Bytes};
+use bytes::Bytes;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -36,10 +36,10 @@ impl Setting {
     pub fn to_restore_blob(&self) -> Bytes {
         // The configuration contains addresses which refer to _indices_ of floats in the dsp memory
         // We can build the blob by iterating through everything, and writing a little endian f32
-        // at each address (which ends up being 4*index since each f32 is 4 bytes).a
+        // at each address (which ends up being 4*index since each f32 is 4 bytes).
 
-        let mut buf = RestoreBlob(Vec::with_capacity(8192));
-        buf.0.resize(8192, 0);
+        let mut buf = RestoreBlob(Vec::with_capacity(65536));
+        // buf.0.resize(65536, 0);
 
         for item in &self.items {
             match item {
@@ -79,7 +79,17 @@ impl Setting {
             AddressableElement::Item { addr, .. } => addr,
             AddressableElement::Fir { addr, .. } => addr,
             AddressableElement::Filter { addr, .. } => addr,
-        })
+        });
+
+        // Sort FIR rows so we send them in the right order
+        for item in self.items.iter_mut() {
+            if let AddressableElement::Fir { para, .. } = item {
+                if para.is_empty() {
+                    continue;
+                }
+                para[0].subpara.sort_unstable_by_key(|sp| sp.row);
+            }
+        }
     }
 }
 
@@ -89,7 +99,7 @@ impl RestoreBlob {
         // Make sure the blob is big enough to hold the given address
         let (start, end) = (at * 4, at * 4 + x.len());
         self.ensure_size(end);
-        // Reverse the iterator because the config stores hex data in the opposite endiannesss
+        // Reverse the iterator because the config stores hex data in the opposite endianness
         let splice = self.0.splice(start..end, x.iter().rev().cloned());
         debug_assert!(splice.count() == x.len());
     }
@@ -251,17 +261,18 @@ impl Display for HexString {
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
-    fn test_deserialize() {
-        let file = include_str!("./test_fixtures/config.xml");
+    fn test_restore_blob() {
+        let file = include_str!("./test_fixtures/config1/config.xml");
         let s = Setting::from_str(file).unwrap();
         let cfg = s.to_restore_blob();
 
         // TODO: Gen this from the logged packets
-        let fixture = include_bytes!("./test_fixtures/config-bulk.bin");
+        let fixture = include_bytes!("./test_fixtures/config1/config-bulk.bin");
         assert_eq!(cfg.as_ref(), fixture);
     }
 

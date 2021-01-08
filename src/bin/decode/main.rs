@@ -77,8 +77,8 @@ async fn dump(
         })
         .filter_map(|x| async {
             match x {
-                Commands::MaybeBulkLoad { payload } => Some(Ok(payload.0)),
-                Commands::Write { .. } => Some(Err(std::io::ErrorKind::AddrInUse)),
+                Commands::BulkLoad { payload } => Some(Ok(payload.0)),
+                Commands::Write { .. } => Some(Err(std::io::ErrorKind::UnexpectedEof)),
                 _ => None,
             }
         });
