@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{self as clap, Clap};
 use futures::{Stream, StreamExt};
+use minidsp::transport::MiniDSPError;
 use minidsp::utils::recorder::Message;
 use minidsp::{
     commands::Commands,
@@ -67,14 +68,7 @@ async fn dump(
 ) -> Result<()> {
     // Only keep bulk load commands
     let f = framed
-        .filter_map(|x| async {
-            if let Message::Sent(data) = x {
-                let data = packet::unframe(data).ok()?;
-                Some(Commands::from_bytes(data).ok()?)
-            } else {
-                None
-            }
-        })
+        .filter_map(recorder::decode_sent_commands)
         .filter_map(|x| async {
             match x {
                 Commands::BulkLoad { payload } => Some(Ok(payload.0)),

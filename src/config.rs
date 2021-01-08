@@ -264,16 +264,61 @@ impl Display for HexString {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{
+        commands::Commands,
+        transport::MiniDSPError,
+        utils::recorder::{self as recorder, Message},
+    };
+    use futures::{Stream, StreamExt};
+    use tokio::io::{AsyncRead, AsyncReadExt};
+    use tokio_util::io::StreamReader;
 
-    #[test]
-    fn test_restore_blob() {
-        let file = include_str!("./test_fixtures/config1/config.xml");
-        let s = Setting::from_str(file).unwrap();
-        let cfg = s.to_restore_blob();
+    /// Extracts a restore blob from a built-in recorded fixture
+    async fn extract_restore_blob(fixture: &'static [u8]) -> Bytes {
+        let stream = recorder::fixtures_reader(fixture)
+            .filter_map(recorder::decode_sent_commands)
+            .filter_map(|x| async {
+                match x {
+                    Commands::BulkLoad { payload } => Some(Ok::<Bytes, std::io::Error>(payload.0)),
+                    _ => None,
+                }
+            });
 
-        // TODO: Gen this from the logged packets
-        let fixture = include_bytes!("./test_fixtures/config1/config-bulk.bin");
-        assert_eq!(cfg.as_ref(), fixture);
+        let mut reader = Box::pin(StreamReader::new(stream));
+        let mut buffer = Vec::new();
+        let f = reader.read_to_end(&mut buffer).await.unwrap();
+
+        // Skip the 7 bytes header
+        Bytes::from(buffer).slice(7..)
+    }
+
+    #[tokio::test]
+    async fn test_restore_blob() {
+        struct Fixture {
+            xml: &'static str,
+            sync: &'static [u8],
+        }
+        let fixtures = &[
+            Fixture {
+                xml: include_str!("./test_fixtures/config1/config.xml"),
+                sync: include_bytes!("./test_fixtures/config1/sync.txt"),
+            },
+            Fixture {
+                xml: include_str!("./test_fixtures/config2/config.xml"),
+                sync: include_bytes!("./test_fixtures/config2/sync.txt"),
+            },
+            Fixture {
+                xml: include_str!("./test_fixtures/config3/config.xml"),
+                sync: include_bytes!("./test_fixtures/config3/sync.txt"),
+            },
+        ];
+
+        for fixture in fixtures.iter() {
+            let s = Setting::from_str(fixture.xml).unwrap();
+            let cfg = s.to_restore_blob();
+            let fixture = extract_restore_blob(fixture.sync).await;
+            assert_eq!(cfg.as_ref(), fixture);
+        }
     }
 
     #[test]
