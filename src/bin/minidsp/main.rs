@@ -324,8 +324,15 @@ async fn main() -> Result<()> {
             let words = shellwords::split(cmd)?;
             let prefix = &["minidsp".to_string()];
             let words = prefix.iter().chain(words.iter());
-            let opts = Opts::parse_from(words);
-            println!("Run: {:?}", opts);
+            let opts = Opts::try_parse_from(words);
+            let opts = match opts {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("While executing: {}\n{}", cmd, e);
+                    return Err(anyhow!("Command failure"));
+                }
+            };
+
             handlers::run_command(&device, opts.subcmd).await?;
         }
     } else {
