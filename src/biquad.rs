@@ -9,3 +9,22 @@ pub struct Biquad {
     pub a1: f32,
     pub a2: f32,
 }
+
+impl Biquad {
+    pub fn to_array(&self) -> [f32; 5] {
+        [self.b0, self.b1, self.b2, self.a1, self.a2]
+    }
+}
+
+impl Default for Biquad {
+    fn default() -> Self {
+        Biquad {
+            index: 1,
+            b0: 1.,
+            b1: 0.,
+            b2: 0.,
+            a1: 0.,
+            a2: 0.,
+        }
+    }
+}

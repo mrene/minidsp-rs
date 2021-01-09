@@ -1,7 +1,7 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::debug::run_debug;
+use crate::{debug::run_debug, PEQTarget};
 use crate::{PEQCommand, RoutingCommand, SubCommand};
-use minidsp::{BiquadFilter, Channel};
+use minidsp::{rew::FromRew, Biquad, BiquadFilter, Channel};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -48,7 +48,19 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         // Handled earlier
         Some(SubCommand::Probe) => return Ok(()),
         Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
-        None => {}
+        None => {
+            // Always output the current master status and input/output levels
+            let master_status = device.get_master_status().await?;
+            println!("{:?}", master_status);
+
+            let input_levels = device.get_input_levels().await?;
+            let strs: Vec<String> = input_levels.iter().map(|x| format!("{:.1}", *x)).collect();
+            println!("Input levels: {}", strs.join(", "));
+
+            let output_levels = device.get_output_levels().await?;
+            let strs: Vec<String> = output_levels.iter().map(|x| format!("{:.1}", *x)).collect();
+            println!("Output levels: {}", strs.join(", "));
+        }
     };
 
     Ok(())
@@ -70,7 +82,13 @@ pub(crate) async fn run_input(
             Enable { value } => input.set_output_enable(output_index, value).await?,
             RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
         },
-        PEQ { index, cmd } => run_peq(input.peq(index), cmd).await?,
+        PEQ { index, cmd } => match index {
+            PEQTarget::One(index) => run_peq(&[input.peq(index)], cmd).await?,
+            PEQTarget::All => {
+                let eqs = input.peqs_all();
+                run_peq(eqs.as_ref(), cmd).await?
+            }
+        },
     }
     Ok(())
 }
@@ -91,19 +109,58 @@ pub(crate) async fn run_output(
             output.set_delay(delay).await?
         }
         Invert { value } => output.set_invert(value).await?,
-        PEQ { index, cmd } => run_peq(output.peq(index), cmd).await?,
+        OutputCommand::PEQ { index, cmd } => match index {
+            PEQTarget::One(index) => run_peq(&[output.peq(index)], cmd).await?,
+            PEQTarget::All => {
+                let eqs = output.peqs_all();
+                run_peq(eqs.as_ref(), cmd).await?
+            }
+        },
     }
     Ok(())
 }
 
-pub(crate) async fn run_peq(peq: BiquadFilter<'_>, cmd: PEQCommand) -> Result<()> {
+pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: PEQCommand) -> Result<()> {
     use PEQCommand::*;
 
     match cmd {
         Set { coeff } => {
-            peq.set_coefficients(&coeff).await?;
+            if peqs.len() > 1 {
+                eprintln!("Warning: Setting the same coefficients on all PEQs, did you mean `peq [n] set` instead?")
+            }
+            for peq in peqs {
+                peq.set_coefficients(&coeff).await?;
+            }
         }
-        Bypass { value } => peq.set_bypass(value).await?,
+        Bypass { value } => {
+            for peq in peqs {
+                peq.set_bypass(value).await?;
+            }
+        }
+        Clear => {
+            for peq in peqs {
+                peq.clear().await?;
+                peq.set_bypass(false).await?;
+            }
+        }
+        Import { filename } => {
+            let file = std::fs::read_to_string(filename)?;
+            let mut lines = file.lines();
+            for (i, peq) in peqs.iter().enumerate() {
+                if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
+                    peq.set_coefficients(biquad.to_array().as_ref()).await?;
+                    println!("PEQ {}: Applied imported filter: biquad{}", i, biquad.index);
+                } else {
+                    println!("PEQ {}: Cleared filter", i);
+                    peq.clear().await?;
+                }
+                peq.set_bypass(false).await?;
+            }
+
+            if let Some(_) = Biquad::from_rew_lines(&mut lines) {
+                eprintln!("Warning: Some filters were not imported because they didn't fit (try using `all`)")
+            }
+        }
     }
     Ok(())
 }

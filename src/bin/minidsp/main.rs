@@ -10,7 +10,7 @@ use minidsp::{
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP,
 };
-use std::{num::ParseIntError, str::FromStr, sync::Arc};
+use std::{num::ParseIntError, path::PathBuf, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
 
 mod debug;
@@ -114,8 +114,8 @@ enum InputCommand {
 
     /// Control the parametric equalizer
     PEQ {
-        /// Parametric EQ index
-        index: usize,
+        /// Parametric EQ index (all | <id>) (0 to 9 inclusively)
+        index: PEQTarget,
 
         #[clap(subcommand)]
         cmd: PEQCommand,
@@ -164,12 +164,30 @@ enum OutputCommand {
 
     /// Control the parametric equalizer
     PEQ {
-        /// Parametric EQ index
-        index: usize,
+        /// Parametric EQ index (all | <id>) (0 to 9 inclusively)
+        index: PEQTarget,
 
         #[clap(subcommand)]
         cmd: PEQCommand,
     },
+}
+
+#[derive(Debug)]
+enum PEQTarget {
+    All,
+    One(usize),
+}
+
+impl FromStr for PEQTarget {
+    type Err = <usize as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.to_lowercase() == "all" {
+            Ok(PEQTarget::All)
+        } else {
+            Ok(PEQTarget::One(usize::from_str(s)?))
+        }
+    }
 }
 
 #[derive(Clap, Debug)]
@@ -184,6 +202,15 @@ enum PEQCommand {
     Bypass {
         #[clap(parse(try_from_str = on_or_off))]
         value: bool,
+    },
+
+    /// Sets all coefficients back to their default values and un-bypass them
+    Clear,
+
+    /// Imports the coefficients from the given file
+    Import {
+        /// Filename containing the coefficients in REW format
+        filename: PathBuf,
     },
 }
 
@@ -281,18 +308,6 @@ async fn main() -> Result<()> {
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
     handlers::run_command(&device, opts.subcmd).await?;
-
-    // Always output the current master status and input/output levels
-    let master_status = device.get_master_status().await?;
-    println!("{:?}", master_status);
-
-    let input_levels = device.get_input_levels().await?;
-    let strs: Vec<String> = input_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-    println!("Input levels: {}", strs.join(", "));
-
-    let output_levels = device.get_output_levels().await?;
-    let strs: Vec<String> = output_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-    println!("Output levels: {}", strs.join(", "));
 
     Ok(())
 }

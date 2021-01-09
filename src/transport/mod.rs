@@ -35,6 +35,9 @@ pub enum MiniDSPError {
     #[error("Parse error")]
     ParseError(#[from] commands::ParseError),
 
+    #[error("Malformed filter data")]
+    MalformedFilterData,
+
     #[error("Transport error")]
     TransportError(#[from] broadcast::error::RecvError),
 
