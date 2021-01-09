@@ -287,7 +287,6 @@ mod test {
         let mut buffer = Vec::new();
         reader.read_to_end(&mut buffer).await.unwrap();
 
-        // Skip the 7 bytes header
         Bytes::from(buffer)
     }
 
@@ -300,6 +299,7 @@ mod test {
             }
         })
         .await
+        // Skip the 7 bytes header
         .slice(7..)
     }
 
@@ -314,6 +314,7 @@ mod test {
             }
         })
         .await
+        // Skip the 4 bytes header
         .slice(4..)
     }
 
@@ -344,6 +345,7 @@ mod test {
             let blob = extract_restore_blob(fixture.sync).await;
             assert_eq!(cfg.as_ref(), blob);
             let _ = extract_filter_block(fixture.sync).await;
+            // TODO: Generate and test this block
         }
     }
 
