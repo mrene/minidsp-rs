@@ -6,7 +6,7 @@ version = "0.0.1-pre3"
 license = "MIT"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
-keywords = ["minidsp","audio","dsp"]
+keywords = ["minidsp", "audio", "dsp"]
 
 [dependencies]
 anyhow = "1.0.36"
@@ -26,6 +26,9 @@ hexplay = "0.2.1"
 enum-utils = "0.1.2"
 lazy_static = "1.4.0"
 atomic_refcell = "0.1.6"
+termcolor = "1.1.2"
+strong-xml = "0.6.0"
+
 
 [dependencies.hidapi]
 optional = true
@@ -46,7 +49,7 @@ default = ["hid"]
 hid = ["hidapi"]
 
 [target.arm-unknown-linux-gnueabihf]
-linker="gcc-sysroot"
+linker = "gcc-sysroot"
 
 [profile.release]
 lto = true

@@ -37,35 +37,34 @@
 //!
 //! ```   
 
-pub use crate::commands::Gain;
-use crate::commands::{
-    roundtrip, FromMemory, MasterStatus, ReadFloats, ReadMemory, SetConfig, SetMute, SetSource,
-    SetVolume, UnaryCommand, WriteBiquad, WriteBiquadBypass, WriteFloat, WriteInt,
-};
+use std::sync::Arc;
+use std::{cell::Cell, convert::TryInto};
+
+use anyhow::anyhow;
 use async_trait::async_trait;
-use commands::ReadHardwareId;
+use tokio::sync::Mutex;
+use tokio::time::Duration;
+
+use commands::{read_floats, read_memory};
+pub use source::Source;
+use transport::Transport;
+
+pub use crate::commands::Gain;
+use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Value};
+use crate::device::{Gate, PEQ};
+use crate::transport::MiniDSPError;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
-use std::{cell::Cell, convert::TryInto};
-
 pub mod commands;
+pub mod config;
 pub mod device;
 pub mod discovery;
-pub mod lease;
 pub mod packet;
 pub mod server;
 pub mod source;
 pub mod transport;
-
-use crate::device::{Gate, PEQ};
-use crate::transport::MiniDSPError;
-use anyhow::anyhow;
-pub use source::Source;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::Duration;
-use transport::Transport;
+pub mod utils;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -86,41 +85,51 @@ impl<'a> MiniDSP<'a> {
 }
 
 impl MiniDSP<'_> {
-    async fn roundtrip<C>(&self, cmd: C) -> Result<C::Response, MiniDSPError>
-    where
-        C: UnaryCommand,
-    {
-        roundtrip(self.transport.as_ref(), cmd).await
+    async fn roundtrip_expect(
+        &self,
+        cmd: commands::Commands,
+        expect: u8,
+    ) -> Result<commands::Responses, MiniDSPError> {
+        roundtrip(self.transport.as_ref(), cmd, Some(expect)).await
+    }
+
+    async fn roundtrip(
+        &self,
+        cmd: commands::Commands,
+    ) -> Result<commands::Responses, MiniDSPError> {
+        roundtrip(self.transport.as_ref(), cmd, None).await
     }
 
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
-        let memory = self.roundtrip(ReadMemory::new(0xffd8, 4)).await?;
+        let memory = read_memory(self.transport.as_ref(), 0xffd8, 8).await?;
         Ok(MasterStatus::from_memory(&device_info, &memory)
             .map_err(|_| MiniDSPError::MalformedResponse)?)
     }
 
     /// Gets the current input levels
     pub async fn get_input_levels(&self) -> Result<Vec<f32>> {
-        let view = self.roundtrip(ReadFloats::new(0x0044, 2)).await?;
-        Ok(view.data)
+        Ok(read_floats(self.transport.as_ref(), 0x0044, 2).await?.data)
     }
 
     /// Gets the current output levels
     pub async fn get_output_levels(&self) -> Result<Vec<f32>> {
-        let view = self.roundtrip(ReadFloats::new(0x004a, 4)).await?;
-        Ok(view.data)
+        Ok(read_floats(self.transport.as_ref(), 0x004a, 4).await?.data)
     }
 
     /// Sets the current master volume
     pub async fn set_master_volume(&self, value: Gain) -> Result<()> {
-        self.roundtrip(SetVolume::new(value)).await
+        self.roundtrip(Commands::SetVolume { value })
+            .await?
+            .into_ack()
     }
 
     /// Sets the current master mute status
     pub async fn set_master_mute(&self, value: bool) -> Result<()> {
-        self.roundtrip(SetMute::new(value)).await
+        self.roundtrip(Commands::SetMute { value })
+            .await?
+            .into_ack()
     }
 
     /// Sets the current input source
@@ -129,13 +138,21 @@ impl MiniDSP<'_> {
         let device_info = self.get_device_info().await?;
         let source: Source = Source::from_str(source).map_err(|_| MiniDSPError::InvalidSource)?;
 
-        self.roundtrip(SetSource::new(source.to_id(&device_info)))
-            .await
+        self.roundtrip(Commands::SetSource {
+            source: source.to_id(&device_info),
+        })
+        .await?
+        .into_ack()
     }
 
     /// Sets the active configuration
-    pub async fn set_config(&self, index: u8) -> Result<()> {
-        self.roundtrip(SetConfig::new(index)).await
+    pub async fn set_config(&self, config: u8) -> Result<()> {
+        self.roundtrip(Commands::SetConfig {
+            config,
+            reset: true,
+        })
+        .await?;
+        Ok(())
     }
 
     /// Gets an object wrapping an input channel
@@ -161,10 +178,15 @@ impl MiniDSP<'_> {
             return Ok(info);
         }
 
-        let hardware_id = self.roundtrip(ReadHardwareId {}).await?;
-        let view = self.roundtrip(ReadMemory::new(0xffa1, 1)).await?;
+        let hw_id = self
+            .roundtrip_expect(Commands::ReadHardwareId, 0x31)
+            .await?
+            .into_hardware_id()?;
+
+        let view = read_memory(self.transport.as_ref(), 0xffa1, 1).await?;
+
         let info = DeviceInfo {
-            hw_id: hardware_id[3],
+            hw_id,
             dsp_version: view.read_u8(0xffa1),
         };
         self_device_info.set(Some(info));
@@ -188,13 +210,20 @@ pub trait Channel {
     /// Sets the current mute setting
     async fn set_mute(&self, value: bool) -> Result<()> {
         let (dsp, gate, _) = self._channel();
-        dsp.roundtrip(WriteInt::mute(gate.enable, value)).await
+        dsp.roundtrip(Commands::mute(gate.enable, value))
+            .await?
+            .into_ack()
     }
 
     /// Sets the current gain setting
     async fn set_gain(&self, value: Gain) -> Result<()> {
         let (dsp, gate, _) = self._channel();
-        dsp.roundtrip(WriteFloat::new(gate.gain, value.0)).await
+        dsp.roundtrip(Commands::Write {
+            addr: gate.gain,
+            value: Value::Float(value.0),
+        })
+        .await?
+        .into_ack()
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
@@ -214,21 +243,23 @@ impl<'a> Input<'a> {
     /// Sets whether this input is routed to the given output
     pub async fn set_output_enable(&self, output_index: usize, value: bool) -> Result<()> {
         self.dsp
-            .roundtrip(WriteInt::mute(
+            .roundtrip(Commands::mute(
                 self.spec.routing[output_index].enable,
                 value,
             ))
-            .await
+            .await?
+            .into_ack()
     }
 
     /// Sets the routing matrix gain for this [input, output_index] pair
     pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
         self.dsp
-            .roundtrip(WriteFloat::new(
-                self.spec.routing[output_index].gain,
-                gain.0,
-            ))
-            .await
+            .roundtrip(Commands::Write {
+                addr: self.spec.routing[output_index].gain,
+                value: Value::Float(gain.0),
+            })
+            .await?
+            .into_ack()
     }
 }
 
@@ -248,8 +279,12 @@ impl<'a> Output<'a> {
     /// Sets the output mute setting for this channel
     pub async fn set_invert(&self, value: bool) -> Result<()> {
         self.dsp
-            .roundtrip(WriteInt::new(self.spec.invert_addr, value as u8))
-            .await
+            .roundtrip(Commands::Write {
+                addr: self.spec.invert_addr,
+                value: Value::Int(value as u16),
+            })
+            .await?;
+        Ok(())
     }
 
     /// Sets the output gain setting
@@ -264,11 +299,15 @@ impl<'a> Output<'a> {
                 value
             )));
         }
-        let value = value as u8;
+        let value = value as u16;
 
         self.dsp
-            .roundtrip(WriteInt::new(self.spec.delay_addr, value))
-            .await
+            .roundtrip(Commands::Write {
+                addr: self.spec.delay_addr,
+                value: Value::Int(value),
+            })
+            .await?
+            .into_ack()
     }
 }
 
@@ -298,17 +337,22 @@ impl<'a> BiquadFilter<'a> {
         }
 
         self.dsp
-            .roundtrip(WriteBiquad::new(
-                self.addr,
-                coefficients.try_into().unwrap(),
-            ))
-            .await
+            .roundtrip(Commands::WriteBiquad {
+                addr: self.addr,
+                data: coefficients.try_into().unwrap(),
+            })
+            .await?
+            .into_ack()
     }
 
     /// Sets whether this filter is bypassed
     pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
         self.dsp
-            .roundtrip(WriteBiquadBypass::new(self.addr, bypass))
-            .await
+            .roundtrip(Commands::WriteBiquadBypass {
+                addr: self.addr,
+                value: bypass,
+            })
+            .await?
+            .into_ack()
     }
 }

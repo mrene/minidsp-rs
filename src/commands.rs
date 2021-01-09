@@ -14,20 +14,491 @@ use crate::{
 };
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use std::convert::TryInto;
-use std::str::FromStr;
+use std::ops::Deref;
+use std::{convert::TryInto, fmt};
+use std::{fmt::Debug, str::FromStr};
 use thiserror::Error;
 
-/// Trait representing a command that has a bytes representation and a parsed response.
-pub trait UnaryCommand {
-    type Response: UnaryResponse;
+#[derive(Error, Debug)]
+pub enum ParseError {
+    #[error("bad cmd id")]
+    BadCommandId,
+}
 
-    fn request_packet(&self) -> Bytes;
-    fn response_matches(&self, _packet: &[u8]) -> bool {
-        true
+#[derive(Clone)]
+pub struct BytesWrap(pub Bytes);
+impl fmt::Debug for BytesWrap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self.0.as_ref(), f)
     }
-    fn parse_response(&self, packet: Bytes) -> Self::Response {
-        Self::Response::from_packet(packet)
+}
+impl Deref for BytesWrap {
+    type Target = Bytes;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Clone)]
+pub enum Value {
+    Unknown(Bytes),
+    Float(f32),
+    Int(u16),
+}
+
+impl Value {
+    pub fn into_bytes(self) -> Bytes {
+        match self {
+            Value::Unknown(b) => b,
+            Value::Float(f) => Bytes::copy_from_slice(&f.to_le_bytes()),
+            Value::Int(i) => {
+                let mut b = BytesMut::with_capacity(4);
+                b.put_u16_le(i);
+                b.put_u16(0x00);
+                b.freeze()
+            }
+        }
+    }
+
+    pub fn from_bytes(mut b: Bytes) -> Self {
+        if b.len() < 4 {
+            Value::Unknown(b)
+        } else if (b[0] != 0 || b[1] != 0) && (b[2] == 0 && b[3] == 0) {
+            Value::Int(b.get_u16_le())
+        } else {
+            Value::Float(b.get_f32_le())
+        }
+    }
+}
+
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let b = self.clone().into_bytes();
+        match self {
+            Value::Unknown(u) => {
+                let float = b.clone().get_f32_le();
+                let i = b[0];
+                write!(
+                    f,
+                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?}) }}",
+                    u.as_ref(),
+                    i,
+                    float
+                )
+            }
+            Value::Float(val) => {
+                write!(
+                    f,
+                    "Value {{ Float: {:?} (Bytes: {:x?}) }}",
+                    *val,
+                    b.as_ref()
+                )
+            }
+            Value::Int(val) => {
+                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", *val, b.as_ref())
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Commands {
+    /// 0x31: Read hardware id
+    ReadHardwareId,
+
+    /// 0x14: Reads float data from a given base address. Max length is 14
+    ReadFloats {
+        addr: u16,
+        len: u8,
+    },
+
+    /// 0x04: Writes byte data to the given address
+    WriteMemory {
+        addr: u16,
+        data: BytesWrap,
+    },
+
+    /// 0x05: Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
+    ReadMemory {
+        addr: u16,
+        size: u8,
+    },
+
+    /// 0x25: Sets the current configuration
+    SetConfig {
+        config: u8,
+        reset: bool,
+    },
+
+    /// 0x34: Unary command to set the current source
+    SetSource {
+        source: u8,
+    },
+
+    /// 0x17 Unary command to set the master mute setting
+    SetMute {
+        value: bool,
+    },
+
+    /// 0x42: Set master volume
+    SetVolume {
+        value: Gain,
+    },
+
+    /// 0x30: Write biquad data
+    WriteBiquad {
+        addr: u16,
+        data: [f32; 5],
+    },
+
+    /// 0x19: Toggle biquad filter bypass
+    WriteBiquadBypass {
+        addr: u16,
+        value: bool,
+    },
+
+    /// 0x13: Write dsp data
+    Write {
+        addr: u16,
+        value: Value,
+    },
+
+    /// 0x39: Start FIR load
+    FirLoadStart {
+        index: u8,
+    },
+
+    /// 0x3a: FIR Data
+    FirLoadData {
+        index: u8,
+        data: Vec<f32>, // Max 15 floats
+    },
+
+    /// 0x3b: FIR Data Completed
+    FirLoadEnd,
+
+    // Speculative commands
+    /// 0x12: Seen when restoring a configuration
+    BulkLoad {
+        // Initial payload:
+        // 04 88 97 13 0f 00 00
+        // 04: 4 | (Addr&0x0F0000 >> 12)
+        // 88: (Addr&0xFF00 >> 8)
+        // 97: (Addr&0xFF)
+        // 13: constant
+        // 0f: constant
+        // 00: constant
+        // 00: constant
+        payload: BytesWrap,
+    },
+
+    /// 0x06: Seen after 0x12 in configuration restore
+    BulkLoadFilterData {
+        // Initial packet:
+        // 02 05 (addr+3 u16)
+        payload: BytesWrap,
+    },
+
+    Unknown {
+        cmd_id: u8,
+        payload: BytesWrap,
+    },
+}
+
+impl Commands {
+    pub fn from_bytes(mut frame: Bytes) -> Result<Commands, ParseError> {
+        Ok(match frame.get_u8() {
+            0x04 => Commands::WriteMemory {
+                addr: frame.get_u16(),
+                data: BytesWrap(frame),
+            },
+            0x05 => Commands::ReadMemory {
+                addr: frame.get_u16(),
+                size: frame.get_u8(),
+            },
+            0x06 => Commands::BulkLoadFilterData {
+                payload: BytesWrap(frame),
+            },
+            0x12 => Commands::BulkLoad {
+                payload: BytesWrap(frame),
+            },
+            0x13 => {
+                frame.get_u8(); // discard 0x80
+                Commands::Write {
+                    addr: frame.get_u16(),
+                    value: Value::from_bytes(frame),
+                }
+            }
+            0x14 => Commands::ReadFloats {
+                addr: frame.get_u16(),
+                len: frame.get_u8(),
+            },
+            0x17 => Commands::SetMute {
+                value: frame.get_u8() != 0,
+            },
+            0x19 => Commands::WriteBiquadBypass {
+                value: frame.get_u8() == 0x80,
+                addr: frame.get_u16(),
+            },
+            0x25 => Commands::SetConfig {
+                config: frame.get_u8(),
+                reset: frame.get_u8() != 0,
+            },
+            0x31 => Commands::ReadHardwareId {},
+            0x30 => Commands::WriteBiquad {
+                addr: {
+                    frame.get_u8(); // discard 0x80
+                    frame.get_u16()
+                },
+                data: {
+                    frame.get_u16(); // discard 0x0000;
+                    let mut data: [f32; 5] = Default::default();
+                    for f in data.iter_mut() {
+                        *f = frame.get_f32_le();
+                    }
+                    data
+                },
+            },
+            0x34 => Commands::SetSource {
+                source: frame.get_u8(),
+            },
+            0x39 => Commands::FirLoadStart {
+                index: frame.get_u8(),
+            },
+            0x3a => Commands::FirLoadData {
+                index: frame.get_u8(),
+                data: {
+                    let mut data = Vec::with_capacity(15);
+                    while frame.len() > 4 {
+                        data.push(frame.get_f32_le());
+                    }
+                    data
+                },
+            },
+            0x3b => Commands::FirLoadEnd,
+            0x42 => Commands::SetVolume {
+                value: frame.get_u8().into(),
+            },
+            cmd_id => Commands::Unknown {
+                cmd_id,
+                payload: BytesWrap(frame),
+            },
+        })
+    }
+
+    pub fn to_bytes(&self) -> Bytes {
+        let mut f = BytesMut::with_capacity(64);
+
+        match self {
+            Commands::ReadHardwareId => {
+                f.put_u8(0x31);
+            }
+            Commands::ReadFloats { addr, len } => {
+                f.put_u8(0x14);
+                f.put_u16(*addr);
+                f.put_u8(*len);
+            }
+            Commands::ReadMemory { addr, size } => {
+                f.put_u8(0x05);
+                f.put_u16(*addr);
+                f.put_u8(*size);
+            }
+            Commands::WriteMemory { addr, data } => {
+                f.put_u8(0x04);
+                f.put_u16(*addr);
+                f.put(data.0.clone());
+            }
+            Commands::SetConfig { config, reset } => {
+                f.put_u8(0x25);
+                f.put_u8(*config);
+                f.put_u8(*reset as u8);
+            }
+            Commands::SetSource { source } => {
+                f.put_u8(0x34);
+                f.put_u8(*source);
+            }
+            Commands::SetMute { value } => {
+                f.put_u8(0x17);
+                f.put_u8(*value as u8);
+            }
+            Commands::SetVolume { value } => {
+                f.put_u8(0x42);
+                f.put_u8((*value).into());
+            }
+            Commands::WriteBiquad { addr, data } => {
+                f.put_u16(0x3080);
+                f.put_u16(*addr);
+                f.put_u16(0x0000);
+                for coeff in data.iter() {
+                    f.put_f32_le(*coeff);
+                }
+            }
+            Commands::WriteBiquadBypass { addr, value } => {
+                f.put_u8(0x19);
+                f.put_u8(if *value { 0x80 } else { 0x00 });
+                f.put_u16(*addr);
+            }
+            Commands::Write { addr, value } => {
+                f.put_u16(0x1380);
+                f.put_u16(*addr);
+                f.put(value.clone().into_bytes());
+            }
+
+            Commands::FirLoadStart { index } => {
+                f.put_u8(0x39);
+                f.put_u8(*index);
+            }
+            Commands::FirLoadData { index, data } => {
+                f.put_u8(0x3a);
+                f.put_u8(*index);
+                for coeff in data {
+                    f.put_f32_le(*coeff);
+                }
+            }
+            Commands::FirLoadEnd => {
+                f.put_u8(0x3b);
+            }
+            Commands::BulkLoad { payload } => {
+                f.put_u8(0x12);
+                f.put(payload.0.clone());
+            }
+            Commands::BulkLoadFilterData { payload } => {
+                f.put_u8(0x06);
+                f.put(payload.0.clone());
+            }
+            Commands::Unknown { cmd_id, payload } => {
+                f.put_u8(*cmd_id);
+                f.put(payload.0.clone());
+            }
+        }
+        f.freeze()
+    }
+
+    pub fn mute(addr: u16, value: bool) -> Self {
+        let value: u16 = if value {
+            WriteInt::DISABLED
+        } else {
+            WriteInt::ENABLED
+        };
+
+        Commands::Write {
+            addr,
+            value: Value::Int(value),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Responses {
+    Ack,
+    MemoryData(MemoryView),
+    FloatData(FloatView),
+    HardwareId {
+        payload: BytesWrap,
+    },
+    FirLoadSize {
+        size: u16,
+    },
+
+    /// Speculative commands
+    MaybeConfigChanged,
+
+    Unknown {
+        cmd_id: u8,
+        payload: BytesWrap,
+    },
+}
+
+impl Responses {
+    pub fn from_bytes(mut frame: Bytes) -> Result<Responses, ParseError> {
+        if frame.is_empty() {
+            return Ok(Responses::Ack);
+        }
+
+        Ok(match frame[0] {
+            0x05 => Responses::MemoryData(MemoryView::from_packet(frame)),
+            0x14 => Responses::FloatData(FloatView::from_packet(frame)),
+            0x31 => Responses::HardwareId {
+                payload: {
+                    frame.get_u8();
+                    BytesWrap(frame)
+                },
+            },
+            0x39 => Responses::FirLoadSize {
+                size: {
+                    frame.get_u8(); // Consume command id
+                    frame.get_u16()
+                },
+            },
+            0xab => Responses::MaybeConfigChanged,
+            cmd_id => Responses::Unknown {
+                cmd_id,
+                payload: BytesWrap(frame),
+            },
+        })
+    }
+
+    pub fn to_bytes(&self) -> Bytes {
+        let mut f = BytesMut::with_capacity(64);
+        match self {
+            Responses::Ack => {}
+            Responses::MemoryData(data) => {
+                f.put_u8(0x05);
+                f.put_u16(data.base);
+                f.put(data.data.clone());
+            }
+            Responses::FloatData(data) => {
+                f.put_u8(0x05);
+                f.put_u16(data.base);
+
+                for item in &data.data {
+                    f.put_f32_le(*item);
+                }
+            }
+            Responses::Unknown { cmd_id, payload } => {
+                f.put_u8(*cmd_id);
+                f.put(payload.0.clone());
+            }
+            Responses::HardwareId { payload } => {
+                f.put_u8(0x31);
+                f.put(payload.0.clone());
+            }
+            Responses::FirLoadSize { size } => {
+                f.put_u8(0x39);
+                f.put_u16(*size);
+            }
+            Responses::MaybeConfigChanged => {}
+        }
+        f.freeze()
+    }
+
+    pub fn into_memory_view(self) -> Result<MemoryView, MiniDSPError> {
+        match self {
+            Responses::MemoryData(m) => Ok(m),
+            _ => Err(MiniDSPError::MalformedResponse),
+        }
+    }
+
+    pub fn into_float_view(self) -> Result<FloatView, MiniDSPError> {
+        match self {
+            Responses::FloatData(m) => Ok(m),
+            _ => Err(MiniDSPError::MalformedResponse),
+        }
+    }
+
+    pub fn into_hardware_id(self) -> Result<u8, MiniDSPError> {
+        match self {
+            Responses::HardwareId { payload } => Ok(payload[2]),
+            _ => Err(MiniDSPError::MalformedResponse),
+        }
+    }
+
+    pub fn into_ack(self) -> Result<(), MiniDSPError> {
+        match self {
+            Responses::Ack => Ok(()),
+            _ => Err(MiniDSPError::MalformedResponse),
+        }
     }
 }
 
@@ -49,28 +520,29 @@ impl UnaryResponse for Bytes {
 /// Acquire an exclusive lock to the transport,
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)
-pub async fn roundtrip<C>(
+pub async fn roundtrip(
     transport: &dyn Transport,
-    command: C,
-) -> Result<C::Response, MiniDSPError>
-where
-    C: UnaryCommand,
-{
-    let mut receiver = transport.subscribe();
+    command: Commands,
+    expect: Option<u8>,
+) -> Result<Responses, MiniDSPError> {
+    let mut receiver = transport.subscribe()?;
     let mut sender = transport.send_lock().await;
 
-    sender.send(packet::frame(command.request_packet())).await?;
+    sender.send(packet::frame(command.to_bytes())).await?;
 
-    while let Ok(frame) = receiver.recv().await {
-        if let Ok(p) = packet::unframe(frame) {
-            if command.response_matches(&p) {
-                return Ok(command.parse_response(p));
+    loop {
+        let frame = receiver.recv().await?;
+        let packet = packet::unframe(frame)?;
+        let response = Responses::from_bytes(packet.clone())?;
+
+        if let Some(expected) = expect {
+            if expected != packet[0] {
+                continue;
             }
         }
-    }
 
-    // TODO: Handle other error cases
-    Err(MiniDSPError::MalformedResponse)
+        return Ok(response);
+    }
 }
 
 /// Types that can be read from a contiguous memory representation
@@ -79,6 +551,27 @@ where
     Self: Sized,
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
+}
+
+/// Wrapper for common commands
+pub async fn read_memory(
+    transport: &dyn Transport,
+    addr: u16,
+    size: u8,
+) -> Result<MemoryView, MiniDSPError> {
+    roundtrip(transport, Commands::ReadMemory { addr, size }, Some(0x05))
+        .await?
+        .into_memory_view()
+}
+
+pub async fn read_floats(
+    transport: &dyn Transport,
+    addr: u16,
+    len: u8,
+) -> Result<FloatView, MiniDSPError> {
+    roundtrip(transport, Commands::ReadFloats { addr, len }, Some(0x14))
+        .await?
+        .into_float_view()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -111,7 +604,7 @@ where
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 /// A gain between the minimum and maximum allowed values
 pub struct Gain(pub f32);
 
@@ -139,176 +632,6 @@ impl FromStr for Gain {
         Ok(Gain(<f32 as FromStr>::from_str(s)?))
     }
 }
-
-/// 0x42: Unary command to set the master volume
-pub struct SetVolume {
-    pub value: Gain,
-}
-
-impl SetVolume {
-    pub fn new(value: Gain) -> Self {
-        Self { value }
-    }
-}
-
-impl UnaryCommand for SetVolume {
-    type Response = ();
-    fn request_packet(&self) -> Bytes {
-        Bytes::from(vec![0x42, self.value.into()])
-    }
-}
-
-/// 0x17 Unary command to set the master mute setting
-pub struct SetMute {
-    pub value: bool,
-}
-
-impl SetMute {
-    pub fn new(value: bool) -> Self {
-        SetMute { value }
-    }
-}
-
-impl UnaryCommand for SetMute {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        Bytes::from(vec![0x17, self.value as u8])
-    }
-}
-
-/// 0x25: Sets the current configuration
-pub struct SetConfig {
-    config: u8,
-    reset: bool,
-}
-
-impl SetConfig {
-    pub fn new(config: u8) -> Self {
-        SetConfig {
-            config,
-            reset: true,
-        }
-    }
-}
-
-impl UnaryCommand for SetConfig {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        Bytes::from(vec![0x25, self.config, self.reset as u8])
-    }
-}
-
-/// 0x34: Unary command to set the current source
-pub struct SetSource {
-    source: u8,
-}
-
-impl SetSource {
-    pub fn new(source: u8) -> Self {
-        Self { source }
-    }
-}
-
-impl UnaryCommand for SetSource {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        Bytes::from(vec![0x34, self.source])
-    }
-}
-
-/// Custom unary command used for sending custom commmands for debugging purposes
-pub struct CustomUnaryCommand {
-    request: Bytes,
-}
-
-impl CustomUnaryCommand {
-    pub fn new(request: Bytes) -> Self {
-        CustomUnaryCommand { request }
-    }
-}
-
-impl UnaryCommand for CustomUnaryCommand {
-    type Response = Bytes;
-
-    fn request_packet(&self) -> Bytes {
-        self.request.clone()
-    }
-}
-
-/// 0x05: Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
-pub struct ReadMemory {
-    pub addr: u16,
-    pub size: u8,
-}
-
-impl ReadMemory {
-    pub fn new(addr: u16, size: u8) -> Self {
-        ReadMemory { addr, size }
-    }
-}
-
-impl UnaryCommand for ReadMemory {
-    type Response = MemoryView;
-
-    fn request_packet(&self) -> Bytes {
-        let mut cmd = BytesMut::with_capacity(4);
-        cmd.put_u8(0x05);
-        cmd.put_u16(self.addr);
-        cmd.put_u8(self.size + 1); // we loose 1 byte when decoding
-        cmd.freeze()
-    }
-
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        if !packet.starts_with(&[0x05]) {
-            return false;
-        }
-
-        let mut b = Bytes::copy_from_slice(packet);
-        b.get_u8();
-        self.addr == b.get_u16()
-    }
-}
-
-/// 0x14: Reads float data from a given base address. Max length is 14
-pub struct ReadFloats {
-    pub addr: u16,
-    pub len: u8,
-}
-
-impl ReadFloats {
-    pub fn new(addr: u16, len: u8) -> Self {
-        if len > 14 {
-            panic!("length too big")
-        }
-        ReadFloats { addr, len }
-    }
-}
-
-impl UnaryCommand for ReadFloats {
-    type Response = FloatView;
-
-    fn request_packet(&self) -> Bytes {
-        let mut cmd = BytesMut::with_capacity(4);
-        cmd.put_u8(0x14);
-        cmd.put_u16(self.addr);
-        cmd.put_u8(self.len);
-        cmd.freeze()
-    }
-
-    fn response_matches(&self, packet: &[u8]) -> bool {
-        if !packet.starts_with(&[0x14]) {
-            return false;
-        }
-
-        let mut b = Bytes::copy_from_slice(packet);
-        b.get_u8();
-        self.addr == b.get_u16() && self.len == ((b.remaining() as u8) / 4)
-    }
-}
-
 /// Memory views can be extended with multiple contiguous reads
 pub trait ExtendView {
     fn extend_with(&mut self, other: Self) -> Result<(), ExtendError>;
@@ -321,6 +644,7 @@ pub enum ExtendError {
 }
 
 /// A contiguous view of floats read from the device
+#[derive(Debug, Clone, Default)]
 pub struct FloatView {
     pub base: u16,
     pub data: Vec<f32>,
@@ -361,6 +685,7 @@ impl UnaryResponse for FloatView {
 }
 
 /// A contiguous bytes view read from the device
+#[derive(Clone, Default)]
 pub struct MemoryView {
     pub base: u16,
     pub data: Bytes,
@@ -388,9 +713,18 @@ impl UnaryResponse for MemoryView {
         packet.get_u8(); // Discard command id 0x5
         let base = packet.get_u16();
 
-        // Last byte seems to be a counter of some sort.
-        packet.truncate(packet.len() - 1);
         MemoryView { base, data: packet }
+    }
+}
+
+impl fmt::Debug for MemoryView {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "MemoryView {{ base: {:04x?}, data: {:02x?} }}",
+            self.base,
+            self.data.as_ref()
+        )
     }
 }
 
@@ -415,130 +749,14 @@ impl ExtendView for MemoryView {
     }
 }
 
-/// 0x13: Write float data
-pub struct WriteFloat {
-    pub addr: u16,
-    pub value: f32,
-}
-
-impl WriteFloat {
-    pub fn new(addr: u16, value: f32) -> Self {
-        WriteFloat { addr, value }
-    }
-}
-
-impl UnaryCommand for WriteFloat {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        let mut b = BytesMut::with_capacity(8);
-        b.put_u8(0x13);
-        b.put_u8(0x80);
-        b.put_u16(self.addr);
-        b.put_f32_le(self.value);
-
-        b.freeze()
-    }
-}
-
 /// 0x13: Write an integer value
-pub struct WriteInt {
-    pub addr: u16,
-    pub value: u8,
-}
+#[derive(Debug, Clone, Default)]
+pub struct WriteInt;
 
 impl WriteInt {
-    pub const DISABLED: u8 = 1;
-    pub const ENABLED: u8 = 2;
-    pub const BYPASSED: u8 = 3;
-
-    pub fn new(addr: u16, value: u8) -> Self {
-        WriteInt { addr, value }
-    }
-
-    pub fn mute(addr: u16, value: bool) -> Self {
-        let value = if value {
-            WriteInt::DISABLED
-        } else {
-            WriteInt::ENABLED
-        };
-
-        WriteInt { addr, value }
-    }
-}
-
-impl UnaryCommand for WriteInt {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        let mut b = BytesMut::with_capacity(16);
-        b.put_slice(&[0x13, 0x80]);
-        b.put_u16(self.addr);
-        b.put_u8(self.value);
-        b.put_slice(&[0x00, 0x00, 0x00]);
-        b.freeze()
-    }
-}
-
-/// 0x30: Write biquad data
-pub struct WriteBiquad {
-    pub addr: u16,
-    pub data: [f32; 5],
-}
-
-impl WriteBiquad {
-    pub fn new(addr: u16, data: [f32; 5]) -> Self {
-        WriteBiquad { addr, data }
-    }
-}
-
-impl UnaryCommand for WriteBiquad {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        let mut b = BytesMut::with_capacity(64);
-        b.put_slice(&[0x30, 0x80]);
-        b.put_u16(self.addr);
-        b.put_u16(0x0000);
-        for f in self.data.iter() {
-            b.put_f32_le(*f);
-        }
-        b.freeze()
-    }
-}
-
-/// 0x19: Toggle biquad filter bypass
-pub struct WriteBiquadBypass {
-    pub addr: u16,
-    pub value: bool,
-}
-
-impl WriteBiquadBypass {
-    pub fn new(addr: u16, value: bool) -> Self {
-        WriteBiquadBypass { addr, value }
-    }
-}
-
-impl UnaryCommand for WriteBiquadBypass {
-    type Response = ();
-
-    fn request_packet(&self) -> Bytes {
-        let mut p = BytesMut::with_capacity(16);
-        p.put_u8(0x19);
-        p.put_u8(if self.value { 0x80 } else { 0x00 });
-        p.put_u16(self.addr);
-        p.freeze()
-    }
-}
-
-/// 0x31: Read hardware id
-pub struct ReadHardwareId {}
-impl UnaryCommand for ReadHardwareId {
-    type Response = Bytes;
-
-    fn request_packet(&self) -> Bytes {
-        Bytes::from_static(&[0x31])
-    }
+    pub const DISABLED: u16 = 1;
+    pub const ENABLED: u16 = 2;
+    pub const BYPASSED: u16 = 3;
 }
 
 #[cfg(test)]
@@ -547,19 +765,22 @@ mod test {
 
     #[test]
     fn test_read_reg() {
-        let cmd = ReadMemory {
+        let cmd = Commands::ReadMemory {
             addr: 0xffda,
             size: 4,
         };
 
-        let mut req_packet = cmd.request_packet();
+        let mut req_packet = cmd.to_bytes();
         assert_eq!(req_packet.get_u8(), 0x05);
         assert_eq!(req_packet.get_u16(), 0xffda);
-        assert_eq!(req_packet.get_u8(), 5);
+        assert_eq!(req_packet.get_u8(), 4);
         assert_eq!(req_packet.remaining(), 0);
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xda, 0x1, 0x2, 0x3, 0x4, 0x0]);
-        let memory = cmd.parse_response(response);
+        let memory = Responses::from_bytes(response)
+            .unwrap()
+            .into_memory_view()
+            .unwrap();
         let data = memory.read_at(0xffda, 4);
 
         assert_eq!(data, &[0x1, 0x2, 0x3, 0x4]);
@@ -568,19 +789,22 @@ mod test {
 
     #[test]
     fn test_master_status() {
-        let cmd = ReadMemory {
+        let cmd = Commands::ReadMemory {
             addr: 0xffd8,
             size: 4,
         };
 
-        let mut req_packet = cmd.request_packet();
+        let mut req_packet = cmd.to_bytes();
         assert_eq!(req_packet.get_u8(), 0x05);
         assert_eq!(req_packet.get_u16(), 0xffd8);
-        assert_eq!(req_packet.get_u8(), 5);
+        assert_eq!(req_packet.get_u8(), 4);
         assert_eq!(req_packet.remaining(), 0);
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
-        let memory = cmd.parse_response(response);
+        let memory = Responses::from_bytes(response)
+            .unwrap()
+            .into_memory_view()
+            .unwrap();
         let device_info = DeviceInfo {
             hw_id: 10,
             dsp_version: 100,
@@ -615,7 +839,7 @@ mod test {
         assert!(f1
             .data
             .into_iter()
-            .eq((0u16..20).into_iter().map(|x| x.into())));
+            .eq((0u16..20).into_iter().map(|x| -> f32 { x.into() })));
 
         let mut m1 = MemoryView {
             base: 0,
@@ -631,20 +855,5 @@ mod test {
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
         assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
-    }
-
-    #[test]
-    fn biquad_test() {
-        let b = WriteBiquad {
-            addr: 0,
-            data: [1.0, 0.1, 0.2, 0.3, 0.4],
-        };
-
-        for (i, f) in b.data.iter().enumerate() {
-            println!("{}: {} {:02x?}", i, f, f.to_le_bytes().as_ref())
-        }
-
-        println!("{:?}", f32::from_le_bytes([0x01, 0x00, 0x00, 0x00]));
-        println!("{:?}", f32::from_le_bytes([0x02, 0x00, 0x00, 0x00]));
     }
 }

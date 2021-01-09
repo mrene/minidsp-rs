@@ -13,6 +13,8 @@ pub mod hid;
 #[cfg(feature = "hid")]
 use hidapi::HidError;
 
+use crate::commands;
+
 pub mod net;
 
 #[derive(Error, Debug)]
@@ -29,6 +31,15 @@ pub enum MiniDSPError {
 
     #[error("This source was not recognized. Supported types are: 'toslink', 'usb', 'analog'")]
     InvalidSource,
+
+    #[error("Parse error")]
+    ParseError(#[from] commands::ParseError),
+
+    #[error("Transport error")]
+    TransportError(#[from] broadcast::error::RecvError),
+
+    #[error("Transport has closed")]
+    TransportClosed,
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
@@ -55,7 +66,7 @@ where
 #[async_trait]
 pub trait Transport: Send + Sync {
     // Subscribe to all received frames
-    fn subscribe(&self) -> broadcast::Receiver<Bytes>;
+    fn subscribe(&self) -> Result<broadcast::Receiver<Bytes>, MiniDSPError>;
 
     // Acquire an exclusive lock for sending frames on this device
     async fn send_lock(&self) -> Box<dyn Sender>;

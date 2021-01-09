@@ -6,7 +6,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use hidapi::{HidApi, HidDevice, HidError};
 use log::debug;
 use std::ffi::CString;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as SyncMutex};
 use tokio::sync::{broadcast, oneshot, Mutex};
 
 // 65 byte wide: 1 byte report id + 64 bytes data
@@ -18,7 +18,7 @@ pub struct HidTransport {
     shutdown_tx: oneshot::Sender<()>,
 
     /// The sending side of a broadcast channel used for received HID messages
-    receiver_tx: broadcast::Sender<Bytes>,
+    receiver_tx: Arc<SyncMutex<Option<broadcast::Sender<Bytes>>>>,
 
     /// Inner struct wrapping the device handle, ensuring only one sender exists simultaneously
     /// The Arc is used to be able to hold a lock guard as 'static
@@ -31,19 +31,22 @@ impl HidTransport {
         let (recv_send, _) = broadcast::channel::<Bytes>(10);
         let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
 
-        // Spawn blocking send & recv loops.
-        // TODO: Handle failures from recv loops
-        tokio::spawn(HidTransport::recv_loop(
-            recv_send.clone(),
-            shutdown_rx,
-            device.clone(),
-        ));
-
-        HidTransport {
+        let transport = HidTransport {
             shutdown_tx,
-            receiver_tx: recv_send,
-            inner: Arc::new(Mutex::new(Inner::new(device))),
-        }
+            receiver_tx: Arc::new(SyncMutex::new(Some(recv_send.clone()))),
+            inner: Arc::new(Mutex::new(Inner::new(device.clone()))),
+        };
+
+        let receiver_tx = transport.receiver_tx.clone();
+        // Spawn blocking send & recv loops.
+        tokio::spawn(async move {
+            let _ = HidTransport::recv_loop(recv_send, shutdown_rx, device).await;
+
+            // Take away the receiver_tx sender, which causes all receivers to err
+            receiver_tx.lock().unwrap().take();
+        });
+
+        transport
     }
 
     pub fn with_path(hid: &HidApi, path: String) -> Result<Self, HidError> {
@@ -102,8 +105,12 @@ impl HidTransport {
 impl Transport for HidTransport {
     // type Sender = Inner;
 
-    fn subscribe(&self) -> broadcast::Receiver<Bytes> {
-        self.receiver_tx.subscribe()
+    fn subscribe(&self) -> Result<broadcast::Receiver<Bytes>, MiniDSPError> {
+        let tx = self.receiver_tx.lock().unwrap();
+        match tx.as_ref() {
+            Some(tx) => Ok(tx.subscribe()),
+            None => Err(MiniDSPError::TransportClosed),
+        }
     }
 
     async fn send_lock(&'_ self) -> Box<dyn Sender> {

@@ -43,7 +43,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
                 tokio::spawn(discovery::server::advertise_packet(packet, interval));
             }
             use crate::server;
-            server::serve(bind_address, device.transport.clone()).await?
+            server::serve(bind_address.as_str(), device.transport.clone()).await?
         }
         // Handled earlier
         Some(SubCommand::Probe) => return Ok(()),
