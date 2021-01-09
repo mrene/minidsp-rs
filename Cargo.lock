@@ -446,6 +446,7 @@ dependencies = [
  "hidapi",
  "lazy_static",
  "log",
+ "shellwords",
  "strong-xml",
  "termcolor 1.1.2",
  "thiserror",
@@ -686,6 +687,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "shellwords"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89e515aa4699a88148ed5ef96413ceef0048ce95b43fbc955a33bde0a70fcae6"
+dependencies = [
+ "lazy_static",
+ "regex",
 ]
 
 [[package]]
