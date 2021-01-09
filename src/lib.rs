@@ -61,6 +61,7 @@ pub mod config;
 pub mod device;
 pub mod discovery;
 pub mod packet;
+pub mod rew;
 pub mod server;
 pub mod source;
 pub mod transport;
