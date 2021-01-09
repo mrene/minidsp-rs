@@ -1,11 +1,8 @@
 use anyhow::Result;
 use clap::{self as clap, Clap};
 use futures::{Stream, StreamExt};
-use minidsp::transport::MiniDSPError;
-use minidsp::utils::recorder::Message;
 use minidsp::{
     commands::Commands,
-    packet,
     utils::{decoder, recorder},
 };
 use std::borrow::BorrowMut;

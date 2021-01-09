@@ -196,7 +196,7 @@ pub enum Commands {
     /// 0x06: Seen after 0x12 in configuration restore
     BulkLoadFilterData {
         // Initial packet:
-        // 06 02 05 (size+3 u16)
+        // 02 05 (addr+3 u16)
         payload: BytesWrap,
     },
 

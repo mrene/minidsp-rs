@@ -266,30 +266,55 @@ mod test {
     use super::*;
     use crate::{
         commands::Commands,
-        transport::MiniDSPError,
-        utils::recorder::{self as recorder, Message},
+        utils::recorder::{self as recorder},
     };
-    use futures::{Stream, StreamExt};
-    use tokio::io::{AsyncRead, AsyncReadExt};
+    use futures::{Future, StreamExt};
+
+    use tokio::io::AsyncReadExt;
     use tokio_util::io::StreamReader;
 
     /// Extracts a restore blob from a built-in recorded fixture
-    async fn extract_restore_blob(fixture: &'static [u8]) -> Bytes {
+    async fn extract_blob<F, Fut>(fixture: &'static [u8], f: F) -> Bytes
+    where
+        F: FnMut(Commands) -> Fut,
+        Fut: Future<Output = Option<Result<Bytes, std::io::Error>>>,
+    {
         let stream = recorder::fixtures_reader(fixture)
             .filter_map(recorder::decode_sent_commands)
-            .filter_map(|x| async {
-                match x {
-                    Commands::BulkLoad { payload } => Some(Ok::<Bytes, std::io::Error>(payload.0)),
-                    _ => None,
-                }
-            });
+            .filter_map(f);
 
         let mut reader = Box::pin(StreamReader::new(stream));
         let mut buffer = Vec::new();
-        let f = reader.read_to_end(&mut buffer).await.unwrap();
+        reader.read_to_end(&mut buffer).await.unwrap();
 
         // Skip the 7 bytes header
-        Bytes::from(buffer).slice(7..)
+        Bytes::from(buffer)
+    }
+
+    /// Extracts a restore blob from a built-in recorded fixture
+    async fn extract_restore_blob(fixture: &'static [u8]) -> Bytes {
+        extract_blob(fixture, |x| async {
+            match x {
+                Commands::BulkLoad { payload } => Some(Ok::<Bytes, std::io::Error>(payload.0)),
+                _ => None,
+            }
+        })
+        .await
+        .slice(7..)
+    }
+
+    /// Extracts a filter block from a built-in recorded fixture
+    async fn extract_filter_block(fixture: &'static [u8]) -> Bytes {
+        extract_blob(fixture, |x| async {
+            match x {
+                Commands::BulkLoadFilterData { payload } => {
+                    Some(Ok::<Bytes, std::io::Error>(payload.0))
+                }
+                _ => None,
+            }
+        })
+        .await
+        .slice(4..)
     }
 
     #[tokio::test]
@@ -316,8 +341,9 @@ mod test {
         for fixture in fixtures.iter() {
             let s = Setting::from_str(fixture.xml).unwrap();
             let cfg = s.to_restore_blob();
-            let fixture = extract_restore_blob(fixture.sync).await;
-            assert_eq!(cfg.as_ref(), fixture);
+            let blob = extract_restore_blob(fixture.sync).await;
+            assert_eq!(cfg.as_ref(), blob);
+            let _ = extract_filter_block(fixture.sync).await;
         }
     }
 
