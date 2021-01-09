@@ -1,21 +1,21 @@
 //! Room Eq Wizard utilities
 //! Provides a way to read exported biquad filter files
 
+use crate::Biquad;
 use std::str::FromStr;
 use thiserror::Error;
 
-pub struct Biquad {
-    pub index: u16,
-    pub b0: f32,
-    pub b1: f32,
-    pub b2: f32,
-    pub a1: f32,
-    pub a2: f32,
+pub trait FromRew: Sized {
+    fn from_rew_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Option<Self>;
 }
 
-impl Biquad {
+pub trait ToRew {
+    fn to_rew(&self) -> String;
+}
+
+impl FromRew for Biquad {
     /// Reads a single filter from the given line iterator
-    pub fn from_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Option<Biquad> {
+    fn from_rew_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Option<Biquad> {
         let mut lines = lines.filter(|s| !s.trim().is_empty());
 
         // The first line contains the index
@@ -45,20 +45,12 @@ impl Biquad {
     }
 }
 
-impl ToString for Biquad {
-    fn to_string(&self) -> String {
+impl ToRew for Biquad {
+    fn to_rew(&self) -> String {
         format!(
             "biquad{},\nb0={},\nb1={},\nb2={},\na1={},\na2={},\n",
             self.index, self.b0, self.b1, self.b2, self.a1, self.a2
         )
-    }
-}
-
-impl FromStr for Biquad {
-    type Err = RewParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Biquad::from_lines(s.lines()).ok_or(RewParseError::MalformedFilter)
     }
 }
 
@@ -78,7 +70,7 @@ mod test {
     fn test_parse() {
         let mut filters = Vec::new();
         let mut it = REW_DATA.lines();
-        while let Some(filter) = Biquad::from_lines(&mut it) {
+        while let Some(filter) = Biquad::from_rew_lines(&mut it) {
             filters.push(filter);
         }
 
@@ -96,5 +88,20 @@ mod test {
         assert_eq!(filters[9].b2, 0.7320089079645271);
         assert_eq!(filters[9].a1, 1.2978927199484762);
         assert_eq!(filters[9].a2, -0.6104320304126742);
+    }
+    #[test]
+    fn test_string() {
+        let b = Biquad {
+            index: 1,
+            b0: 1.,
+            b1: 2.,
+            b2: 3.,
+            a1: 4.,
+            a2: 5.,
+        };
+
+        let s = b.to_rew();
+        let b2 = Biquad::from_rew_lines(s.lines()).unwrap();
+        assert_eq!(b, b2);
     }
 }

@@ -56,6 +56,7 @@ use crate::transport::MiniDSPError;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
+pub mod biquad;
 pub mod commands;
 pub mod config;
 pub mod device;
@@ -66,6 +67,7 @@ pub mod server;
 pub mod source;
 pub mod transport;
 pub mod utils;
+pub use biquad::Biquad;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
