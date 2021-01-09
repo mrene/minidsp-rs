@@ -157,7 +157,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: PEQCommand) -> Resul
                 peq.set_bypass(false).await?;
             }
 
-            if let Some(_) = Biquad::from_rew_lines(&mut lines) {
+            if Biquad::from_rew_lines(&mut lines).is_some() {
                 eprintln!("Warning: Some filters were not imported because they didn't fit (try using `all`)")
             }
         }
