@@ -74,7 +74,6 @@ async fn dump(
             }
         });
 
-    // let f = Box::pin(f);
     let mut reader = Box::pin(StreamReader::new(f));
     let mut output = File::create(output).await?;
 
