@@ -6,7 +6,6 @@ After=network.target
 ExecStart=/usr/local/bin/minidsp server
 KillMode=process
 Restart=always
-Environment=RUST_LOG=info
 
 [Install]
 WantedBy=multi-user.target

@@ -16,14 +16,22 @@ jobs:
       - name: Setup cross environment
         run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
       - name: Run build
-        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh
+        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh deb
+      - name: Copy debian package
+        run: |
+          cp -v target/arm-unknown-linux-gnueabihf/debian/${{ matrix.pair.bin }}* .
+      - name: Upload debian package
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: arm-linux-gnueabihf-rpi-deb-artifact
+          path: minidsp*.deb
+          if-no-files-found: error
       - name: Create binary
         run: |
           mkdir archive
           cp target/arm-unknown-linux-gnueabihf/release/minidsp archive
           cd archive/
           tar -czf ../minidsp.arm-linux-gnueabihf-rpi.tar.gz *
-
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.1
         with:
@@ -49,6 +57,8 @@ jobs:
             cross: false
 
     runs-on: ${{ matrix.pair.os }}
+    env:
+      CARGO_DEB_VER: 1.28.2
 
     steps:
       - uses: actions/checkout@v2.3.4
@@ -61,13 +71,44 @@ jobs:
 
       - name: Install native packages
         if: runner.os == 'Linux'
-        run: sudo apt-get install libhidapi-dev libhidapi-libusb0 libusb-1.0-0 libusb-1.0-0-dev
+        run: sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev
+
+      # From https://github.com/NLnetLabs/krill/blob/master/.github/workflows/pkg.yml
+      # Speed up cargo-deb installation by only re-downloading and re-building its
+      # dependent crates if we change the version of cargo-deb that we are using.
+      - name: Cache Cargo Deb binary
+        if: runner.os == 'Linux'
+        id: cache-cargo-deb
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/bin/cargo-deb
+          key: ${{ matrix.pair.target }}-cargo-deb-${{ env.CARGO_DEB_VER }}
+
+      # Only install cargo-deb if not already fetched from the cache.
+      - name: Install Cargo Deb
+        if: runner.os == 'Linux' && steps.cache-cargo-deb.outputs.cache-hit != 'true'
+        run: |
+          cargo install cargo-deb --version $CARGO_DEB_VER
 
       - uses: actions-rs/cargo@v1
         with:
           use-cross: ${{ matrix.pair.cross }}
           command: build
           args: --bin minidsp --release --target ${{ matrix.pair.target }}
+
+      - name: Create debian package
+        if: runner.os == 'Linux'
+        run: |
+          cargo deb --target ${{ matrix.pair.target }}
+          cp -v target/${{ matrix.pair.target }}/debian/${{ matrix.pair.bin }}* .
+
+      - name: Upload debian package
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: ${{ matrix.pair.target }}-deb
+          path: minidsp*.deb
+          if-no-files-found: error
 
       - name: Create binary
         run: |
@@ -101,7 +142,7 @@ jobs:
         run: |
           set -x
           assets=()
-          for asset in ./artifacts/*/*.tar.gz; do
+          for asset in ./artifacts/*/*.{tar.gz,deb}; do
             assets+=("-a" "$asset")
           done
           TAG="${GITHUB_REF##*/}"
