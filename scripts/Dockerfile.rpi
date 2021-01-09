@@ -1,5 +1,6 @@
 FROM rust:1.48-buster
 RUN rustup target add arm-unknown-linux-gnueabihf
+RUN cargo install cargo-deb
 ADD . /src
 
 RUN mkdir /build && \
