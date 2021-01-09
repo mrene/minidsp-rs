@@ -34,7 +34,7 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
-    #[clap(short='f')]
+    #[clap(short = 'f')]
     /// Read commands to run from the given filename
     file: Option<PathBuf>,
 
