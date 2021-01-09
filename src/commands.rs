@@ -40,95 +40,6 @@ impl Deref for BytesWrap {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum Commands {
-    /// 0x31: Read hardware id
-    ReadHardwareId,
-
-    /// 0x14: Reads float data from a given base address. Max length is 14
-    ReadFloats {
-        addr: u16,
-        len: u8,
-    },
-
-    /// 0x04: Writes byte data to the given address
-    WriteMemory {
-        addr: u16,
-        data: BytesWrap,
-    },
-
-    /// 0x05: Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
-    ReadMemory {
-        addr: u16,
-        size: u8,
-    },
-
-    /// 0x25: Sets the current configuration
-    SetConfig {
-        config: u8,
-        reset: bool,
-    },
-
-    /// 0x34: Unary command to set the current source
-    SetSource {
-        source: u8,
-    },
-
-    /// 0x17 Unary command to set the master mute setting
-    SetMute {
-        value: bool,
-    },
-
-    /// 0x42: Set master volume
-    SetVolume {
-        value: Gain,
-    },
-
-    /// 0x30: Write biquad data
-    WriteBiquad {
-        addr: u16,
-        data: [f32; 5],
-    },
-
-    /// 0x19: Toggle biquad filter bypass
-    WriteBiquadBypass {
-        addr: u16,
-        value: bool,
-    },
-
-    /// 0x13: Write dsp data
-    Write {
-        addr: u16,
-        value: Value,
-    },
-
-    // 0x39: Start FIR load
-    FirLoadStart {
-        index: u8,
-    },
-
-    // 0x3a: FIR Data
-    // 60 bytes pure float le (all 15 of them)
-    FirLoadData {
-        index: u8,
-        data: Vec<f32>, // Max 15 floats
-    },
-
-    // 0x3b: FIR Data Completed
-    FirLoadEnd,
-
-    // Speculative commands
-    /// Seen when restoring a configuration
-    MaybeBulkLoad {
-        payload: BytesWrap,
-    },
-
-    Unknown {
-        cmd_id: u8,
-        payload: BytesWrap,
-    },
-}
-
 #[derive(Clone)]
 pub enum Value {
     Unknown(Bytes),
@@ -191,6 +102,110 @@ impl fmt::Debug for Value {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum Commands {
+    /// 0x31: Read hardware id
+    ReadHardwareId,
+
+    /// 0x14: Reads float data from a given base address. Max length is 14
+    ReadFloats {
+        addr: u16,
+        len: u8,
+    },
+
+    /// 0x04: Writes byte data to the given address
+    WriteMemory {
+        addr: u16,
+        data: BytesWrap,
+    },
+
+    /// 0x05: Reads byte data from the given address. Max read sizes are 61 bytes. (64 - crc - len - cmd)
+    ReadMemory {
+        addr: u16,
+        size: u8,
+    },
+
+    /// 0x25: Sets the current configuration
+    SetConfig {
+        config: u8,
+        reset: bool,
+    },
+
+    /// 0x34: Unary command to set the current source
+    SetSource {
+        source: u8,
+    },
+
+    /// 0x17 Unary command to set the master mute setting
+    SetMute {
+        value: bool,
+    },
+
+    /// 0x42: Set master volume
+    SetVolume {
+        value: Gain,
+    },
+
+    /// 0x30: Write biquad data
+    WriteBiquad {
+        addr: u16,
+        data: [f32; 5],
+    },
+
+    /// 0x19: Toggle biquad filter bypass
+    WriteBiquadBypass {
+        addr: u16,
+        value: bool,
+    },
+
+    /// 0x13: Write dsp data
+    Write {
+        addr: u16,
+        value: Value,
+    },
+
+    /// 0x39: Start FIR load
+    FirLoadStart {
+        index: u8,
+    },
+
+    /// 0x3a: FIR Data
+    FirLoadData {
+        index: u8,
+        data: Vec<f32>, // Max 15 floats
+    },
+
+    /// 0x3b: FIR Data Completed
+    FirLoadEnd,
+
+    // Speculative commands
+    /// 0x12: Seen when restoring a configuration
+    BulkLoad {
+        // Initial payload:
+        // 04 88 97 13 0f 00 00
+        // 04: 4 | (Addr&0x0F0000 >> 12)
+        // 88: (Addr&0xFF00 >> 8)
+        // 97: (Addr&0xFF)
+        // 13: constant
+        // 0f: constant
+        // 00: constant
+        // 00: constant
+        payload: BytesWrap,
+    },
+
+    /// 0x06: Seen after 0x12 in configuration restore
+    BulkLoadFilterData {
+        // Initial packet:
+        // 02 05 (addr+3 u16)
+        payload: BytesWrap,
+    },
+
+    Unknown {
+        cmd_id: u8,
+        payload: BytesWrap,
+    },
+}
+
 impl Commands {
     pub fn from_bytes(mut frame: Bytes) -> Result<Commands, ParseError> {
         Ok(match frame.get_u8() {
@@ -202,7 +217,10 @@ impl Commands {
                 addr: frame.get_u16(),
                 size: frame.get_u8(),
             },
-            0x12 => Commands::MaybeBulkLoad {
+            0x06 => Commands::BulkLoadFilterData {
+                payload: BytesWrap(frame),
+            },
+            0x12 => Commands::BulkLoad {
                 payload: BytesWrap(frame),
             },
             0x13 => {
@@ -262,8 +280,8 @@ impl Commands {
             0x42 => Commands::SetVolume {
                 value: frame.get_u8().into(),
             },
-            x => Commands::Unknown {
-                cmd_id: x,
+            cmd_id => Commands::Unknown {
+                cmd_id,
                 payload: BytesWrap(frame),
             },
         })
@@ -341,8 +359,12 @@ impl Commands {
             Commands::FirLoadEnd => {
                 f.put_u8(0x3b);
             }
-            Commands::MaybeBulkLoad { payload } => {
+            Commands::BulkLoad { payload } => {
                 f.put_u8(0x12);
+                f.put(payload.0.clone());
+            }
+            Commands::BulkLoadFilterData { payload } => {
+                f.put_u8(0x06);
                 f.put(payload.0.clone());
             }
             Commands::Unknown { cmd_id, payload } => {
@@ -416,6 +438,7 @@ impl Responses {
             },
         })
     }
+
     pub fn to_bytes(&self) -> Bytes {
         let mut f = BytesMut::with_capacity(64);
         match self {
@@ -466,7 +489,7 @@ impl Responses {
 
     pub fn into_hardware_id(self) -> Result<u8, MiniDSPError> {
         match self {
-            Responses::HardwareId { payload } => Ok(payload[3]),
+            Responses::HardwareId { payload } => Ok(payload[2]),
             _ => Err(MiniDSPError::MalformedResponse),
         }
     }
@@ -816,7 +839,7 @@ mod test {
         assert!(f1
             .data
             .into_iter()
-            .eq((0u16..20).into_iter().map(|x| x.into())));
+            .eq((0u16..20).into_iter().map(|x| -> f32 { x.into() })));
 
         let mut m1 = MemoryView {
             base: 0,

@@ -1,28 +1,37 @@
 //! TCP server compatible with the official mobile and desktop application
 // #[macro_use]
 extern crate log;
-use crate::{decoder::Decoder, transport::Transport, MiniDSPError};
+
+use std::sync::{Arc, Mutex};
+
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
-use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
+
+use crate::utils::{decoder::Decoder, recorder::Recorder};
+use crate::{transport::Transport, MiniDSPError};
+use tokio::fs::File;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
 async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
-    let mut device_receiver = handle.subscribe()?;
-
     let decoder = {
         use termcolor::{ColorChoice, StandardStream};
-        let writer = StandardStream::stderr(ColorChoice::Always);
+        let writer = StandardStream::stderr(ColorChoice::Auto);
         Arc::new(Mutex::new(Decoder {
             w: Box::new(writer),
             quiet: true,
         }))
     };
 
+    let mut recorder = match std::env::var("MINIDSP_LOG") {
+        Ok(filename) => Some(Recorder::new(File::create(filename).await?)),
+        _ => None,
+    };
+
+    let mut device_receiver = handle.subscribe()?;
     loop {
         let mut tcp_recv_buf = BytesMut::with_capacity(65);
         tokio::select! {
@@ -31,8 +40,10 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                     Err(_) => { return Ok(()) },
                     Ok(read_buf) => {
                         let read_size = read_buf[0] as usize;
-                        {
-                            decoder.lock().unwrap().feed_recv(&Bytes::copy_from_slice(&read_buf[..read_size]));
+                        let buf = Bytes::copy_from_slice(&read_buf[..read_size]);
+                        decoder.lock().unwrap().feed_recv(&buf);
+                        if let Some(recorder) = &mut recorder {
+                            recorder.feed_recv(&buf);
                         }
                         tcp.write_all(&read_buf[..read_size]).await?;
                     }
@@ -47,6 +58,9 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                 let tcp_recv_buf = tcp_recv_buf.freeze();
                 {
                     decoder.lock().unwrap().feed_sent(&tcp_recv_buf);
+                    if let Some(recorder) = &mut recorder {
+                        recorder.feed_sent(&tcp_recv_buf);
+                    }
                 }
                 handle.send(tcp_recv_buf)
                     .await
