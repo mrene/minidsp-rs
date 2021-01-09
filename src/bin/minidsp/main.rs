@@ -317,7 +317,7 @@ async fn main() -> Result<()> {
         let cmds = file.lines().filter(|s| {
             // Ignore comments and empty lines
             let trimmed = s.trim();
-            !trimmed.is_empty() && !trimmed.starts_with("#")
+            !trimmed.is_empty() && !trimmed.starts_with('#')
         });
 
         for cmd in cmds {
