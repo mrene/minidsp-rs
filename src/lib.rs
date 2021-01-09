@@ -56,15 +56,18 @@ use crate::transport::MiniDSPError;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
+pub mod biquad;
 pub mod commands;
 pub mod config;
 pub mod device;
 pub mod discovery;
 pub mod packet;
+pub mod rew;
 pub mod server;
 pub mod source;
 pub mod transport;
 pub mod utils;
+pub use biquad::Biquad;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -231,6 +234,11 @@ pub trait Channel {
         let (dsp, _, peq) = self._channel();
         BiquadFilter::new(dsp, peq.at(index))
     }
+
+    fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
+        let (dsp, _, peq) = self._channel();
+        peq.iter().map(move |x| BiquadFilter::new(dsp, x)).collect()
+    }
 }
 
 /// Input channel control
@@ -326,6 +334,11 @@ pub struct BiquadFilter<'a> {
 impl<'a> BiquadFilter<'a> {
     pub(crate) fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
         BiquadFilter { dsp, addr }
+    }
+
+    pub async fn clear(&self) -> Result<()> {
+        self.set_coefficients(Biquad::default().to_array().as_ref())
+            .await
     }
 
     /// Sets the biquad coefficient for this filter.

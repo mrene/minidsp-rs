@@ -188,6 +188,10 @@ impl PEQ {
         }
         self.high - (index * 5) as u16
     }
+
+    pub fn iter(&'_ self) -> impl '_ + Iterator<Item = u16> {
+        (0..self.len).map(move |x| self.at(x))
+    }
 }
 
 #[cfg(test)]
