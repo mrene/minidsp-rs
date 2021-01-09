@@ -20,6 +20,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
+    -f <file>          Read commands to run from the given filename
         --tcp <tcp>    The target address of the server component
         --usb <usb>...    The USB vendor and product id (2752:0011 for the 2x4HD)
 
@@ -118,6 +119,20 @@ PEQ 0: Applied imported filter: biquad1
 Warning: Some filters were not imported because they didn't fit (try using `all`)
 ```
 
+### Running multiple commands at once
+For the purposes of organizing configurations, a file can be created with commands to run sequentially.
+
+Files are using the same format at the command line, without the `minidsp` command.
+
+Example:
+```
+config 3
+input 0 peq all bypass off
+output 0 peq all bypass off
+mute off
+```
+
+> minidsp -f ./file.txt
 
 ### udev
 In order to run as a non-privileged user under Linux, you may have to add a udev rule for this specific device. Under `/etc/udev/rules.d`, create a file named `99-minidsp.rules` containing:

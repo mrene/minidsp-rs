@@ -34,6 +34,10 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
+    #[clap(short = 'f')]
+    /// Read commands to run from the given filename
+    file: Option<PathBuf>,
+
     #[clap(subcommand)]
     subcmd: Option<SubCommand>,
 }
@@ -307,7 +311,33 @@ async fn main() -> Result<()> {
     let transport: Arc<dyn Transport> = get_transport(&opts).await?;
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
-    handlers::run_command(&device, opts.subcmd).await?;
+
+    if let Some(filename) = opts.file {
+        let file = std::fs::read_to_string(filename)?;
+        let cmds = file.lines().filter(|s| {
+            // Ignore comments and empty lines
+            let trimmed = s.trim();
+            !trimmed.is_empty() && !trimmed.starts_with('#')
+        });
+
+        for cmd in cmds {
+            let words = shellwords::split(cmd)?;
+            let prefix = &["minidsp".to_string()];
+            let words = prefix.iter().chain(words.iter());
+            let opts = Opts::try_parse_from(words);
+            let opts = match opts {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("While executing: {}\n{}", cmd, e);
+                    return Err(anyhow!("Command failure"));
+                }
+            };
+
+            handlers::run_command(&device, opts.subcmd).await?;
+        }
+    } else {
+        handlers::run_command(&device, opts.subcmd).await?;
+    }
 
     Ok(())
 }
