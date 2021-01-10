@@ -29,6 +29,7 @@ atomic_refcell = "0.1.6"
 termcolor = "1.1.2"
 strong-xml = "0.6.0"
 shellwords = "1.1.0"
+bimap = "0.6.0"
 
 [dependencies.hidapi]
 optional = true

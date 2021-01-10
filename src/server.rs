@@ -20,10 +20,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
     let decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stderr(ColorChoice::Auto);
-        Arc::new(Mutex::new(Decoder {
-            w: Box::new(writer),
-            quiet: true,
-        }))
+        Arc::new(Mutex::new(Decoder::new(Box::new(writer), true)))
     };
 
     let mut recorder = match std::env::var("MINIDSP_LOG") {

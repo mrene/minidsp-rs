@@ -77,7 +77,15 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x20e9,
                 len: 10,
             },
+            xover: [PEQ { high: 0, len: 0 }, PEQ { high: 0, len: 0 }],
+            compressor: Compressor {
+                threshold: 0,
+                ratio: 0,
+                attack: 0,
+                release: 0,
+            },
             fir_bypass_addr: 0x0e,
+            fir_index: 0,
         },
         Output {
             gate: Gate {
@@ -90,7 +98,15 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x211b,
                 len: 10,
             },
+            xover: [PEQ { high: 0, len: 0 }, PEQ { high: 0, len: 0 }],
+            compressor: Compressor {
+                threshold: 0,
+                ratio: 0,
+                attack: 0,
+                release: 0,
+            },
             fir_bypass_addr: 0x0f,
+            fir_index: 1,
         },
         Output {
             gate: Gate {
@@ -103,7 +119,15 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x214d,
                 len: 10,
             },
+            xover: [PEQ { high: 0, len: 0 }, PEQ { high: 0, len: 0 }],
+            compressor: Compressor {
+                threshold: 0,
+                ratio: 0,
+                attack: 0,
+                release: 0,
+            },
             fir_bypass_addr: 0x10,
+            fir_index: 2,
         },
         Output {
             gate: Gate {
@@ -116,7 +140,15 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x217f,
                 len: 10,
             },
+            xover: [PEQ { high: 0, len: 0 }, PEQ { high: 0, len: 0 }],
+            compressor: Compressor {
+                threshold: 0,
+                ratio: 0,
+                attack: 0,
+                release: 0,
+            },
             fir_bypass_addr: 0x11,
+            fir_index: 3,
         },
     ],
 };
@@ -151,12 +183,15 @@ pub struct Output {
     pub invert_addr: u16,
     /// Parametric equalizers
     pub peq: PEQ,
-    // TODO: Xover
-    // TODO: Compressor
-    // pub fir_coeff_addr: u16,
+    /// Crossover biquads
+    pub xover: [PEQ; 2],
+    /// Compressor
+    pub compressor: Compressor,
     // XXX: TODO: active=2 bypass=3 via 0x13 0x80
     /// Address of the FIR bypass toggle
     pub fir_bypass_addr: u16,
+    /// Index to use when sending FIR load commands
+    pub fir_index: u8,
 }
 
 /// Reference to a control having both a mute and gain setting
@@ -166,6 +201,13 @@ pub struct Gate {
 
     /// Address where the gain is controlled
     pub gain: u16,
+}
+
+pub struct Compressor {
+    pub threshold: u16,
+    pub ratio: u16,
+    pub attack: u16,
+    pub release: u16,
 }
 
 /// A range of biquad filter address part of a single parametric eq
