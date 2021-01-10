@@ -199,7 +199,30 @@ enum OutputCommand {
 
         #[clap(subcommand)]
         cmd: FilterCommand,
-    }
+    },
+
+    /// Controls crossovers (2x 4 biquads)
+    Compressor {
+        /// Bypass the compressor
+        #[clap(short='b', long, parse(try_from_str = on_or_off))]
+        bypass: Option<bool>,
+
+        /// Sets the threshold in dBFS
+        #[clap(short = 't', long)]
+        threshold: Option<f32>,
+
+        /// Sets the ratio
+        #[clap(short = 'k', long)]
+        ratio: Option<f32>,
+
+        /// Sets the attack time in ms
+        #[clap(short = 'a', long)]
+        attack: Option<f32>,
+
+        /// Sets the release time in ms
+        #[clap(short = 'r', long)]
+        release: Option<f32>,
+    },
 }
 
 #[derive(Debug)]

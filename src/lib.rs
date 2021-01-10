@@ -560,7 +560,7 @@ impl<'a> Fir<'a> {
             .into_fir_size()?;
 
         if coefficients.len() > max_coeff as usize {
-            return Err(MiniDSPError::TooManyCoefficients)
+            return Err(MiniDSPError::TooManyCoefficients);
         }
 
         // Load coefficients by chunk of 14 floats

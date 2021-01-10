@@ -121,6 +121,30 @@ pub(crate) async fn run_output(
         OutputCommand::Crossover { group, index, cmd } => {
             run_xover(&output.crossover(), cmd, group, index).await?
         }
+        OutputCommand::Compressor {
+            bypass,
+            threshold,
+            ratio,
+            attack,
+            release,
+        } => {
+            let compressor = output.compressor();
+            if let Some(bypass) = bypass {
+                compressor.set_bypass(bypass).await?;
+            }
+            if let Some(threshold) = threshold {
+                compressor.set_threshold(threshold).await?;
+            }
+            if let Some(ratio) = ratio {
+                compressor.set_ratio(ratio).await?;
+            }
+            if let Some(attack) = attack {
+                compressor.set_attack(attack).await?;
+            }
+            if let Some(release) = release {
+                compressor.set_release(release).await?;
+            }
+        }
     }
     Ok(())
 }
