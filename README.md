@@ -6,12 +6,29 @@ It's a complete rewrite from `node-minidsp` and aims to support multiple devices
 
 ## Installation
 
+### From source
+
+If you don't have rust setup, the quickest way to get started is with [rustup](https://rustup.rs/)
+
+```shell
+cargo build --release --bin minidsp
+
+# If you want to build a debian package
+cargo install cargo-deb
+cargo deb
+```
+
+## From Cargo
+There is a published crate which is kept in sync with releases, you can install with:
 ```shell
 cargo install minidsp
 ```
 
 ## Usage
 ```shell
+minidsp 0.0.2-dev
+Mathieu Rene <mathieu.rene@gmail.com>
+
 USAGE:
     minidsp [OPTIONS] [SUBCOMMAND]
 
@@ -21,8 +38,8 @@ FLAGS:
 
 OPTIONS:
     -f <file>          Read commands to run from the given filename
-        --tcp <tcp>    The target address of the server component
-        --usb <usb>...    The USB vendor and product id (2752:0011 for the 2x4HD)
+        --tcp <tcp>    The target address of the server component [env: MINIDSP_TCP=]
+        --usb <usb>    The USB vendor and product id (2752:0011 for the 2x4HD) [env: MINIDSP_USB=]
 
 SUBCOMMANDS:
     config    Set the current active configuration,
@@ -35,10 +52,13 @@ SUBCOMMANDS:
     probe     Try to find reachable devices
     server    Launch a server usable with `--tcp`, the mobile application, and the official
               client
-    source    Set the active input sourcee
+    source    Set the active input source
 ```
 
-#### Running without arguments will print information about the current state:
+
+## Getting started
+Running without arguments will print information about the current state:
+
 ```shell
 $ minidsp 
 MasterStatus { preset: 0, source: Toslink, volume: Gain(-36.5), mute: false }
@@ -46,9 +66,8 @@ Input levels: -131.4, -131.4
 Output levels: -168.0, -168.0, -120.0, -120.0
 ```
 
-Commands are organized in different categories:
-### Commands changing global state
-```shell
+## Useful commands
+```
 # Set input source to toslink
 minidsp source toslink
 
@@ -57,14 +76,14 @@ minidsp gain -- -30
 
 # Activate the 2nd configuration setting (indexing starts at 0)
 minidsp config 1
-
 ```
 
 ### Input channel configuration
-> minidsp input <input-index> <SUBCOMMAND>
-> For more details, look at `minidsp input --help`
+This is where you'd configure routing, gain settings and PEQ for each input
 
-#### Examples
+<details>
+  <summary>minidsp input [input-index] [SUBCOMMAND]</summary>
+
 ```shell
 # Sets input channel 0's gain to -10dB
 minidsp input 0 gain -- -10
@@ -78,14 +97,15 @@ minidsp input 0 routing 0 gain 6
 
 # Bypass the first PEQ on input channel 1
 minidsp input 1 peq 0 bypass on
-````
+```
+</details>
 
 ### Output channel configuration
-```shell
->  minidsp output <output-index> <SUBCOMMAND>
-> For more details, look at `minidsp output --help`
-```
-#### Examples
+This is where you'd configure the output gain settings, crossovers, PEQs, FIR filters, compressors, phase inversion and delay for each output channel.
+
+<details>
+  <summary>minidsp output [output-index] [SUBCOMMAND]</summary>
+  
 ```shell
 # Set the delay on output channel 0 to 0.10ms
 minidsp output 0 delay 0.10
@@ -98,8 +118,9 @@ minidsp output 1 invert on
 
 # Bypass the first PEQ on output channel 1
 minidsp input 1 peq 0 bypass on
-
 ```
+
+</details>
 
 ### Importing filters from Room Eq Wizard (REW)
 The `minidsp output n peq` and `minidsp input n peq` commands both support importing from a REW-formatted file. If there are less
@@ -120,19 +141,25 @@ Warning: Some filters were not imported because they didn't fit (try using `all`
 ```
 
 ### Running multiple commands at once
-For the purposes of organizing configurations, a file can be created with commands to run sequentially.
+For the purposes of organizing configurations, a file can be created with commands to run sequentially. It's an easy way to recall a certain preset without changing the devie config preset.
 
-Files are using the same format at the command line, without the `minidsp` command.
+Lines are using the same format at the command line, without the `minidsp` command. 
 
 Example:
 ```
+# Comments are allowed and skipped
+# So are empty lines
+
+mute on
 config 3
 input 0 peq all bypass off
 output 0 peq all bypass off
+gain -- -30
 mute off
 ```
 
 > minidsp -f ./file.txt
+
 
 ### udev
 In order to run as a non-privileged user under Linux, you may have to add a udev rule for this specific device. Under `/etc/udev/rules.d`, create a file named `99-minidsp.rules` containing:

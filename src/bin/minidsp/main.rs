@@ -43,7 +43,7 @@ struct Opts {
     tcp_option: Option<String>,
 
     #[clap(short = 'f')]
-    /// Read commands to run from the given filename
+    /// Read commands to run from the given filename (use - for stdin)
     file: Option<PathBuf>,
 
     #[clap(subcommand)]
@@ -203,7 +203,7 @@ enum OutputCommand {
 
     /// Controls crossovers (2x 4 biquads)
     Compressor {
-        /// Bypass the compressor
+        /// Bypasses the compressor (on | off)
         #[clap(short='b', long, parse(try_from_str = on_or_off))]
         bypass: Option<bool>,
 
