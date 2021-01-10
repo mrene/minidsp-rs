@@ -116,7 +116,7 @@ SUBCOMMANDS:
     routing    Controls signal routing from this input
 ```
 
-#### gain / mute
+### gain / mute
 
 ```shell
 # Sets input channel 0's gain to -10dB
@@ -125,7 +125,8 @@ minidsp input 0 gain -- -10
 # Mute input channel 0
 minidsp input 0 mute on
 ```
-#### routing
+
+### routing
 Each output matrix entry has to be enabled in order for audio to be routed. The gain can then be set (in dB) for each entry.
 
 ```shell
@@ -134,7 +135,7 @@ minidsp input 0 routing 0 enable on
 minidsp input 0 routing 0 gain 6
 ```
 
-#### peq
+### peq
 
 ```
 $ minidsp input 0 peq --help
@@ -203,7 +204,7 @@ SUBCOMMANDS:
     peq           Control the parametric equalizer
 ```
 
-#### Gain
+### Gain
 
 ```shell
 $ minidsp output 0 gain --help
@@ -218,7 +219,7 @@ Example usage: `minidsp output 0 gain -- -20`
 
 `--` is used to distinguish negative values from another option
 
-#### PEQ
+### PEQ
 
 ```
 $ minidsp output 0 peq --help
@@ -250,7 +251,7 @@ Bypass all peqs:
 Importing filters should use the `all` target if the ununsed filter should also be cleared.
 `minidsp output 0 preq all import ./file.txt`
 
-#### Crossover
+### Crossover
 
 ```
 $ minidsp output 0 crossover --help
@@ -279,7 +280,7 @@ They can be imported in REW's format:
 `minidsp output 0 crossover 0 all import ./file.txt`
 `minidsp output 0 crossover 1 all import ./file2.txt`
 
-#### FIR
+### FIR
 
 ```shell
 $ minidsp output 0 fir --help
@@ -302,7 +303,7 @@ Importing FIR filters can be done using a wav file. The file's sampling rate MUS
 `minidsp output 0 fir import ./impulse.wav`
 `minidsp output 0 fir bypass off`
 
-#### Delay
+### Delay
 
 ```shell
 $ minidsp output 0 delay --help
@@ -316,7 +317,7 @@ ARGS:
     <delay>    Delay in milliseconds
 ```
 
-#### Invert
+### Invert
 
 ```
 USAGE:
