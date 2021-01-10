@@ -538,6 +538,9 @@ impl<'a> Fir<'a> {
 
     /// Loads all coefficients into the filter, automatically setting the number of active taps
     pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
+        // The device will change the master mute status while loading the filter
+        let master_status = self.dsp.get_master_status().await?;
+
         // Set the number of active coefficients
         self.dsp
             .roundtrip(Commands::Write {
@@ -576,6 +579,9 @@ impl<'a> Fir<'a> {
 
         // Send load end
         self.dsp.roundtrip(Commands::FirLoadEnd).await?.into_ack()?;
+
+        // Set the master mute status back
+        self.dsp.set_master_mute(master_status.mute).await?;
 
         Ok(())
     }

@@ -12,6 +12,15 @@ Debian packages are available for:
 - armhf: Tested on raspbian (Raspberry PI, including the rpi0)
 - x86_64 Debian / Ubuntu variants
 
+Tip: the packages do not automatically enable the server component, if you want to be able to use this app or the official plugin from another machine, enable the service with:
+
+```shell
+systemctl enable minidsp.service
+systemctl start minidsp.service
+```
+
+You can then connect with `minidsp --tcp=ip:5333 ` (or set the `MINIDSP_TCP` env var) or with the official plugin.
+
 Single binary distribution are also provided for common operating systems:
 - Linux: minidsp.x86_64-unknown-linux-gnu.tar.gz
 - MacOS: minidsp.x86_64-apple-darwin.tar.gz
