@@ -10,7 +10,7 @@ use minidsp::{
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP,
 };
-use std::{num::ParseIntError, path::PathBuf, str::FromStr, sync::Arc};
+use std::{fs::File, io::{BufRead, BufReader}, num::ParseIntError, path::PathBuf, str::FromStr, sync::Arc};
 use tokio::net::TcpStream;
 
 mod debug;
@@ -21,6 +21,7 @@ use minidsp::transport::hid;
 use minidsp::transport::Openable;
 use std::ops::Deref;
 use std::time::Duration;
+use std::io::Read;
 
 #[derive(Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
@@ -313,15 +314,25 @@ async fn main() -> Result<()> {
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
 
     if let Some(filename) = opts.file {
-        let file = std::fs::read_to_string(filename)?;
-        let cmds = file.lines().filter(|s| {
-            // Ignore comments and empty lines
-            let trimmed = s.trim();
-            !trimmed.is_empty() && !trimmed.starts_with('#')
+        let file: Box<dyn Read> = {
+            if filename.to_string_lossy() == "-" {
+                Box::new(std::io::stdin())
+            } else {
+                Box::new(File::open(filename)?)
+            }
+        };
+        let reader = BufReader::new(file);
+        let cmds = reader.lines().filter_map(|s| {
+            let trimmed = s.ok()?.trim().to_string();
+            if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                Some(trimmed)
+            } else {
+                None
+            }
         });
 
         for cmd in cmds {
-            let words = shellwords::split(cmd)?;
+            let words = shellwords::split(&cmd)?;
             let prefix = &["minidsp".to_string()];
             let words = prefix.iter().chain(words.iter());
             let opts = Opts::try_parse_from(words);
