@@ -277,8 +277,11 @@ Crossovers are implemented as series biquad filters. There are two groups of 4 b
 The command follows the same syntax as the `peq` command, for the exception that you have to specify the group index.
 
 They can be imported in REW's format:
-`minidsp output 0 crossover 0 all import ./file.txt`
-`minidsp output 0 crossover 1 all import ./file2.txt`
+
+```shell
+minidsp output 0 crossover 0 all import ./file.txt
+minidsp output 0 crossover 1 all import ./file2.txt
+```
 
 ### FIR
 
@@ -300,8 +303,10 @@ SUBCOMMANDS:
 
 Importing FIR filters can be done using a wav file. The file's sampling rate MUST match the device's internal rate. 
 
-`minidsp output 0 fir import ./impulse.wav`
-`minidsp output 0 fir bypass off`
+```shell
+minidsp output 0 fir import ./impulse.wav
+minidsp output 0 fir bypass off
+```
 
 ### Delay
 
