@@ -96,6 +96,7 @@ This is where you'd configure routing, gain settings and PEQ for each input
 
 <details>
   <summary>(Click to expand) minidsp input [input-index] [SUBCOMMAND]</summary>
+
 ```shell
 $ minidsp input --help
 minidsp-input
@@ -116,6 +117,7 @@ SUBCOMMANDS:
 ```
 
 #### gain / mute
+
 ```shell
 # Sets input channel 0's gain to -10dB
 minidsp input 0 gain -- -10
@@ -133,6 +135,7 @@ minidsp input 0 routing 0 gain 6
 ```
 
 #### peq
+
 ```
 $ minidsp input 0 peq --help
 minidsp-input-peq
@@ -201,6 +204,7 @@ SUBCOMMANDS:
 ```
 
 #### Gain
+
 ```shell
 $ minidsp output 0 gain --help
 USAGE:
@@ -247,6 +251,7 @@ Importing filters should use the `all` target if the ununsed filter should also 
 `minidsp output 0 preq all import ./file.txt`
 
 #### Crossover
+
 ```
 $ minidsp output 0 crossover --help
 Controls crossovers (2x 4 biquads)
@@ -275,6 +280,7 @@ They can be imported in REW's format:
 `minidsp output 0 crossover 1 all import ./file2.txt`
 
 #### FIR
+
 ```shell
 $ minidsp output 0 fir --help
 minidsp-output-fir
@@ -297,6 +303,7 @@ Importing FIR filters can be done using a wav file. The file's sampling rate MUS
 `minidsp output 0 fir bypass off`
 
 #### Delay
+
 ```shell
 $ minidsp output 0 delay --help
 minidsp-output-delay
@@ -310,6 +317,7 @@ ARGS:
 ```
 
 #### Invert
+
 ```
 USAGE:
     minidsp output <output-index> invert <value>
