@@ -320,6 +320,10 @@ impl<'a> Output<'a> {
     pub async fn crossover(&'_ self) -> Crossover<'_> {
         Crossover::new(self.dsp, &self.spec.xover)
     }
+
+    pub async fn compressor(&'_ self) -> Compressor<'_> {
+        Compressor::new(self.dsp, &self.spec.compressor)
+    }
 }
 
 impl Channel for Output<'_> {
@@ -395,7 +399,12 @@ impl<'a> Crossover<'a> {
 
     /// Set the biquad coefficients for a given index within a group
     /// There are usually two groups (0 and 1), each grouping 4 biquads
-    pub async fn set_coefficients(&self, group: usize, index: usize, coefficients: &[f32]) -> Result<()> {
+    pub async fn set_coefficients(
+        &self,
+        group: usize,
+        index: usize,
+        coefficients: &[f32],
+    ) -> Result<()> {
         let addr = self.spec.peqs[group].at(index);
         let filter = BiquadFilter::new(self.dsp, addr);
         filter.set_coefficients(coefficients).await
@@ -416,5 +425,141 @@ impl<'a> Crossover<'a> {
 
     pub fn num_groups(&self) -> usize {
         self.spec.peqs.len()
+    }
+}
+
+pub struct Compressor<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Compressor,
+}
+
+impl<'a> Compressor<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Compressor) -> Self {
+        Self { dsp, spec }
+    }
+
+    pub async fn set_bypass(&self, value: bool) -> Result<()> {
+        let value = if value {
+            commands::WriteInt::BYPASSED
+        } else {
+            commands::WriteInt::ENABLED
+        };
+
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.threshold,
+                value: Value::Int(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_threshold(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.threshold,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_ratio(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.ratio,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_attack(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.attack,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_release(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.release,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+}
+
+pub struct Fir<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Fir,
+}
+
+impl<'a> Fir<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Fir) -> Self {
+        Self { dsp, spec }
+    }
+
+    pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
+        let value = if bypass {
+            commands::WriteInt::BYPASSED
+        } else {
+            commands::WriteInt::ENABLED
+        };
+
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.bypass,
+                value: Value::Int(value),
+            })
+            .await?
+            .into_ack()?;
+
+        Ok(())
+    }
+
+    /// Loads all coefficients into the filter, automatically setting the number of active taps
+    pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
+        // Set the number of active coefficients
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.num_coefficients,
+                value: Value::Int(coefficients.len() as u16),
+            })
+            .await?
+            .into_ack()?;
+
+        // Get the max number of usable coefficients
+        let max_coeff = self
+            .dsp
+            .roundtrip_expect(
+                Commands::FirLoadStart {
+                    index: self.spec.index,
+                },
+                0x39,
+            )
+            .await?
+            .into_fir_size()?;
+
+        // Load coefficients by chunk of 14 floats
+        for block in coefficients.chunks(14) {
+            self.dsp
+                .roundtrip(Commands::FirLoadData {
+                    index: self.spec.index,
+                    data: Vec::from(block),
+                })
+                .await?
+                .into_ack()?;
+        }
+
+        // Send load end
+        self.dsp.roundtrip(Commands::FirLoadEnd).await?.into_ack()?;
+
+        Ok(())
     }
 }

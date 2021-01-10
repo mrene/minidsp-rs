@@ -78,7 +78,16 @@ pub const DEVICE_2X4HD: Device = Device {
                 len: 10,
             },
             xover: Crossover {
-                peqs: [PEQ { high: 0x2193, len: 4 }, PEQ { high: 0x21a7, len: 4 }],
+                peqs: [
+                    PEQ {
+                        high: 0x2193,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21a7,
+                        len: 4,
+                    },
+                ],
                 bypass: [0x2184, 0x2198],
             },
             compressor: Compressor {
@@ -88,8 +97,11 @@ pub const DEVICE_2X4HD: Device = Device {
                 attack: 0x2c,
                 release: 0x2d,
             },
-            fir_bypass_addr: 0x0e,
-            fir_index: 0,
+            fir: Fir {
+                index: 0,
+                bypass: 0xe,
+                num_coefficients: 0x54,
+            },
         },
         Output {
             gate: Gate {
@@ -103,7 +115,16 @@ pub const DEVICE_2X4HD: Device = Device {
                 len: 10,
             },
             xover: Crossover {
-                peqs: [PEQ { high: 0x21bb, len: 4 }, PEQ { high: 0x21cf, len: 4 }],
+                peqs: [
+                    PEQ {
+                        high: 0x21bb,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21cf,
+                        len: 4,
+                    },
+                ],
                 bypass: [0x21ac, 0x21c0],
             },
             compressor: Compressor {
@@ -113,8 +134,11 @@ pub const DEVICE_2X4HD: Device = Device {
                 attack: 0x32,
                 release: 0x33,
             },
-            fir_bypass_addr: 0x0f,
-            fir_index: 1,
+            fir: Fir {
+                index: 1,
+                bypass: 0xf,
+                num_coefficients: 0x855,
+            },
         },
         Output {
             gate: Gate {
@@ -128,7 +152,16 @@ pub const DEVICE_2X4HD: Device = Device {
                 len: 10,
             },
             xover: Crossover {
-                peqs: [PEQ { high: 0x21e3, len: 4 }, PEQ { high: 0x21f7, len: 4 }],
+                peqs: [
+                    PEQ {
+                        high: 0x21e3,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21f7,
+                        len: 4,
+                    },
+                ],
                 bypass: [0x21e8, 0x21d4],
             },
             compressor: Compressor {
@@ -138,8 +171,11 @@ pub const DEVICE_2X4HD: Device = Device {
                 attack: 0x38,
                 release: 0x39,
             },
-            fir_bypass_addr: 0x10,
-            fir_index: 2,
+            fir: Fir {
+                index: 2,
+                bypass: 0x10,
+                num_coefficients: 0x1056,
+            },
         },
         Output {
             gate: Gate {
@@ -153,7 +189,16 @@ pub const DEVICE_2X4HD: Device = Device {
                 len: 10,
             },
             xover: Crossover {
-                peqs: [PEQ { high: 0x220b, len: 4 }, PEQ { high: 0x221f, len: 4 }],
+                peqs: [
+                    PEQ {
+                        high: 0x220b,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x221f,
+                        len: 4,
+                    },
+                ],
                 bypass: [0x21fc, 0x2210],
             },
             compressor: Compressor {
@@ -163,8 +208,11 @@ pub const DEVICE_2X4HD: Device = Device {
                 attack: 0x3e,
                 release: 0x3f,
             },
-            fir_bypass_addr: 0x11,
-            fir_index: 3,
+            fir: Fir {
+                index: 3,
+                bypass: 0x11,
+                num_coefficients: 0x1857,
+            },
         },
     ],
 };
@@ -208,9 +256,7 @@ pub struct Output {
     pub compressor: Compressor,
     // XXX: TODO: active=2 bypass=3 via 0x13 0x80
     /// Address of the FIR bypass toggle
-    pub fir_bypass_addr: u16,
-    /// Index to use when sending FIR load commands
-    pub fir_index: u8,
+    pub fir: Fir,
 }
 
 /// Reference to a control having both a mute and gain setting
@@ -265,6 +311,18 @@ pub struct Crossover {
 
     /// Bypass addresses. Contrary to regular PEQs, there are 2 bypass addresses for 8 biquads.
     pub bypass: [u16; 2],
+}
+
+#[derive(Debug)]
+pub struct Fir {
+    /// Index to use in the FIRLoad commands
+    pub index: u8,
+
+    /// Address saving the number of active coefficients
+    pub num_coefficients: u16,
+
+    /// Bypass address
+    pub bypass: u16,
 }
 
 #[cfg(test)]
