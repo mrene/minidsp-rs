@@ -10,7 +10,14 @@ use minidsp::{
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP,
 };
-use std::{fs::File, io::{BufRead, BufReader}, num::ParseIntError, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    num::ParseIntError,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
 use tokio::net::TcpStream;
 
 mod debug;
@@ -19,9 +26,9 @@ mod handlers;
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
+use std::io::Read;
 use std::ops::Deref;
 use std::time::Duration;
-use std::io::Read;
 
 #[derive(Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]

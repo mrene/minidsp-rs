@@ -284,7 +284,7 @@ pub struct Output<'a> {
 }
 
 impl<'a> Output<'a> {
-    /// Sets the output mute setting for this channel
+    /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
         self.dsp
             .roundtrip(Commands::Write {
@@ -295,8 +295,7 @@ impl<'a> Output<'a> {
         Ok(())
     }
 
-    /// Sets the output gain setting
-
+    /// Sets the output delay setting
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
         // Each delay increment is 0.010 ms
         // let value = value / Duration::from_micros(10);
@@ -307,8 +306,8 @@ impl<'a> Output<'a> {
                 value
             )));
         }
-        let value = value as u16;
 
+        let value = value as u16;
         self.dsp
             .roundtrip(Commands::Write {
                 addr: self.spec.delay_addr,
@@ -316,6 +315,10 @@ impl<'a> Output<'a> {
             })
             .await?
             .into_ack()
+    }
+
+    pub async fn crossover(&'_ self) -> Crossover<'_> {
+        Crossover::new(self.dsp, &self.spec.xover)
     }
 }
 
@@ -367,5 +370,51 @@ impl<'a> BiquadFilter<'a> {
             })
             .await?
             .into_ack()
+    }
+}
+
+pub struct Crossover<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Crossover,
+}
+
+impl<'a> Crossover<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Crossover) -> Self {
+        Crossover { dsp, spec }
+    }
+
+    pub async fn clear(&self) -> Result<()> {
+        for group in &self.spec.peqs {
+            for addr in group.iter() {
+                BiquadFilter::new(self.dsp, addr).clear().await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Set the biquad coefficients for a given index within a group
+    /// There are usually two groups (0 and 1), each grouping 4 biquads
+    pub async fn set_coefficients(&self, group: usize, index: usize, coefficients: &[f32]) -> Result<()> {
+        let addr = self.spec.peqs[group].at(index);
+        let filter = BiquadFilter::new(self.dsp, addr);
+        filter.set_coefficients(coefficients).await
+    }
+
+    /// Sets the bypass for a given crossover biquad group.
+    /// There are usually two groups (0 and 1), each grouping 4 biquads
+    pub async fn set_bypass(&self, group: usize, bypass: bool) -> Result<()> {
+        let addr = self.spec.bypass[group];
+        self.dsp
+            .roundtrip(Commands::WriteBiquadBypass {
+                addr,
+                value: bypass,
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub fn num_groups(&self) -> usize {
+        self.spec.peqs.len()
     }
 }

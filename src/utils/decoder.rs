@@ -16,9 +16,9 @@ use lazy_static::lazy_static;
 use strong_xml::XmlRead;
 
 lazy_static! {
-    static ref DEFAULT_CONFIG: Setting =
+    pub static ref DEFAULT_CONFIG: Setting =
         Setting::from_str(include_str!("../test_fixtures/config1/config.xml")).unwrap();
-    static ref NAME_MAP: BiMap<String, usize> = DEFAULT_CONFIG.name_map();
+    pub static ref NAME_MAP: BiMap<String, usize> = DEFAULT_CONFIG.name_map();
 }
 
 /// Main decoder
