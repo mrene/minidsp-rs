@@ -150,7 +150,7 @@ enum RoutingCommand {
 
 #[derive(Clap, Debug)]
 enum OutputCommand {
-    /// Set the input gain for this channel
+    /// Set the output gain for this channel
     Gain {
         /// Output gain in dB
         value: Gain,
@@ -183,13 +183,13 @@ enum OutputCommand {
         cmd: FilterCommand,
     },
 
-    /// Controls the FIR filter
+    /// Control the FIR filter
     FIR {
         #[clap(subcommand)]
         cmd: FilterCommand,
     },
 
-    /// Controls crossovers (2x 4 biquads)
+    /// Control crossovers (2x 4 biquads)
     Crossover {
         /// Group index (0 or 1)
         group: usize,
@@ -201,7 +201,7 @@ enum OutputCommand {
         cmd: FilterCommand,
     },
 
-    /// Controls crossovers (2x 4 biquads)
+    /// Control the compressor
     Compressor {
         /// Bypasses the compressor (on | off)
         #[clap(short='b', long, parse(try_from_str = on_or_off))]
