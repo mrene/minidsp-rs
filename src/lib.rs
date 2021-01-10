@@ -317,12 +317,19 @@ impl<'a> Output<'a> {
             .into_ack()
     }
 
-    pub async fn crossover(&'_ self) -> Crossover<'_> {
+    /// Helper for setting crossover settings
+    pub fn crossover(&'_ self) -> Crossover<'_> {
         Crossover::new(self.dsp, &self.spec.xover)
     }
 
-    pub async fn compressor(&'_ self) -> Compressor<'_> {
+    /// Helper for setting compressor settings
+    pub fn compressor(&'_ self) -> Compressor<'_> {
         Compressor::new(self.dsp, &self.spec.compressor)
+    }
+
+    /// Helper for setting fir settings
+    pub fn fir(&'_ self) -> Fir<'_> {
+        Fir::new(self.dsp, &self.spec.fir)
     }
 }
 
@@ -387,11 +394,9 @@ impl<'a> Crossover<'a> {
         Crossover { dsp, spec }
     }
 
-    pub async fn clear(&self) -> Result<()> {
-        for group in &self.spec.peqs {
-            for addr in group.iter() {
-                BiquadFilter::new(self.dsp, addr).clear().await?;
-            }
+    pub async fn clear(&self, group: usize) -> Result<()> {
+        for addr in self.spec.peqs[group].iter() {
+            BiquadFilter::new(self.dsp, addr).clear().await?;
         }
 
         Ok(())
@@ -425,6 +430,10 @@ impl<'a> Crossover<'a> {
 
     pub fn num_groups(&self) -> usize {
         self.spec.peqs.len()
+    }
+
+    pub fn num_filter_per_group(&self) -> usize {
+        self.spec.peqs[0].len
     }
 }
 
@@ -523,6 +532,10 @@ impl<'a> Fir<'a> {
         Ok(())
     }
 
+    pub async fn clear(&self) -> Result<()> {
+        self.set_coefficients([0.0].repeat(16).as_ref()).await
+    }
+
     /// Loads all coefficients into the filter, automatically setting the number of active taps
     pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
         // Set the number of active coefficients
@@ -545,6 +558,10 @@ impl<'a> Fir<'a> {
             )
             .await?
             .into_fir_size()?;
+
+        if coefficients.len() > max_coeff as usize {
+            return Err(MiniDSPError::TooManyCoefficients)
+        }
 
         // Load coefficients by chunk of 14 floats
         for block in coefficients.chunks(14) {

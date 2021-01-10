@@ -91,7 +91,7 @@ impl Decoder {
         let _ = self.print_direction(true);
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)));
         write!(self.w, "{:02x?} ", cmd)?;
-        let _ = self.maybe_print_addr(&ParsedMessage::Request(cmd.clone()));
+        let _ = self.maybe_print_addr(&ParsedMessage::Request(cmd));
         Ok(())
     }
 
@@ -101,7 +101,7 @@ impl Decoder {
             .w
             .set_color(ColorSpec::new().set_fg(Some(Color::Green)));
         write!(self.w, "{:02x?}", cmd)?;
-        let _ = self.maybe_print_addr(&ParsedMessage::Response(cmd.clone()));
+        let _ = self.maybe_print_addr(&ParsedMessage::Response(cmd));
         Ok(())
     }
 

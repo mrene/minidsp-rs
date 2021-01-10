@@ -101,6 +101,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 index: 0,
                 bypass: 0xe,
                 num_coefficients: 0x54,
+                max_coefficients: 2048,
             },
         },
         Output {
@@ -138,6 +139,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 index: 1,
                 bypass: 0xf,
                 num_coefficients: 0x855,
+                max_coefficients: 2048,
             },
         },
         Output {
@@ -175,6 +177,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 index: 2,
                 bypass: 0x10,
                 num_coefficients: 0x1056,
+                max_coefficients: 2048,
             },
         },
         Output {
@@ -212,9 +215,12 @@ pub const DEVICE_2X4HD: Device = Device {
                 index: 3,
                 bypass: 0x11,
                 num_coefficients: 0x1857,
+                max_coefficients: 2048,
             },
         },
     ],
+    fir_max_taps: 4096,
+    internal_sampling_rate: 96000,
 };
 
 /// Defines how the high level api should interact with the device based on its memory layout
@@ -226,6 +232,10 @@ pub struct Device {
     pub inputs: &'static [Input],
     /// The definitions for all output channels
     pub outputs: &'static [Output],
+    /// Maximum total number of FIR taps
+    pub fir_max_taps: u16,
+    /// Internal sampling rate in Hz
+    pub internal_sampling_rate: u32,
 }
 
 /// Defines an input channel and its features
@@ -323,6 +333,9 @@ pub struct Fir {
 
     /// Bypass address
     pub bypass: u16,
+
+    /// Maximum supported coefficients
+    pub max_coefficients: u16,
 }
 
 #[cfg(test)]

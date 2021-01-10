@@ -130,7 +130,7 @@ enum InputCommand {
         index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
     },
 }
 
@@ -180,8 +180,26 @@ enum OutputCommand {
         index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
     },
+
+    /// Controls the FIR filter
+    FIR {
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    },
+
+    /// Controls crossovers (2x 4 biquads)
+    Crossover {
+        /// Group index (0 or 1)
+        group: usize,
+
+        /// Filter index (all | 0 | 1 | 3)
+        index: PEQTarget,
+
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    }
 }
 
 #[derive(Debug)]
@@ -203,10 +221,10 @@ impl FromStr for PEQTarget {
 }
 
 #[derive(Clap, Debug)]
-enum PEQCommand {
-    /// Set biquad coefficients
+enum FilterCommand {
+    /// Set coefficients
     Set {
-        /// Biquad coefficients
+        /// Coefficients
         coeff: Vec<f32>,
     },
 
@@ -223,6 +241,8 @@ enum PEQCommand {
     Import {
         /// Filename containing the coefficients in REW format
         filename: PathBuf,
+        /// Import file format
+        format: Option<String>,
     },
 }
 

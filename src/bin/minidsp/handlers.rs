@@ -1,9 +1,10 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
-use crate::{PEQCommand, RoutingCommand, SubCommand};
-use minidsp::{rew::FromRew, Biquad, BiquadFilter, Channel};
-use std::str::FromStr;
-use std::time::Duration;
+use crate::{FilterCommand, RoutingCommand, SubCommand};
+use minidsp::{
+    rew::FromRew, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel, Crossover, Fir,
+};
+use std::{str::FromStr, time::Duration};
 
 pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -> Result<()> {
     match cmd {
@@ -116,12 +117,16 @@ pub(crate) async fn run_output(
                 run_peq(eqs.as_ref(), cmd).await?
             }
         },
+        OutputCommand::FIR { cmd } => run_fir(dsp, &output.fir(), cmd).await?,
+        OutputCommand::Crossover { group, index, cmd } => {
+            run_xover(&output.crossover(), cmd, group, index).await?
+        }
     }
     Ok(())
 }
 
-pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: PEQCommand) -> Result<()> {
-    use PEQCommand::*;
+pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: FilterCommand) -> Result<()> {
+    use FilterCommand::*;
 
     match cmd {
         Set { coeff } => {
@@ -143,7 +148,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: PEQCommand) -> Resul
                 peq.set_bypass(false).await?;
             }
         }
-        Import { filename } => {
+        FilterCommand::Import { filename, .. } => {
             let file = std::fs::read_to_string(filename)?;
             let mut lines = file.lines();
             for (i, peq) in peqs.iter().enumerate() {
@@ -162,5 +167,83 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: PEQCommand) -> Resul
             }
         }
     }
+    Ok(())
+}
+
+pub(crate) async fn run_xover(
+    xover: &Crossover<'_>,
+    cmd: FilterCommand,
+    group: usize,
+    index: PEQTarget,
+) -> Result<()> {
+    match cmd {
+        FilterCommand::Set { coeff } => match index {
+            PEQTarget::All => {
+                for index in 0..xover.num_filter_per_group() {
+                    xover.set_coefficients(group, index, coeff.as_ref()).await?;
+                }
+            }
+            PEQTarget::One(index) => {
+                xover.set_coefficients(group, index, coeff.as_ref()).await?;
+            }
+        },
+        FilterCommand::Bypass { value } => {
+            xover.set_bypass(group, value).await?;
+        }
+        FilterCommand::Clear => {
+            xover.clear(group).await?;
+        }
+        FilterCommand::Import { filename, .. } => {
+            let file = std::fs::read_to_string(filename)?;
+            let mut lines = file.lines();
+
+            let range = match index {
+                PEQTarget::All => 0..xover.num_filter_per_group(),
+                PEQTarget::One(i) => i..i + 1,
+            };
+
+            for i in range {
+                if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
+                    xover
+                        .set_coefficients(group, i, biquad.to_array().as_ref())
+                        .await?;
+                    println!(
+                        "Xover {}.{}: Applied imported filter: biquad{}",
+                        group, i, biquad.index
+                    );
+                } else {
+                    println!("Xover {}.{}: Cleared filter", group, i);
+                    xover.clear(group).await?;
+                }
+            }
+
+            xover.set_bypass(group, false).await?;
+
+            if Biquad::from_rew_lines(&mut lines).is_some() {
+                eprintln!("Warning: Some filters were not imported because they didn't fit (try using `all`)")
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub(crate) async fn run_fir(dsp: &MiniDSP<'_>, fir: &Fir<'_>, cmd: FilterCommand) -> Result<()> {
+    match cmd {
+        FilterCommand::Set { coeff } => {
+            fir.set_coefficients(coeff.as_ref()).await?;
+        }
+        FilterCommand::Bypass { value } => {
+            fir.set_bypass(value).await?;
+        }
+        FilterCommand::Clear => {
+            fir.clear().await?;
+        }
+        FilterCommand::Import { filename, .. } => {
+            let coeff = read_wav_filter(filename, dsp.device.internal_sampling_rate)?;
+            fir.set_coefficients(coeff.as_ref()).await?;
+        }
+    }
+
     Ok(())
 }
