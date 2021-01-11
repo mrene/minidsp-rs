@@ -265,7 +265,9 @@ impl<'a> Input<'a> {
 
     /// Sets the routing matrix gain for this [input, output_index] pair
     pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
-        self.dsp.write_dsp(self.spec.routing[output_index].gain,gain.0).await
+        self.dsp
+            .write_dsp(self.spec.routing[output_index].gain, gain.0)
+            .await
     }
 }
 
@@ -284,7 +286,9 @@ pub struct Output<'a> {
 impl<'a> Output<'a> {
     /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
-        self.dsp.write_dsp(self.spec.invert_addr,value as u16).await
+        self.dsp
+            .write_dsp(self.spec.invert_addr, value as u16)
+            .await
     }
 
     /// Sets the output delay setting
@@ -300,7 +304,7 @@ impl<'a> Output<'a> {
         }
 
         let value = value as u16;
-        self.dsp.write_dsp(self.spec.delay_addr,value).await
+        self.dsp.write_dsp(self.spec.delay_addr, value).await
     }
 
     /// Helper for setting crossover settings
@@ -440,23 +444,23 @@ impl<'a> Compressor<'a> {
             commands::WriteInt::ENABLED
         };
 
-        self.dsp.write_dsp(self.spec.bypass,value).await
+        self.dsp.write_dsp(self.spec.bypass, value).await
     }
 
     pub async fn set_threshold(&self, value: f32) -> Result<()> {
-        self.dsp.write_dsp(self.spec.threshold,value).await
+        self.dsp.write_dsp(self.spec.threshold, value).await
     }
 
     pub async fn set_ratio(&self, value: f32) -> Result<()> {
-        self.dsp.write_dsp(self.spec.ratio,value).await
+        self.dsp.write_dsp(self.spec.ratio, value).await
     }
 
     pub async fn set_attack(&self, value: f32) -> Result<()> {
-        self.dsp.write_dsp(self.spec.attack,value).await
+        self.dsp.write_dsp(self.spec.attack, value).await
     }
 
     pub async fn set_release(&self, value: f32) -> Result<()> {
-        self.dsp.write_dsp(self.spec.release,value).await
+        self.dsp.write_dsp(self.spec.release, value).await
     }
 
     pub async fn get_level(&self) -> Result<f32> {
@@ -490,7 +494,7 @@ impl<'a> Fir<'a> {
             commands::WriteInt::ENABLED
         };
 
-        self.dsp.write_dsp(self.spec.bypass,value).await
+        self.dsp.write_dsp(self.spec.bypass, value).await
     }
 
     pub async fn clear(&self) -> Result<()> {
@@ -503,7 +507,9 @@ impl<'a> Fir<'a> {
         let master_status = self.dsp.get_master_status().await?;
 
         // Set the number of active coefficients
-        self.dsp.write_dsp(self.spec.num_coefficients,coefficients.len() as u16).await?;
+        self.dsp
+            .write_dsp(self.spec.num_coefficients, coefficients.len() as u16)
+            .await?;
 
         // Get the max number of usable coefficients
         let max_coeff = self

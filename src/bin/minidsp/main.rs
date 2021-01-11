@@ -56,7 +56,9 @@ enum SubCommand {
     Probe,
 
     /// Set the master output gain [-127, 0]
-    Gain { value: Gain },
+    Gain {
+        value: Gain,
+    },
 
     /// Set the master mute status
     Mute {
@@ -208,7 +210,7 @@ enum OutputCommand {
         bypass: Option<bool>,
 
         /// Sets the threshold in dBFS
-        #[clap(short = 't', long)]
+        #[clap(short = 't', long, allow_hyphen_values(true))]
         threshold: Option<f32>,
 
         /// Sets the ratio
