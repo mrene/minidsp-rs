@@ -47,6 +47,18 @@ pub enum Value {
     Int(u16),
 }
 
+impl From<f32> for Value {
+    fn from(f: f32) -> Self {
+        Value::Float(f)
+    }
+}
+
+impl From<u16> for Value {
+    fn from(x: u16) -> Self {
+        Value::Int(x)
+    }
+}
+
 impl Value {
     pub fn into_bytes(self) -> Bytes {
         match self {
