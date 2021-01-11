@@ -61,7 +61,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                 }
                 handle.send(tcp_recv_buf)
                     .await
-                    .map_err(|_| anyhow!("send error"))?;
+                    .map_err(|e| anyhow!("send error: {:?}", e))?;
             },
         }
     }
