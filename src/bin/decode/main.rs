@@ -94,10 +94,7 @@ async fn decode(framed: impl Stream<Item = recorder::Message>) -> Result<()> {
     let mut decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stdout(ColorChoice::Always);
-        decoder::Decoder {
-            w: Box::new(writer),
-            quiet: true,
-        }
+        decoder::Decoder::new(Box::new(writer), true)
     };
 
     let mut n_recv: i32 = 0;

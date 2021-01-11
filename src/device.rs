@@ -77,7 +77,33 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x20e9,
                 len: 10,
             },
-            fir_bypass_addr: 0x0e,
+            xover: Crossover {
+                peqs: [
+                    PEQ {
+                        high: 0x2193,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21a7,
+                        len: 4,
+                    },
+                ],
+                bypass: [0x2184, 0x2198],
+            },
+            compressor: Compressor {
+                bypass: 0x16,
+                threshold: 0x28,
+                ratio: 0x2a,
+                attack: 0x2c,
+                release: 0x2d,
+                meter: 0x46,
+            },
+            fir: Fir {
+                index: 0,
+                bypass: 0xe,
+                num_coefficients: 0x54,
+                max_coefficients: 2048,
+            },
         },
         Output {
             gate: Gate {
@@ -90,7 +116,33 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x211b,
                 len: 10,
             },
-            fir_bypass_addr: 0x0f,
+            xover: Crossover {
+                peqs: [
+                    PEQ {
+                        high: 0x21bb,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21cf,
+                        len: 4,
+                    },
+                ],
+                bypass: [0x21ac, 0x21c0],
+            },
+            compressor: Compressor {
+                bypass: 0x17,
+                threshold: 0x2e,
+                ratio: 0x30,
+                attack: 0x32,
+                release: 0x33,
+                meter: 0x47,
+            },
+            fir: Fir {
+                index: 1,
+                bypass: 0xf,
+                num_coefficients: 0x855,
+                max_coefficients: 2048,
+            },
         },
         Output {
             gate: Gate {
@@ -103,7 +155,33 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x214d,
                 len: 10,
             },
-            fir_bypass_addr: 0x10,
+            xover: Crossover {
+                peqs: [
+                    PEQ {
+                        high: 0x21e3,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x21f7,
+                        len: 4,
+                    },
+                ],
+                bypass: [0x21e8, 0x21d4],
+            },
+            compressor: Compressor {
+                bypass: 0x18,
+                threshold: 0x34,
+                ratio: 0x36,
+                attack: 0x38,
+                release: 0x39,
+                meter: 0x48,
+            },
+            fir: Fir {
+                index: 2,
+                bypass: 0x10,
+                num_coefficients: 0x1056,
+                max_coefficients: 2048,
+            },
         },
         Output {
             gate: Gate {
@@ -116,12 +194,41 @@ pub const DEVICE_2X4HD: Device = Device {
                 high: 0x217f,
                 len: 10,
             },
-            fir_bypass_addr: 0x11,
+            xover: Crossover {
+                peqs: [
+                    PEQ {
+                        high: 0x220b,
+                        len: 4,
+                    },
+                    PEQ {
+                        high: 0x221f,
+                        len: 4,
+                    },
+                ],
+                bypass: [0x21fc, 0x2210],
+            },
+            compressor: Compressor {
+                bypass: 0x19,
+                threshold: 0x3a,
+                ratio: 0x3c,
+                attack: 0x3e,
+                release: 0x3f,
+                meter: 0x49,
+            },
+            fir: Fir {
+                index: 3,
+                bypass: 0x11,
+                num_coefficients: 0x1857,
+                max_coefficients: 2048,
+            },
         },
     ],
+    fir_max_taps: 4096,
+    internal_sampling_rate: 96000,
 };
 
 /// Defines how the high level api should interact with the device based on its memory layout
+#[derive(Debug)]
 pub struct Device {
     /// The name of the input sources
     pub sources: &'static [Source],
@@ -129,9 +236,14 @@ pub struct Device {
     pub inputs: &'static [Input],
     /// The definitions for all output channels
     pub outputs: &'static [Output],
+    /// Maximum total number of FIR taps
+    pub fir_max_taps: u16,
+    /// Internal sampling rate in Hz
+    pub internal_sampling_rate: u32,
 }
 
 /// Defines an input channel and its features
+#[derive(Debug)]
 pub struct Input {
     /// Mute and Gain
     pub gate: Gate,
@@ -142,6 +254,7 @@ pub struct Input {
 }
 
 /// Defines an output channel and its features
+#[derive(Debug)]
 pub struct Output {
     /// Mute and Gain
     pub gate: Gate,
@@ -151,15 +264,17 @@ pub struct Output {
     pub invert_addr: u16,
     /// Parametric equalizers
     pub peq: PEQ,
-    // TODO: Xover
-    // TODO: Compressor
-    // pub fir_coeff_addr: u16,
+    /// Crossover biquads
+    pub xover: Crossover,
+    /// Compressor
+    pub compressor: Compressor,
     // XXX: TODO: active=2 bypass=3 via 0x13 0x80
     /// Address of the FIR bypass toggle
-    pub fir_bypass_addr: u16,
+    pub fir: Fir,
 }
 
 /// Reference to a control having both a mute and gain setting
+#[derive(Debug)]
 pub struct Gate {
     /// Address controlling whether audio is enabled, 1 = off 2 = on
     pub enable: u16,
@@ -167,8 +282,18 @@ pub struct Gate {
     /// Address where the gain is controlled
     pub gain: u16,
 }
+#[derive(Debug)]
+pub struct Compressor {
+    pub bypass: u16,
+    pub threshold: u16,
+    pub ratio: u16,
+    pub attack: u16,
+    pub release: u16,
+    pub meter: u16,
+}
 
-/// A range of biquad filter address part of a single parametric eq
+/// A range of contiguous biquad filter addresses
+#[derive(Debug)]
 pub struct PEQ {
     /// Higher bound address
     pub high: u16,
@@ -188,6 +313,34 @@ impl PEQ {
         }
         self.high - (index * 5) as u16
     }
+
+    pub fn iter(&'_ self) -> impl '_ + Iterator<Item = u16> {
+        (0..self.len).map(move |x| self.at(x))
+    }
+}
+
+#[derive(Debug)]
+pub struct Crossover {
+    /// Individual biquad groups. On the 2x4HD there are two of these containing 4 biquads each.
+    pub peqs: [PEQ; 2],
+
+    /// Bypass addresses. Contrary to regular PEQs, there are 2 bypass addresses for 8 biquads.
+    pub bypass: [u16; 2],
+}
+
+#[derive(Debug)]
+pub struct Fir {
+    /// Index to use in the FIRLoad commands
+    pub index: u8,
+
+    /// Address saving the number of active coefficients
+    pub num_coefficients: u16,
+
+    /// Bypass address
+    pub bypass: u16,
+
+    /// Maximum supported coefficients
+    pub max_coefficients: u16,
 }
 
 #[cfg(test)]

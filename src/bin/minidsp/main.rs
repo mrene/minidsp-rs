@@ -10,7 +10,14 @@ use minidsp::{
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP,
 };
-use std::{num::ParseIntError, str::FromStr, sync::Arc};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    num::ParseIntError,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
 use tokio::net::TcpStream;
 
 mod debug;
@@ -19,6 +26,7 @@ mod handlers;
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
+use std::io::Read;
 use std::ops::Deref;
 use std::time::Duration;
 
@@ -33,6 +41,10 @@ struct Opts {
     #[clap(name = "tcp", env = "MINIDSP_TCP", long)]
     /// The target address of the server component
     tcp_option: Option<String>,
+
+    #[clap(short = 'f')]
+    /// Read commands to run from the given filename (use - for stdin)
+    file: Option<PathBuf>,
 
     #[clap(subcommand)]
     subcmd: Option<SubCommand>,
@@ -114,11 +126,11 @@ enum InputCommand {
 
     /// Control the parametric equalizer
     PEQ {
-        /// Parametric EQ index
-        index: usize,
+        /// Parametric EQ index (all | <id>) (0 to 9 inclusively)
+        index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
     },
 }
 
@@ -138,7 +150,7 @@ enum RoutingCommand {
 
 #[derive(Clap, Debug)]
 enum OutputCommand {
-    /// Set the input gain for this channel
+    /// Set the output gain for this channel
     Gain {
         /// Output gain in dB
         value: Gain,
@@ -164,19 +176,78 @@ enum OutputCommand {
 
     /// Control the parametric equalizer
     PEQ {
-        /// Parametric EQ index
-        index: usize,
+        /// Parametric EQ index (all | <id>) (0 to 9 inclusively)
+        index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
+    },
+
+    /// Control the FIR filter
+    FIR {
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    },
+
+    /// Control crossovers (2x 4 biquads)
+    Crossover {
+        /// Group index (0 or 1)
+        group: usize,
+
+        /// Filter index (all | 0 | 1 | 3)
+        index: PEQTarget,
+
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    },
+
+    /// Control the compressor
+    Compressor {
+        /// Bypasses the compressor (on | off)
+        #[clap(short='b', long, parse(try_from_str = on_or_off))]
+        bypass: Option<bool>,
+
+        /// Sets the threshold in dBFS
+        #[clap(short = 't', long)]
+        threshold: Option<f32>,
+
+        /// Sets the ratio
+        #[clap(short = 'k', long)]
+        ratio: Option<f32>,
+
+        /// Sets the attack time in ms
+        #[clap(short = 'a', long)]
+        attack: Option<f32>,
+
+        /// Sets the release time in ms
+        #[clap(short = 'r', long)]
+        release: Option<f32>,
     },
 }
 
+#[derive(Debug)]
+enum PEQTarget {
+    All,
+    One(usize),
+}
+
+impl FromStr for PEQTarget {
+    type Err = <usize as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.to_lowercase() == "all" {
+            Ok(PEQTarget::All)
+        } else {
+            Ok(PEQTarget::One(usize::from_str(s)?))
+        }
+    }
+}
+
 #[derive(Clap, Debug)]
-enum PEQCommand {
-    /// Set biquad coefficients
+enum FilterCommand {
+    /// Set coefficients
     Set {
-        /// Biquad coefficients
+        /// Coefficients
         coeff: Vec<f32>,
     },
 
@@ -184,6 +255,17 @@ enum PEQCommand {
     Bypass {
         #[clap(parse(try_from_str = on_or_off))]
         value: bool,
+    },
+
+    /// Sets all coefficients back to their default values and un-bypass them
+    Clear,
+
+    /// Imports the coefficients from the given file
+    Import {
+        /// Filename containing the coefficients in REW format
+        filename: PathBuf,
+        /// Import file format
+        format: Option<String>,
     },
 }
 
@@ -280,19 +362,43 @@ async fn main() -> Result<()> {
     let transport: Arc<dyn Transport> = get_transport(&opts).await?;
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
-    handlers::run_command(&device, opts.subcmd).await?;
 
-    // Always output the current master status and input/output levels
-    let master_status = device.get_master_status().await?;
-    println!("{:?}", master_status);
+    if let Some(filename) = opts.file {
+        let file: Box<dyn Read> = {
+            if filename.to_string_lossy() == "-" {
+                Box::new(std::io::stdin())
+            } else {
+                Box::new(File::open(filename)?)
+            }
+        };
+        let reader = BufReader::new(file);
+        let cmds = reader.lines().filter_map(|s| {
+            let trimmed = s.ok()?.trim().to_string();
+            if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                Some(trimmed)
+            } else {
+                None
+            }
+        });
 
-    let input_levels = device.get_input_levels().await?;
-    let strs: Vec<String> = input_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-    println!("Input levels: {}", strs.join(", "));
+        for cmd in cmds {
+            let words = shellwords::split(&cmd)?;
+            let prefix = &["minidsp".to_string()];
+            let words = prefix.iter().chain(words.iter());
+            let opts = Opts::try_parse_from(words);
+            let opts = match opts {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("While executing: {}\n{}", cmd, e);
+                    return Err(anyhow!("Command failure"));
+                }
+            };
 
-    let output_levels = device.get_output_levels().await?;
-    let strs: Vec<String> = output_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-    println!("Output levels: {}", strs.join(", "));
+            handlers::run_command(&device, opts.subcmd).await?;
+        }
+    } else {
+        handlers::run_command(&device, opts.subcmd).await?;
+    }
 
     Ok(())
 }

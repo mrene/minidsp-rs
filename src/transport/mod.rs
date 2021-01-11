@@ -32,8 +32,14 @@ pub enum MiniDSPError {
     #[error("This source was not recognized. Supported types are: 'toslink', 'usb', 'analog'")]
     InvalidSource,
 
+    #[error("There are too many coeffiients in this filter")]
+    TooManyCoefficients,
+
     #[error("Parse error")]
     ParseError(#[from] commands::ParseError),
+
+    #[error("Malformed filter data")]
+    MalformedFilterData,
 
     #[error("Transport error")]
     TransportError(#[from] broadcast::error::RecvError),

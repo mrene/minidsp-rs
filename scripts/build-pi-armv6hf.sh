@@ -22,11 +22,12 @@ DEPS=( \
 
 # Collect Paths
 SYSROOT="/pi-tools/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/sysroot"
-GCC="/pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin"
+TOOLCHAIN="/pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/"
+GCC="$TOOLCHAIN/bin"
 GCC_SYSROOT="$GCC/gcc-sysroot"
 
 
-export PATH=/pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/:$PATH
+export PATH=$TOOLCHAIN/bin/:$PATH
 export PKG_CONFIG_LIBDIR=${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig/
 export PKG_CONFIG_SYSROOT_DIR=$SYSROOT
 export PKG_CONFIG_ALL_STATIC=on
@@ -53,14 +54,20 @@ fi
 mkdir -p ~/.cargo/
 
 # point cargo to use gcc wrapper as linker
-echo -e '[target.arm-unknown-linux-gnueabihf]\nlinker = "gcc-sysroot"' > ~/.cargo/config
+echo -e '[target.arm-unknown-linux-gnueabihf]\nlinker = "gcc-sysroot"\nstrip = { path = "arm-linux-gnueabihf-strip" }\nobjcopy = { path = "arm-linux-gnueabihf-objcopy" }' > ~/.cargo/config.toml
 
-# Somehow the .cargo/config setting isn't properly read
+# Somehow .cargo/config.toml's linker settings are ignored
 export RUSTFLAGS="-C linker=gcc-sysroot"
+export CC_arm_unknown_linux_gnueabihf=gcc-sysroot
+export CARGO_TARGET_arm_unknown_linux_gnueabihf_LINKER="gcc-sysroot"
 
 # Overwrite libc and libpthread with the new ones since the sysroot ones are outdated
 cp $SYSROOT/lib/arm-linux-gnueabihf/libc-2.28.so $SYSROOT/lib/libc.so.6
 cp $SYSROOT/lib/arm-linux-gnueabihf/libpthread-2.28.so $SYSROOT/lib/libpthread.so.0
 
+CMD=$1
+shift
+
 # Build
-cargo build --release --target arm-unknown-linux-gnueabihf
+cargo $CMD --target arm-unknown-linux-gnueabihf "$@"
+

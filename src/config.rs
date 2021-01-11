@@ -1,4 +1,5 @@
 //! Utilities for dealing with xml configuration files
+use bimap::BiMap;
 use bytes::Bytes;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -90,6 +91,27 @@ impl Setting {
                 para[0].subpara.sort_unstable_by_key(|sp| sp.row);
             }
         }
+    }
+
+    /// Returns a BiMap with all names and indices inside this config
+    pub fn name_map(&self) -> BiMap<String, usize> {
+        let mut map = BiMap::<String, usize>::new();
+
+        for item in &self.items {
+            match item {
+                AddressableElement::Item { name, addr, .. } => {
+                    map.insert(name.clone(), *addr as usize);
+                }
+                AddressableElement::Fir { name, addr, .. } => {
+                    map.insert(name.clone(), *addr as usize);
+                }
+                AddressableElement::Filter { name, addr, .. } => {
+                    map.insert(name.clone(), *addr as usize);
+                }
+            }
+        }
+
+        map
     }
 }
 

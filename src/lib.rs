@@ -56,15 +56,18 @@ use crate::transport::MiniDSPError;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
+pub mod biquad;
 pub mod commands;
 pub mod config;
 pub mod device;
 pub mod discovery;
 pub mod packet;
+pub mod rew;
 pub mod server;
 pub mod source;
 pub mod transport;
 pub mod utils;
+pub use biquad::Biquad;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -231,6 +234,11 @@ pub trait Channel {
         let (dsp, _, peq) = self._channel();
         BiquadFilter::new(dsp, peq.at(index))
     }
+
+    fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
+        let (dsp, _, peq) = self._channel();
+        peq.iter().map(move |x| BiquadFilter::new(dsp, x)).collect()
+    }
 }
 
 /// Input channel control
@@ -276,7 +284,7 @@ pub struct Output<'a> {
 }
 
 impl<'a> Output<'a> {
-    /// Sets the output mute setting for this channel
+    /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
         self.dsp
             .roundtrip(Commands::Write {
@@ -287,8 +295,7 @@ impl<'a> Output<'a> {
         Ok(())
     }
 
-    /// Sets the output gain setting
-
+    /// Sets the output delay setting
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
         // Each delay increment is 0.010 ms
         // let value = value / Duration::from_micros(10);
@@ -299,8 +306,8 @@ impl<'a> Output<'a> {
                 value
             )));
         }
-        let value = value as u16;
 
+        let value = value as u16;
         self.dsp
             .roundtrip(Commands::Write {
                 addr: self.spec.delay_addr,
@@ -308,6 +315,21 @@ impl<'a> Output<'a> {
             })
             .await?
             .into_ack()
+    }
+
+    /// Helper for setting crossover settings
+    pub fn crossover(&'_ self) -> Crossover<'_> {
+        Crossover::new(self.dsp, &self.spec.xover)
+    }
+
+    /// Helper for setting compressor settings
+    pub fn compressor(&'_ self) -> Compressor<'_> {
+        Compressor::new(self.dsp, &self.spec.compressor)
+    }
+
+    /// Helper for setting fir settings
+    pub fn fir(&'_ self) -> Fir<'_> {
+        Fir::new(self.dsp, &self.spec.fir)
     }
 }
 
@@ -326,6 +348,11 @@ pub struct BiquadFilter<'a> {
 impl<'a> BiquadFilter<'a> {
     pub(crate) fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
         BiquadFilter { dsp, addr }
+    }
+
+    pub async fn clear(&self) -> Result<()> {
+        self.set_coefficients(Biquad::default().to_array().as_ref())
+            .await
     }
 
     /// Sets the biquad coefficient for this filter.
@@ -354,5 +381,221 @@ impl<'a> BiquadFilter<'a> {
             })
             .await?
             .into_ack()
+    }
+}
+
+pub struct Crossover<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Crossover,
+}
+
+impl<'a> Crossover<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Crossover) -> Self {
+        Crossover { dsp, spec }
+    }
+
+    pub async fn clear(&self, group: usize) -> Result<()> {
+        for addr in self.spec.peqs[group].iter() {
+            BiquadFilter::new(self.dsp, addr).clear().await?;
+        }
+
+        Ok(())
+    }
+
+    /// Set the biquad coefficients for a given index within a group
+    /// There are usually two groups (0 and 1), each grouping 4 biquads
+    pub async fn set_coefficients(
+        &self,
+        group: usize,
+        index: usize,
+        coefficients: &[f32],
+    ) -> Result<()> {
+        let addr = self.spec.peqs[group].at(index);
+        let filter = BiquadFilter::new(self.dsp, addr);
+        filter.set_coefficients(coefficients).await
+    }
+
+    /// Sets the bypass for a given crossover biquad group.
+    /// There are usually two groups (0 and 1), each grouping 4 biquads
+    pub async fn set_bypass(&self, group: usize, bypass: bool) -> Result<()> {
+        let addr = self.spec.bypass[group];
+        self.dsp
+            .roundtrip(Commands::WriteBiquadBypass {
+                addr,
+                value: bypass,
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub fn num_groups(&self) -> usize {
+        self.spec.peqs.len()
+    }
+
+    pub fn num_filter_per_group(&self) -> usize {
+        self.spec.peqs[0].len
+    }
+}
+
+pub struct Compressor<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Compressor,
+}
+
+impl<'a> Compressor<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Compressor) -> Self {
+        Self { dsp, spec }
+    }
+
+    pub async fn set_bypass(&self, value: bool) -> Result<()> {
+        let value = if value {
+            commands::WriteInt::BYPASSED
+        } else {
+            commands::WriteInt::ENABLED
+        };
+
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.bypass,
+                value: Value::Int(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_threshold(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.threshold,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_ratio(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.ratio,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_attack(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.attack,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn set_release(&self, value: f32) -> Result<()> {
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.release,
+                value: Value::Float(value),
+            })
+            .await?
+            .into_ack()
+    }
+
+    pub async fn get_level(&self) -> Result<f32> {
+        let view = self
+            .dsp
+            .roundtrip(Commands::ReadFloats {
+                addr: self.spec.meter,
+                len: 1,
+            })
+            .await?
+            .into_float_view()?;
+
+        Ok(view.get(self.spec.meter))
+    }
+}
+
+pub struct Fir<'a> {
+    dsp: &'a MiniDSP<'a>,
+    spec: &'a device::Fir,
+}
+
+impl<'a> Fir<'a> {
+    pub fn new(dsp: &'a MiniDSP<'a>, spec: &'a device::Fir) -> Self {
+        Self { dsp, spec }
+    }
+
+    pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
+        let value = if bypass {
+            commands::WriteInt::BYPASSED
+        } else {
+            commands::WriteInt::ENABLED
+        };
+
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.bypass,
+                value: Value::Int(value),
+            })
+            .await?
+            .into_ack()?;
+
+        Ok(())
+    }
+
+    pub async fn clear(&self) -> Result<()> {
+        self.set_coefficients([0.0].repeat(16).as_ref()).await
+    }
+
+    /// Loads all coefficients into the filter, automatically setting the number of active taps
+    pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
+        // The device will change the master mute status while loading the filter
+        let master_status = self.dsp.get_master_status().await?;
+
+        // Set the number of active coefficients
+        self.dsp
+            .roundtrip(Commands::Write {
+                addr: self.spec.num_coefficients,
+                value: Value::Int(coefficients.len() as u16),
+            })
+            .await?
+            .into_ack()?;
+
+        // Get the max number of usable coefficients
+        let max_coeff = self
+            .dsp
+            .roundtrip_expect(
+                Commands::FirLoadStart {
+                    index: self.spec.index,
+                },
+                0x39,
+            )
+            .await?
+            .into_fir_size()?;
+
+        if coefficients.len() > max_coeff as usize {
+            return Err(MiniDSPError::TooManyCoefficients);
+        }
+
+        // Load coefficients by chunk of 14 floats
+        for block in coefficients.chunks(14) {
+            self.dsp
+                .roundtrip(Commands::FirLoadData {
+                    index: self.spec.index,
+                    data: Vec::from(block),
+                })
+                .await?
+                .into_ack()?;
+        }
+
+        // Send load end
+        self.dsp.roundtrip(Commands::FirLoadEnd).await?.into_ack()?;
+
+        // Set the master mute status back
+        self.dsp.set_master_mute(master_status.mute).await?;
+
+        Ok(())
     }
 }
