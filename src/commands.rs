@@ -500,6 +500,13 @@ impl Responses {
             _ => Err(MiniDSPError::MalformedResponse),
         }
     }
+
+    pub fn into_fir_size(self) -> Result<u16, MiniDSPError> {
+        match self {
+            Responses::FirLoadSize { size } => Ok(size),
+            _ => Err(MiniDSPError::MalformedResponse),
+        }
+    }
 }
 
 /// Parsable response type

@@ -29,6 +29,11 @@ atomic_refcell = "0.1.6"
 termcolor = "1.1.2"
 strong-xml = "0.6.0"
 shellwords = "1.1.0"
+bimap = "0.6.0"
+wav = "0.5.0"
+
+[dev-dependencies]
+assert_approx_eq = "1.1.0"
 
 [dependencies.hidapi]
 optional = true
@@ -67,5 +72,6 @@ Provides a way to control a MiniDSP 2x4HD and other compatible variants from the
 assets = [
     ["target/release/minidsp", "usr/bin/", "755"],
     ["README.md", "usr/share/doc/minidsp/README", "644"],
-    ["debian/minidsp.service","lib/systemd/system/minidsp.service", "644"]
+    ["debian/minidsp.service","lib/systemd/system/minidsp.service", "644"],
+    ["debian/minidsp.udev","lib/udev/rules.d/99-minidsp.rules", "644"]
 ]

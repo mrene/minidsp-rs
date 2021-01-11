@@ -10,7 +10,14 @@ use minidsp::{
     transport::{net::NetTransport, Transport},
     Gain, MiniDSP,
 };
-use std::{num::ParseIntError, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    num::ParseIntError,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
 use tokio::net::TcpStream;
 
 mod debug;
@@ -19,6 +26,7 @@ mod handlers;
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
+use std::io::Read;
 use std::ops::Deref;
 use std::time::Duration;
 
@@ -35,7 +43,7 @@ struct Opts {
     tcp_option: Option<String>,
 
     #[clap(short = 'f')]
-    /// Read commands to run from the given filename
+    /// Read commands to run from the given filename (use - for stdin)
     file: Option<PathBuf>,
 
     #[clap(subcommand)]
@@ -122,7 +130,7 @@ enum InputCommand {
         index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
     },
 }
 
@@ -142,7 +150,7 @@ enum RoutingCommand {
 
 #[derive(Clap, Debug)]
 enum OutputCommand {
-    /// Set the input gain for this channel
+    /// Set the output gain for this channel
     Gain {
         /// Output gain in dB
         value: Gain,
@@ -172,7 +180,48 @@ enum OutputCommand {
         index: PEQTarget,
 
         #[clap(subcommand)]
-        cmd: PEQCommand,
+        cmd: FilterCommand,
+    },
+
+    /// Control the FIR filter
+    FIR {
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    },
+
+    /// Control crossovers (2x 4 biquads)
+    Crossover {
+        /// Group index (0 or 1)
+        group: usize,
+
+        /// Filter index (all | 0 | 1 | 3)
+        index: PEQTarget,
+
+        #[clap(subcommand)]
+        cmd: FilterCommand,
+    },
+
+    /// Control the compressor
+    Compressor {
+        /// Bypasses the compressor (on | off)
+        #[clap(short='b', long, parse(try_from_str = on_or_off))]
+        bypass: Option<bool>,
+
+        /// Sets the threshold in dBFS
+        #[clap(short = 't', long)]
+        threshold: Option<f32>,
+
+        /// Sets the ratio
+        #[clap(short = 'k', long)]
+        ratio: Option<f32>,
+
+        /// Sets the attack time in ms
+        #[clap(short = 'a', long)]
+        attack: Option<f32>,
+
+        /// Sets the release time in ms
+        #[clap(short = 'r', long)]
+        release: Option<f32>,
     },
 }
 
@@ -195,10 +244,10 @@ impl FromStr for PEQTarget {
 }
 
 #[derive(Clap, Debug)]
-enum PEQCommand {
-    /// Set biquad coefficients
+enum FilterCommand {
+    /// Set coefficients
     Set {
-        /// Biquad coefficients
+        /// Coefficients
         coeff: Vec<f32>,
     },
 
@@ -215,6 +264,8 @@ enum PEQCommand {
     Import {
         /// Filename containing the coefficients in REW format
         filename: PathBuf,
+        /// Import file format
+        format: Option<String>,
     },
 }
 
@@ -313,15 +364,25 @@ async fn main() -> Result<()> {
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
 
     if let Some(filename) = opts.file {
-        let file = std::fs::read_to_string(filename)?;
-        let cmds = file.lines().filter(|s| {
-            // Ignore comments and empty lines
-            let trimmed = s.trim();
-            !trimmed.is_empty() && !trimmed.starts_with('#')
+        let file: Box<dyn Read> = {
+            if filename.to_string_lossy() == "-" {
+                Box::new(std::io::stdin())
+            } else {
+                Box::new(File::open(filename)?)
+            }
+        };
+        let reader = BufReader::new(file);
+        let cmds = reader.lines().filter_map(|s| {
+            let trimmed = s.ok()?.trim().to_string();
+            if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                Some(trimmed)
+            } else {
+                None
+            }
         });
 
         for cmd in cmds {
-            let words = shellwords::split(cmd)?;
+            let words = shellwords::split(&cmd)?;
             let prefix = &["minidsp".to_string()];
             let words = prefix.iter().chain(words.iter());
             let opts = Opts::try_parse_from(words);
