@@ -456,7 +456,7 @@ impl<'a> Compressor<'a> {
 
         self.dsp
             .roundtrip(Commands::Write {
-                addr: self.spec.threshold,
+                addr: self.spec.bypass,
                 value: Value::Int(value),
             })
             .await?
@@ -501,6 +501,19 @@ impl<'a> Compressor<'a> {
             })
             .await?
             .into_ack()
+    }
+
+    pub async fn get_level(&self) -> Result<f32> {
+        let view = self
+            .dsp
+            .roundtrip(Commands::ReadFloats {
+                addr: self.spec.meter,
+                len: 1,
+            })
+            .await?
+            .into_float_view()?;
+
+        Ok(view.get(self.spec.meter))
     }
 }
 

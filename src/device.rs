@@ -96,6 +96,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 ratio: 0x2a,
                 attack: 0x2c,
                 release: 0x2d,
+                meter: 0x46,
             },
             fir: Fir {
                 index: 0,
@@ -134,6 +135,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 ratio: 0x30,
                 attack: 0x32,
                 release: 0x33,
+                meter: 0x47,
             },
             fir: Fir {
                 index: 1,
@@ -172,6 +174,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 ratio: 0x36,
                 attack: 0x38,
                 release: 0x39,
+                meter: 0x48,
             },
             fir: Fir {
                 index: 2,
@@ -210,6 +213,7 @@ pub const DEVICE_2X4HD: Device = Device {
                 ratio: 0x3c,
                 attack: 0x3e,
                 release: 0x3f,
+                meter: 0x49,
             },
             fir: Fir {
                 index: 3,
@@ -285,6 +289,7 @@ pub struct Compressor {
     pub ratio: u16,
     pub attack: u16,
     pub release: u16,
+    pub meter: u16,
 }
 
 /// A range of contiguous biquad filter addresses
