@@ -488,35 +488,50 @@ impl Responses {
     pub fn into_memory_view(self) -> Result<MemoryView, MiniDSPError> {
         match self {
             Responses::MemoryData(m) => Ok(m),
-            _ => Err(MiniDSPError::MalformedResponse),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected a MemoryView, but got a {:?}",
+                self
+            ))),
         }
     }
 
     pub fn into_float_view(self) -> Result<FloatView, MiniDSPError> {
         match self {
             Responses::FloatData(m) => Ok(m),
-            _ => Err(MiniDSPError::MalformedResponse),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected a FloatView, but got a {:?}",
+                self
+            ))),
         }
     }
 
     pub fn into_hardware_id(self) -> Result<u8, MiniDSPError> {
         match self {
             Responses::HardwareId { payload } => Ok(payload[2]),
-            _ => Err(MiniDSPError::MalformedResponse),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected a HardwareId, but got a {:?}",
+                self
+            ))),
         }
     }
 
     pub fn into_ack(self) -> Result<(), MiniDSPError> {
         match self {
             Responses::Ack => Ok(()),
-            _ => Err(MiniDSPError::MalformedResponse),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected an Ack, but got a {:?}",
+                self
+            ))),
         }
     }
 
     pub fn into_fir_size(self) -> Result<u16, MiniDSPError> {
         match self {
             Responses::FirLoadSize { size } => Ok(size),
-            _ => Err(MiniDSPError::MalformedResponse),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected an FirSize, but got a {:?}",
+                self
+            ))),
         }
     }
 }

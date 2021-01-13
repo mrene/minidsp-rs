@@ -26,8 +26,8 @@ pub enum MiniDSPError {
     #[error("IO error: {0}")]
     IOError(#[from] std::io::Error),
 
-    #[error("A malformed packet was received")]
-    MalformedResponse,
+    #[error("A malformed packet was received: {0}")]
+    MalformedResponse(String),
 
     #[error("This source was not recognized. Supported types are: 'toslink', 'usb', 'analog'")]
     InvalidSource,

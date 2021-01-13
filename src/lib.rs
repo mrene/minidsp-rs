@@ -116,8 +116,11 @@ impl MiniDSP<'_> {
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
         let memory = read_memory(self.transport.as_ref(), 0xffd8, 8).await?;
-        Ok(MasterStatus::from_memory(&device_info, &memory)
-            .map_err(|_| MiniDSPError::MalformedResponse)?)
+        Ok(
+            MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
+                MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+            })?,
+        )
     }
 
     /// Gets the current input levels
