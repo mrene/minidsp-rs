@@ -50,7 +50,7 @@ pub use source::Source;
 use transport::Transport;
 
 pub use crate::commands::Gain;
-use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Value};
+use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Responses, Value};
 use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
 
@@ -88,19 +88,22 @@ impl<'a> MiniDSP<'a> {
 }
 
 impl MiniDSP<'_> {
-    async fn roundtrip_expect(
+    async fn roundtrip_expect<ExpectFn>(
         &self,
         cmd: commands::Commands,
-        expect: u8,
-    ) -> Result<commands::Responses, MiniDSPError> {
-        roundtrip(self.transport.as_ref(), cmd, Some(expect)).await
+        expect: ExpectFn,
+    ) -> Result<commands::Responses, MiniDSPError>
+    where
+        ExpectFn: Fn(&Responses) -> bool,
+    {
+        roundtrip(self.transport.as_ref(), cmd, expect).await
     }
 
     async fn roundtrip(
         &self,
         cmd: commands::Commands,
     ) -> Result<commands::Responses, MiniDSPError> {
-        roundtrip(self.transport.as_ref(), cmd, None).await
+        roundtrip(self.transport.as_ref(), cmd, |r| r.is_ack()).await
     }
 
     async fn write_dsp<T: Into<Value>>(&self, addr: u16, value: T) -> Result<()> {
@@ -116,8 +119,11 @@ impl MiniDSP<'_> {
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
         let memory = read_memory(self.transport.as_ref(), 0xffd8, 8).await?;
-        Ok(MasterStatus::from_memory(&device_info, &memory)
-            .map_err(|_| MiniDSPError::MalformedResponse)?)
+        Ok(
+            MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
+                MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+            })?,
+        )
     }
 
     /// Gets the current input levels
@@ -191,7 +197,7 @@ impl MiniDSP<'_> {
         }
 
         let hw_id = self
-            .roundtrip_expect(Commands::ReadHardwareId, 0x31)
+            .roundtrip_expect(Commands::ReadHardwareId, |r| r.is_hardware_id())
             .await?
             .into_hardware_id()?;
 
@@ -518,7 +524,7 @@ impl<'a> Fir<'a> {
                 Commands::FirLoadStart {
                     index: self.spec.index,
                 },
-                0x39,
+                |r| r.is_fir_size(),
             )
             .await?
             .into_fir_size()?;
