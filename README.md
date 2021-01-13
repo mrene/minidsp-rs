@@ -47,6 +47,17 @@ cargo install minidsp
 ```
 
 ## Usage
+
+## Attention
+The changes done through this command will not be visible from the minidsp app, as it cannot read the settings back from the device.
+The following settings will be visible after changing them from any source:
+- Master Gain
+- Master Mute
+- Configuration preset
+- Active Source
+
+The rest of the settings (filters, delays, routing) will not be reflected in the app.
+
 ```shell
 minidsp 0.0.2-dev
 Mathieu Rene <mathieu.rene@gmail.com>
@@ -173,13 +184,13 @@ The `peq` commands supports broadcasting an operation on multiple peqs. If speci
 an index, the command will only affect a single filter.
 
 Bypass the first peq:
-`minidsp output 0 peq 0 bypass on` 
+`minidsp input 0 peq 0 bypass on` 
 
 Bypass all peqs:
-`minidsp output 0 peq all bypass on`
+`minidsp input 0 peq all bypass on`
 
-Importing filters should use the `all` target if the ununsed filter should also be cleared.
-`minidsp output 0 preq all import ./file.txt`
+Importing filters should use the `all` target if the unused filter should also be cleared.
+`minidsp input 0 peq all import ./file.txt`
 
 </details>
 
@@ -257,8 +268,8 @@ Bypass the first peq:
 Bypass all peqs:
 `minidsp output 0 peq all bypass on`
 
-Importing filters should use the `all` target if the ununsed filter should also be cleared.
-`minidsp output 0 preq all import ./file.txt`
+Importing filters should use the `all` target if the unused filter should also be cleared.
+`minidsp output 0 peq all import ./file.txt`
 
 ### Crossover
 
@@ -361,7 +372,7 @@ Warning: Some filters were not imported because they didn't fit (try using `all`
 ```
 
 ### Running multiple commands at once
-For the purposes of organizing configurations, a file can be created with commands to run sequentially. It's an easy way to recall a certain preset without changing the devie config preset.
+For the purposes of organizing configurations, a file can be created with commands to run sequentially. It's an easy way to recall a certain preset without changing the device config preset.
 
 Lines are using the same format at the command line, without the `minidsp` command. 
 

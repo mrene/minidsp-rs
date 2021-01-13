@@ -56,9 +56,7 @@ enum SubCommand {
     Probe,
 
     /// Set the master output gain [-127, 0]
-    Gain {
-        value: Gain,
-    },
+    Gain { value: Gain },
 
     /// Set the master mute status
     Mute {
