@@ -3,7 +3,7 @@ Description=MiniDSP Server
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/minidsp server
+ExecStart=/usr/bin/minidsp server
 KillMode=process
 Restart=always
 
