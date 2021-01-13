@@ -23,7 +23,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
                     cmd_id: value[0],
                     payload: BytesWrap(value.slice(1..)),
                 },
-                None,
+                |_| true,
             )
             .await?;
 

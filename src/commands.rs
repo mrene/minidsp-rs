@@ -485,6 +485,10 @@ impl Responses {
         f.freeze()
     }
 
+    pub fn is_memory_view(&self) -> bool {
+        matches!(self, Responses::MemoryData(_))
+    }
+
     pub fn into_memory_view(self) -> Result<MemoryView, MiniDSPError> {
         match self {
             Responses::MemoryData(m) => Ok(m),
@@ -493,6 +497,10 @@ impl Responses {
                 self
             ))),
         }
+    }
+
+    pub fn is_float_view(&self) -> bool {
+        matches!(self, Responses::FloatData(_))
     }
 
     pub fn into_float_view(self) -> Result<FloatView, MiniDSPError> {
@@ -505,6 +513,10 @@ impl Responses {
         }
     }
 
+    pub fn is_hardware_id(&self) -> bool {
+        matches!(self, Responses::HardwareId { .. })
+    }
+
     pub fn into_hardware_id(self) -> Result<u8, MiniDSPError> {
         match self {
             Responses::HardwareId { payload } => Ok(payload[2]),
@@ -515,6 +527,10 @@ impl Responses {
         }
     }
 
+    pub fn is_ack(&self) -> bool {
+        matches!(self, Responses::Ack)
+    }
+
     pub fn into_ack(self) -> Result<(), MiniDSPError> {
         match self {
             Responses::Ack => Ok(()),
@@ -523,6 +539,10 @@ impl Responses {
                 self
             ))),
         }
+    }
+
+    pub fn is_fir_size(&self) -> bool {
+        matches!(self, Responses::FirLoadSize { .. })
     }
 
     pub fn into_fir_size(self) -> Result<u16, MiniDSPError> {
@@ -554,11 +574,14 @@ impl UnaryResponse for Bytes {
 /// Acquire an exclusive lock to the transport,
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)
-pub async fn roundtrip(
+pub async fn roundtrip<ExpectFn>(
     transport: &dyn Transport,
     command: Commands,
-    expect: Option<u8>,
-) -> Result<Responses, MiniDSPError> {
+    expect: ExpectFn,
+) -> Result<Responses, MiniDSPError>
+where
+    ExpectFn: Fn(&Responses) -> bool,
+{
     let mut receiver = transport.subscribe()?;
     let mut sender = transport.send_lock().await;
 
@@ -569,10 +592,8 @@ pub async fn roundtrip(
         let packet = packet::unframe(frame)?;
         let response = Responses::from_bytes(packet.clone())?;
 
-        if let Some(expected) = expect {
-            if expected != packet[0] {
-                continue;
-            }
+        if !expect(&response) {
+            continue;
         }
 
         return Ok(response);
@@ -593,9 +614,11 @@ pub async fn read_memory(
     addr: u16,
     size: u8,
 ) -> Result<MemoryView, MiniDSPError> {
-    roundtrip(transport, Commands::ReadMemory { addr, size }, Some(0x05))
-        .await?
-        .into_memory_view()
+    roundtrip(transport, Commands::ReadMemory { addr, size }, |r| {
+        r.is_memory_view()
+    })
+    .await?
+    .into_memory_view()
 }
 
 pub async fn read_floats(
@@ -603,9 +626,11 @@ pub async fn read_floats(
     addr: u16,
     len: u8,
 ) -> Result<FloatView, MiniDSPError> {
-    roundtrip(transport, Commands::ReadFloats { addr, len }, Some(0x14))
-        .await?
-        .into_float_view()
+    roundtrip(transport, Commands::ReadFloats { addr, len }, |r| {
+        r.is_float_view()
+    })
+    .await?
+    .into_float_view()
 }
 
 #[derive(Debug, Clone, PartialEq)]
