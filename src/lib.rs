@@ -50,7 +50,7 @@ pub use source::Source;
 use transport::Transport;
 
 pub use crate::commands::Gain;
-use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Value};
+use crate::commands::{roundtrip, Commands, FromMemory, MasterStatus, Responses, Value};
 use crate::device::{Gate, PEQ};
 use crate::transport::MiniDSPError;
 
@@ -88,27 +88,42 @@ impl<'a> MiniDSP<'a> {
 }
 
 impl MiniDSP<'_> {
-    async fn roundtrip_expect(
+    async fn roundtrip_expect<ExpectFn>(
         &self,
         cmd: commands::Commands,
-        expect: u8,
-    ) -> Result<commands::Responses, MiniDSPError> {
-        roundtrip(self.transport.as_ref(), cmd, Some(expect)).await
+        expect: ExpectFn,
+    ) -> Result<commands::Responses, MiniDSPError>
+    where
+        ExpectFn: Fn(&Responses) -> bool,
+    {
+        roundtrip(self.transport.as_ref(), cmd, expect).await
     }
 
     async fn roundtrip(
         &self,
         cmd: commands::Commands,
     ) -> Result<commands::Responses, MiniDSPError> {
-        roundtrip(self.transport.as_ref(), cmd, None).await
+        roundtrip(self.transport.as_ref(), cmd, |r| r.is_ack()).await
+    }
+
+    async fn write_dsp<T: Into<Value>>(&self, addr: u16, value: T) -> Result<()> {
+        self.roundtrip(Commands::Write {
+            addr,
+            value: value.into(),
+        })
+        .await?
+        .into_ack()
     }
 
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
         let memory = read_memory(self.transport.as_ref(), 0xffd8, 8).await?;
-        Ok(MasterStatus::from_memory(&device_info, &memory)
-            .map_err(|_| MiniDSPError::MalformedResponse)?)
+        Ok(
+            MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
+                MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+            })?,
+        )
     }
 
     /// Gets the current input levels
@@ -182,7 +197,7 @@ impl MiniDSP<'_> {
         }
 
         let hw_id = self
-            .roundtrip_expect(Commands::ReadHardwareId, 0x31)
+            .roundtrip_expect(Commands::ReadHardwareId, |r| r.is_hardware_id())
             .await?
             .into_hardware_id()?;
 
@@ -221,12 +236,7 @@ pub trait Channel {
     /// Sets the current gain setting
     async fn set_gain(&self, value: Gain) -> Result<()> {
         let (dsp, gate, _) = self._channel();
-        dsp.roundtrip(Commands::Write {
-            addr: gate.gain,
-            value: Value::Float(value.0),
-        })
-        .await?
-        .into_ack()
+        dsp.write_dsp(gate.gain, value.0).await
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
@@ -262,12 +272,8 @@ impl<'a> Input<'a> {
     /// Sets the routing matrix gain for this [input, output_index] pair
     pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
         self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.routing[output_index].gain,
-                value: Value::Float(gain.0),
-            })
-            .await?
-            .into_ack()
+            .write_dsp(self.spec.routing[output_index].gain, gain.0)
+            .await
     }
 }
 
@@ -287,12 +293,8 @@ impl<'a> Output<'a> {
     /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
         self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.invert_addr,
-                value: Value::Int(value as u16),
-            })
-            .await?;
-        Ok(())
+            .write_dsp(self.spec.invert_addr, value as u16)
+            .await
     }
 
     /// Sets the output delay setting
@@ -308,13 +310,7 @@ impl<'a> Output<'a> {
         }
 
         let value = value as u16;
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.delay_addr,
-                value: Value::Int(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.delay_addr, value).await
     }
 
     /// Helper for setting crossover settings
@@ -454,53 +450,23 @@ impl<'a> Compressor<'a> {
             commands::WriteInt::ENABLED
         };
 
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.bypass,
-                value: Value::Int(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.bypass, value).await
     }
 
     pub async fn set_threshold(&self, value: f32) -> Result<()> {
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.threshold,
-                value: Value::Float(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.threshold, value).await
     }
 
     pub async fn set_ratio(&self, value: f32) -> Result<()> {
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.ratio,
-                value: Value::Float(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.ratio, value).await
     }
 
     pub async fn set_attack(&self, value: f32) -> Result<()> {
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.attack,
-                value: Value::Float(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.attack, value).await
     }
 
     pub async fn set_release(&self, value: f32) -> Result<()> {
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.release,
-                value: Value::Float(value),
-            })
-            .await?
-            .into_ack()
+        self.dsp.write_dsp(self.spec.release, value).await
     }
 
     pub async fn get_level(&self) -> Result<f32> {
@@ -534,15 +500,7 @@ impl<'a> Fir<'a> {
             commands::WriteInt::ENABLED
         };
 
-        self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.bypass,
-                value: Value::Int(value),
-            })
-            .await?
-            .into_ack()?;
-
-        Ok(())
+        self.dsp.write_dsp(self.spec.bypass, value).await
     }
 
     pub async fn clear(&self) -> Result<()> {
@@ -556,12 +514,8 @@ impl<'a> Fir<'a> {
 
         // Set the number of active coefficients
         self.dsp
-            .roundtrip(Commands::Write {
-                addr: self.spec.num_coefficients,
-                value: Value::Int(coefficients.len() as u16),
-            })
-            .await?
-            .into_ack()?;
+            .write_dsp(self.spec.num_coefficients, coefficients.len() as u16)
+            .await?;
 
         // Get the max number of usable coefficients
         let max_coeff = self
@@ -570,7 +524,7 @@ impl<'a> Fir<'a> {
                 Commands::FirLoadStart {
                     index: self.spec.index,
                 },
-                0x39,
+                |r| r.is_fir_size(),
             )
             .await?
             .into_fir_size()?;

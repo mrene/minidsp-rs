@@ -26,11 +26,16 @@ pub fn checksum<T: AsRef<[u8]>>(data: T) -> u8 {
 /// Extracts the packet's data by looking at its first byte for its length
 pub fn unframe(response: Bytes) -> Result<Bytes, MiniDSPError> {
     if response.is_empty() {
-        return Err(MalformedResponse);
+        return Err(MalformedResponse("Packet was empty".to_string()));
     }
     let len = response[0] as usize;
     if response.len() < len {
-        Err(MalformedResponse)
+        Err(MalformedResponse(format!(
+            "Expected a packet of length {}, but got {} instead. (Data={})",
+            len,
+            response.len(),
+            hex::encode(response)
+        )))
     } else {
         Ok(response.slice(1..len))
     }

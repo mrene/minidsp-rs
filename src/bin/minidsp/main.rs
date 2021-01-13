@@ -208,7 +208,7 @@ enum OutputCommand {
         bypass: Option<bool>,
 
         /// Sets the threshold in dBFS
-        #[clap(short = 't', long)]
+        #[clap(short = 't', long, allow_hyphen_values(true))]
         threshold: Option<f32>,
 
         /// Sets the ratio
