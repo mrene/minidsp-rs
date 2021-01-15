@@ -9,7 +9,7 @@ repository = "https://github.com/mrene/minidsp-rs"
 keywords = ["minidsp", "audio", "dsp"]
 
 [dependencies]
-anyhow = "1.0.36"
+anyhow = "1.0.38"
 async-stream = "0.3.0"
 async-trait = "0.1.42"
 bytes = "1.0.0"
