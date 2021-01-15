@@ -7,7 +7,7 @@ use debug::DebugCommands;
 use minidsp::transport::net;
 use minidsp::{
     device, discovery, server,
-    transport::{net::NetTransport, Transport},
+    transport::{net::StreamTransport, Transport},
     Gain, MiniDSP,
 };
 use std::{
@@ -294,10 +294,10 @@ impl FromStr for ProductId {
     }
 }
 
-async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
+async fn get_transport(opts: &Opts) -> Result<Arc<Transport>> {
     if let Some(tcp) = &opts.tcp_option {
         let stream = TcpStream::connect(tcp).await?;
-        return Ok(Arc::new(NetTransport::new(stream)));
+        return Ok(Arc::new(StreamTransport::new(stream)));
     }
 
     #[cfg(feature = "hid")]
@@ -359,7 +359,7 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport: Arc<dyn Transport> = get_transport(&opts).await?;
+    let transport: Arc<Transport> = get_transport(&opts).await?;
 
     let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
 

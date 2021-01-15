@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
+use log::info;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 
@@ -16,7 +17,7 @@ use tokio::fs::File;
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
-async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
+async fn forward(handle: Arc<Transport>, mut tcp: TcpStream) -> Result<()> {
     let decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stderr(ColorChoice::Auto);
@@ -59,7 +60,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
                         recorder.feed_sent(&tcp_recv_buf);
                     }
                 }
-                handle.send(tcp_recv_buf)
+                handle.send_lock().await.send(tcp_recv_buf)
                     .await
                     .map_err(|e| anyhow!("send error: {:?}", e))?;
             },
@@ -68,7 +69,7 @@ async fn forward(handle: Arc<dyn Transport>, mut tcp: TcpStream) -> Result<()> {
 }
 
 /// Listen and forward every incoming tcp connection to the given transport
-pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<dyn Transport>) -> Result<()> {
+pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<Transport>) -> Result<()> {
     let listener = TcpListener::bind(bind_address).await?;
     let mut rx = transport.subscribe()?;
 
@@ -77,15 +78,15 @@ pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<dyn Transpo
            result = listener.accept() => {
                 let (stream, addr) = result?;
                 let handle = transport.clone();
-                eprintln!("New connection: {:?}", addr);
+                info!("New connection: {:?}", addr);
                 tokio::spawn(async move {
-                    let result: Result<()> = async { forward(handle, stream).await }.await;
+                    let result = forward(handle, stream).await;
 
                     if let Err(e) = result {
-                        eprintln!("err: {:?}", e);
+                        log::error!("err: {:?}", e);
                     }
 
-                    eprintln!("Closed: {:?}", addr);
+                    info!("Closed: {:?}", addr);
                 });
            },
            result = rx.recv() => {

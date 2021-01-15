@@ -589,7 +589,7 @@ impl UnaryResponse for Bytes {
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)
 pub async fn roundtrip<ExpectFn>(
-    transport: &dyn Transport,
+    transport: &Transport,
     command: Commands,
     expect: ExpectFn,
 ) -> Result<Responses, MiniDSPError>
@@ -624,7 +624,7 @@ where
 
 /// Wrapper for common commands
 pub async fn read_memory(
-    transport: &dyn Transport,
+    transport: &Transport,
     addr: u16,
     size: u8,
 ) -> Result<MemoryView, MiniDSPError> {
@@ -636,7 +636,7 @@ pub async fn read_memory(
 }
 
 pub async fn read_floats(
-    transport: &dyn Transport,
+    transport: &Transport,
     addr: u16,
     len: u8,
 ) -> Result<FloatView, MiniDSPError> {

@@ -71,14 +71,14 @@ pub use biquad::Biquad;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
-    pub transport: Arc<dyn Transport>,
+    pub transport: Arc<Transport>,
     pub device: &'a device::Device,
 
     device_info: Mutex<Cell<Option<DeviceInfo>>>,
 }
 
 impl<'a> MiniDSP<'a> {
-    pub fn new(transport: Arc<dyn Transport>, device: &'a device::Device) -> Self {
+    pub fn new(transport: Arc<Transport>, device: &'a device::Device) -> Self {
         MiniDSP {
             transport,
             device,
