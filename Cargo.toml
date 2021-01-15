@@ -47,7 +47,7 @@ version = "1.0.1"
 
 [dependencies.tokio-util]
 features = ["full"]
-version = "0.6.0"
+version = "0.6.1"
 
 [features]
 default = ["hid"]
