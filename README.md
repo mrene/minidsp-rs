@@ -48,7 +48,7 @@ cargo install minidsp
 
 ## Usage
 
-## Attention
+### Attention
 The changes done through this command will not be visible from the minidsp app, as it cannot read the settings back from the device.
 The following settings will be visible after changing them from any source:
 - Master Gain

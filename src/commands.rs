@@ -414,7 +414,7 @@ pub enum Responses {
     },
 
     /// Speculative commands
-    MaybeConfigChanged,
+    ConfigChanged,
 
     Unknown {
         cmd_id: u8,
@@ -443,7 +443,7 @@ impl Responses {
                     frame.get_u16()
                 },
             },
-            0xab => Responses::MaybeConfigChanged,
+            0xab => Responses::ConfigChanged,
             cmd_id => Responses::Unknown {
                 cmd_id,
                 payload: BytesWrap(frame),
@@ -480,7 +480,7 @@ impl Responses {
                 f.put_u8(0x39);
                 f.put_u16(*size);
             }
-            Responses::MaybeConfigChanged => {}
+            Responses::ConfigChanged => {}
         }
         f.freeze()
     }
@@ -536,6 +536,20 @@ impl Responses {
             Responses::Ack => Ok(()),
             _ => Err(MiniDSPError::MalformedResponse(format!(
                 "Expected an Ack, but got a {:?}",
+                self
+            ))),
+        }
+    }
+
+    pub fn is_config_changed(&self) -> bool {
+        matches!(self, Responses::ConfigChanged)
+    }
+
+    pub fn into_config_changed(self) -> Result<(), MiniDSPError> {
+        match self {
+            Responses::ConfigChanged => Ok(()),
+            _ => Err(MiniDSPError::MalformedResponse(format!(
+                "Expected a ConfigChanged, but got a {:?}",
                 self
             ))),
         }
