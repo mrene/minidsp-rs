@@ -165,12 +165,15 @@ impl MiniDSP<'_> {
 
     /// Sets the active configuration
     pub async fn set_config(&self, config: u8) -> Result<()> {
-        self.roundtrip(Commands::SetConfig {
-            config,
-            reset: true,
-        })
-        .await?;
-        Ok(())
+        self.roundtrip_expect(
+            Commands::SetConfig {
+                config,
+                reset: true,
+            },
+            |resp| resp.is_config_changed(),
+        )
+        .await?
+        .into_config_changed()
     }
 
     /// Gets an object wrapping an input channel
