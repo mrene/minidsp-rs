@@ -575,16 +575,6 @@ pub trait UnaryResponse {
     fn from_packet(packet: Bytes) -> Self;
 }
 
-impl UnaryResponse for () {
-    fn from_packet(_packet: Bytes) -> Self {}
-}
-
-impl UnaryResponse for Bytes {
-    fn from_packet(packet: Bytes) -> Self {
-        packet
-    }
-}
-
 /// Acquire an exclusive lock to the transport,
 /// send a command and wait for its response.
 /// (to cancel: drop the returned future)

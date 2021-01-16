@@ -1,18 +1,19 @@
 //! TCP server compatible with the official mobile and desktop application
-// #[macro_use]
-extern crate log;
-
-use std::sync::{Arc, Mutex};
-
+use crate::{
+    transport::Transport,
+    utils::{decoder::Decoder, recorder::Recorder},
+    MiniDSPError,
+};
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
 use log::info;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
-
-use crate::utils::{decoder::Decoder, recorder::Recorder};
-use crate::{transport::Transport, MiniDSPError};
-use tokio::fs::File;
+use std::sync::{Arc, Mutex};
+use tokio::{
+    fs::File,
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream, ToSocketAddrs},
+    select,
+};
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
@@ -32,7 +33,7 @@ async fn forward(handle: Arc<Transport>, mut tcp: TcpStream) -> Result<()> {
     let mut device_receiver = handle.subscribe()?;
     loop {
         let mut tcp_recv_buf = BytesMut::with_capacity(65);
-        tokio::select! {
+        select! {
             read_result = device_receiver.recv() => {
                 match read_result {
                     Err(_) => { return Ok(()) },
@@ -74,7 +75,7 @@ pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<Transport>)
     let mut rx = transport.subscribe()?;
 
     loop {
-        tokio::select! {
+        select! {
            result = listener.accept() => {
                 let (stream, addr) = result?;
                 let handle = transport.clone();

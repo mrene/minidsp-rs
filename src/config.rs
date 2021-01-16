@@ -2,7 +2,6 @@
 use bimap::BiMap;
 use bytes::Bytes;
 use std::fmt;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use strong_xml::{XmlRead, XmlWrite};
 
@@ -237,8 +236,8 @@ impl<T: FromStr> FromStr for CommaSeparatedList<T> {
     }
 }
 
-impl<T: Display> Display for CommaSeparatedList<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl<T: fmt::Display> fmt::Display for CommaSeparatedList<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -277,8 +276,8 @@ impl FromStr for HexString {
     }
 }
 
-impl Display for HexString {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for HexString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.inner.as_ref()))
     }
 }
@@ -290,10 +289,7 @@ mod test {
         commands::Commands,
         utils::recorder::{self as recorder},
     };
-    use futures::{Future, StreamExt};
-
-    use tokio::io::AsyncReadExt;
-    use tokio_util::io::StreamReader;
+    use futures::{Future, StreamExt, TryStreamExt, AsyncReadExt, pin_mut};
 
     /// Extracts a restore blob from a built-in recorded fixture
     async fn extract_blob<F, Fut>(fixture: &'static [u8], f: F) -> Bytes
@@ -305,7 +301,8 @@ mod test {
             .filter_map(recorder::decode_sent_commands)
             .filter_map(f);
 
-        let mut reader = Box::pin(StreamReader::new(stream));
+        pin_mut!(stream);
+        let mut reader = stream.into_async_read();
         let mut buffer = Vec::new();
         reader.read_to_end(&mut buffer).await.unwrap();
 

@@ -10,7 +10,6 @@ keywords = ["minidsp", "audio", "dsp"]
 
 [dependencies]
 anyhow = "1.0.38"
-async-stream = "0.3.0"
 async-trait = "0.1.42"
 bytes = "1.0.1"
 clap = "3.0.0-beta.2"
@@ -31,6 +30,7 @@ strong-xml = "0.6.0"
 shellwords = "1.1.0"
 bimap = "0.6.0"
 wav = "0.5.0"
+pin-project = "1.0.4"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
@@ -42,11 +42,11 @@ features = ["linux-static-libusb"]
 default_features = false
 
 [dependencies.tokio]
-features = ["full"]
+features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
 version = "1.0.2"
 
 [dependencies.tokio-util]
-features = ["full"]
+features = ["net", "codec","io"]
 version = "0.6.1"
 
 [features]

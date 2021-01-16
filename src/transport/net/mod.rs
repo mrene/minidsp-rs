@@ -6,7 +6,6 @@ use super::Transport;
 use futures::{SinkExt, StreamExt};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
-
 use codec::Codec;
 
 pub use discover::*;

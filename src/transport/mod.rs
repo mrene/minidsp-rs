@@ -2,19 +2,29 @@
 
 //! Wraps a Stream + Sink backend into a transport
 use anyhow::Result;
+use async_trait::async_trait;
 use bytes::Bytes;
 use futures::{Sink, SinkExt, Stream, StreamExt};
-use log::{debug, trace};
+use log::trace;
 use std::{
     pin::Pin,
     sync::{Arc, Mutex as SyncMutex},
 };
+use thiserror::Error;
 use tokio::sync::{broadcast, Mutex, OwnedMutexGuard};
 
 type BoxSink<E> = Pin<Box<dyn Sink<Bytes, Error = E> + Send + Sync>>;
 type BoxStream = Pin<Box<dyn Stream<Item = Bytes> + Send>>;
-use async_trait::async_trait;
-use thiserror::Error;
+
+pub trait TransportBackend<E>: Stream<Item = Bytes> + Sink<Bytes, Error = E> {}
+impl<T, E> TransportBackend<E> for T
+where
+    T: Stream<Item = Bytes> + Sink<Bytes, Error = E>,
+    E: Into<MiniDSPError>,
+{
+}
+
+type BoxTransport = Pin<Box<dyn TransportBackend<MiniDSPError> + Send + Sync>>;
 
 #[cfg(feature = "hid")]
 pub mod hid;
@@ -23,6 +33,7 @@ pub mod hid;
 use hidapi::HidError;
 
 use crate::commands;
+pub mod frame_codec;
 pub mod net;
 
 #[derive(Error, Debug)]
@@ -102,7 +113,7 @@ impl Transport {
                 .next()
                 .await
                 .ok_or(MiniDSPError::TransportClosed)?;
-            trace!("RECV LOOP: {:02x?}", data.as_ref());
+            trace!("recv: {:02x?}", data.as_ref());
             sender.send(data)?;
         }
     }
@@ -130,8 +141,7 @@ impl Sender {
     }
 
     pub async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
-        debug!("write: {:02x?}", frame.as_ref());
-        // TODO: Expose error correctly
+        trace!("send: {:02x?}", frame.as_ref());
         Ok(self
             .write
             .send(frame)
