@@ -19,17 +19,6 @@ async fn forward(
     mut device_tx: mpsc::Sender<Bytes>,
     mut device_rx: broadcast::Receiver<Bytes>,
 ) -> Result<()> {
-    // let decoder = {
-    //     use termcolor::{ColorChoice, StandardStream};
-    //     let writer = StandardStream::stderr(ColorChoice::Auto);
-    //     Arc::new(Mutex::new(Decoder::new(Box::new(writer), true)))
-    // };
-
-    // let mut recorder = match std::env::var("MINIDSP_LOG") {
-    //     Ok(filename) => Some(Recorder::new(File::create(filename).await?)),
-    //     _ => None,
-    // };
-
     // Apply framing to the TCP stream
     let mut remote = Framed::new(tcp, transport::net::Codec::new());
 

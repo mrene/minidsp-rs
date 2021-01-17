@@ -16,7 +16,7 @@ use std::{convert::TryInto, fmt};
 use std::{fmt::Debug, str::FromStr};
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum ParseError {
     #[error("bad cmd id")]
     BadCommandId,

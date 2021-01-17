@@ -4,12 +4,16 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
+use futures::{pin_mut, StreamExt};
 use handlers::run_server;
-use minidsp::transport::{multiplexer::Multiplexer, net, IntoTransport, Transport};
 use minidsp::{
     device, discovery, server,
     transport::{net::StreamTransport, SharedService},
     Gain, MiniDSP,
+};
+use minidsp::{
+    transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
+    utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
 use std::{
     fs::File,
@@ -322,6 +326,47 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
 }
 
+pub fn transport_logging(transport: Transport) -> Transport {
+    let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
+    let transport = logger(transport, log_tx);
+
+    tokio::spawn(async move {
+        let decoder = {
+            use termcolor::{ColorChoice, StandardStream};
+            let writer = StandardStream::stderr(ColorChoice::Auto);
+            Arc::new(Mutex::new(Decoder::new(Box::new(writer), false)))
+        };
+
+        let mut recorder = match std::env::var("MINIDSP_LOG") {
+            Ok(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
+            _ => None,
+        };
+
+        pin_mut!(log_rx);
+
+        while let Some(msg) = log_rx.next().await {
+            match msg {
+                utils::Message::Sent(msg) => {
+                    decoder.lock().await.feed_sent(&msg);
+                    if let Some(recorder) = recorder.as_mut() {
+                        recorder.feed_sent(&msg);
+                    }
+                }
+                utils::Message::Received(msg) => {
+                    decoder.lock().await.feed_recv(&msg);
+                    if let Some(recorder) = recorder.as_mut() {
+                        recorder.feed_recv(&msg);
+                    }
+                }
+            }
+        }
+
+        Ok::<(), anyhow::Error>(())
+    });
+
+    Box::pin(transport)
+}
+
 async fn get_service(transport: Transport) -> Result<SharedService> {
     let mplex = Multiplexer::from_transport(transport);
 
@@ -368,6 +413,8 @@ async fn main() -> Result<()> {
     }
 
     let transport = get_raw_transport(&opts).await?;
+    let transport = transport_logging(transport);
+
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         run_server(opts.subcmd.unwrap(), transport).await?;
         return Ok(());
