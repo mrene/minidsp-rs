@@ -1,11 +1,12 @@
 //! TCP server compatible with the official mobile and desktop application
 use crate::{
-    transport::Transport,
+    transport::{self, Transport},
     utils::{decoder::Decoder, recorder::Recorder},
     MiniDSPError,
 };
 use anyhow::{anyhow, Result};
 use bytes::{Bytes, BytesMut};
+use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt, TryStreamExt};
 use log::info;
 use std::sync::{Arc, Mutex};
 use tokio::{
@@ -13,75 +14,97 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream, ToSocketAddrs},
     select,
+    sync::broadcast,
 };
+use tokio_util::codec::Framed;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
-async fn forward(handle: Arc<Transport>, mut tcp: TcpStream) -> Result<()> {
-    let decoder = {
-        use termcolor::{ColorChoice, StandardStream};
-        let writer = StandardStream::stderr(ColorChoice::Auto);
-        Arc::new(Mutex::new(Decoder::new(Box::new(writer), true)))
-    };
+async fn forward(
+    tcp: TcpStream,
+    mut device_tx: mpsc::Sender<Bytes>,
+    mut device_rx: broadcast::Receiver<Bytes>,
+) -> Result<()> {
+    // let decoder = {
+    //     use termcolor::{ColorChoice, StandardStream};
+    //     let writer = StandardStream::stderr(ColorChoice::Auto);
+    //     Arc::new(Mutex::new(Decoder::new(Box::new(writer), true)))
+    // };
 
-    let mut recorder = match std::env::var("MINIDSP_LOG") {
-        Ok(filename) => Some(Recorder::new(File::create(filename).await?)),
-        _ => None,
-    };
+    // let mut recorder = match std::env::var("MINIDSP_LOG") {
+    //     Ok(filename) => Some(Recorder::new(File::create(filename).await?)),
+    //     _ => None,
+    // };
 
-    let mut device_receiver = handle.subscribe()?;
+    // Apply framing to the TCP stream
+    let mut remote = Framed::new(tcp, transport::net::Codec::new());
+
     loop {
-        let mut tcp_recv_buf = BytesMut::with_capacity(65);
         select! {
-            read_result = device_receiver.recv() => {
-                match read_result {
-                    Err(_) => { return Ok(()) },
-                    Ok(read_buf) => {
-                        let read_size = read_buf[0] as usize;
-                        let buf = Bytes::copy_from_slice(&read_buf[..read_size]);
-                        decoder.lock().unwrap().feed_recv(&buf);
-                        if let Some(recorder) = &mut recorder {
-                            recorder.feed_recv(&buf);
-                        }
-                        tcp.write_all(&read_buf[..read_size]).await?;
-                    }
-                }
+            frame = device_rx.recv() => {
+                remote.send(frame?).await?;
             },
-            recv_result = tcp.read_buf(&mut tcp_recv_buf) => {
-                let recv_size = recv_result?;
-                if recv_size == 0 {
-                    return Ok(())
-                }
-
-                let tcp_recv_buf = tcp_recv_buf.freeze();
-                {
-                    decoder.lock().unwrap().feed_sent(&tcp_recv_buf);
-                    if let Some(recorder) = &mut recorder {
-                        recorder.feed_sent(&tcp_recv_buf);
-                    }
-                }
-                handle.send_lock().await.send(tcp_recv_buf)
-                    .await
-                    .map_err(|e| anyhow!("send error: {:?}", e))?;
+            frame = remote.next() => {
+                device_tx.send(frame.ok_or(MiniDSPError::TransportClosed)??).await?;
             },
         }
     }
 }
 
 /// Listen and forward every incoming tcp connection to the given transport
-pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<Transport>) -> Result<()> {
-    let listener = TcpListener::bind(bind_address).await?;
-    let mut rx = transport.subscribe()?;
+pub async fn serve<A, T, E>(bind_address: A, transport: T) -> Result<()>
+where
+    A: ToSocketAddrs,
+    T: Sink<Bytes, Error = E> + Stream<Item = Result<Bytes, E>> + Send + 'static,
+    E: Into<anyhow::Error>,
+{
+    // Setup a channel-based forwarder so we can multiplex multiple clients. This could do
+    // command-level multiplexing eventually.
 
+    let (sink, stream) = transport.split();
+    let (sink_tx, mut sink_rx) = mpsc::channel::<Bytes>(10);
+    let (stream_tx, mut stream_rx) = broadcast::channel::<Bytes>(10);
+
+    // Receive
+    {
+        let stream_tx = stream_tx.clone();
+        let mut stream = Box::pin(stream);
+        tokio::spawn(async move {
+            while let Some(Ok(frame)) = stream.next().await {
+                stream_tx
+                    .send(frame)
+                    .map_err(|_| MiniDSPError::TransportClosed)?;
+            }
+            Err::<(), _>(MiniDSPError::TransportClosed)
+        });
+    }
+
+    // Send
+    {
+        let mut sink = Box::pin(sink);
+        tokio::spawn(async move {
+            while let Some(frame) = sink_rx.next().await {
+                sink.send(frame)
+                    .await
+                    .map_err(|_| MiniDSPError::TransportClosed)?;
+            }
+            Err::<(), _>(MiniDSPError::TransportClosed)
+        });
+    }
+
+    let listener = TcpListener::bind(bind_address).await?;
     loop {
         select! {
            result = listener.accept() => {
                 let (stream, addr) = result?;
-                let handle = transport.clone();
                 info!("New connection: {:?}", addr);
+
+                let device_tx = sink_tx.clone();
+                let device_rx = stream_tx.clone().subscribe();
+
                 tokio::spawn(async move {
-                    let result = forward(handle, stream).await;
+                    let result = forward(stream, device_tx, device_rx).await;
 
                     if let Err(e) = result {
                         log::error!("err: {:?}", e);
@@ -90,7 +113,7 @@ pub async fn serve<A: ToSocketAddrs>(bind_address: A, transport: Arc<Transport>)
                     info!("Closed: {:?}", addr);
                 });
            },
-           result = rx.recv() => {
+           result = stream_rx.recv() => {
                 if result.is_err() {
                     return Err(MiniDSPError::TransportClosed.into())
                 }

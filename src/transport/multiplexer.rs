@@ -8,7 +8,7 @@ use crate::{
     transport::MiniDSPError,
     Result,
 };
-use futures::{channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, Stream, StreamExt};
+use futures::{channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt};
 use std::{
     collections::VecDeque,
     pin::Pin,

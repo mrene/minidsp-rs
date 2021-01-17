@@ -5,7 +5,7 @@ mod discover;
 use std::sync::Arc;
 
 use super::{frame_codec, multiplexer::Multiplexer};
-use codec::Codec;
+pub(crate) use codec::Codec;
 use futures::{SinkExt, StreamExt};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
