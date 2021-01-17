@@ -2,7 +2,7 @@
 use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
-use futures::{SinkExt, StreamExt, TryStreamExt};
+use futures::{SinkExt, TryStreamExt};
 use hidapi::{HidApi, HidDevice, HidError, HidResult};
 use std::{ops::Deref, sync::Arc};
 use stream::HidStream;
@@ -51,9 +51,7 @@ impl HidTransport {
     }
 
     pub fn into_multiplexer(self) -> Arc<Multiplexer> {
-        let framed = FrameCodec::new(self.stream);
-        let (tx, rx) = framed.split();
-        Multiplexer::new(Box::pin(rx), Box::pin(tx.sink_err_into()))
+        Multiplexer::new(FrameCodec::new(self.stream).sink_err_into().err_into())
     }
 
     pub fn into_inner(self) -> HidStream {

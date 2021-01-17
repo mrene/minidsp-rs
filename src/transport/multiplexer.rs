@@ -22,11 +22,10 @@ use std::{
 use tokio::sync::broadcast;
 use tower::Service;
 
-use super::{frame_codec::FrameCodec};
+use super::frame_codec::FrameCodec;
 
 type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
 type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
-
 type PendingCommandTuple = (Commands, oneshot::Sender<Result<Responses, MiniDSPError>>);
 
 pub struct Multiplexer {
@@ -42,12 +41,20 @@ pub struct Multiplexer {
 }
 
 impl Multiplexer {
-    pub fn new(rx: BoxStream, tx: BoxSink<MiniDSPError>) -> Arc<Self> {
+    pub fn new<S>(backend: S) -> Arc<Self>
+    where
+        S: StreamSink<'static, Result<Responses, MiniDSPError>, Commands, MiniDSPError> + Send,
+    {
+        let (tx, rx) = backend.split();
+        Self::from_split(Box::pin(tx), Box::pin(rx))
+    }
+
+    pub fn from_split(tx: BoxSink<MiniDSPError>, rx: BoxStream) -> Arc<Self> {
         let (recv_send, _) = broadcast::channel::<Responses>(10);
         let transport = Arc::new(Self {
             pending_command: Arc::new(Mutex::new(VecDeque::new())),
             event_tx: Arc::new(Mutex::new(Some(recv_send.clone()))),
-            write: tokio::sync::Mutex::new(tx),
+            write: tokio::sync::Mutex::new(Box::pin(tx)),
         });
 
         // Spawn the receive task
@@ -68,11 +75,7 @@ impl Multiplexer {
     where
         T: StreamSink<'static, Result<Bytes, MiniDSPError>, Bytes, MiniDSPError> + Send,
     {
-        let (tx, rx) = FrameCodec::new(transport)
-            .sink_err_into()
-            .err_into()
-            .split();
-        Multiplexer::new(Box::pin(rx), Box::pin(tx))
+        Multiplexer::new(FrameCodec::new(transport).sink_err_into().err_into())
     }
 
     pub fn roundtrip(
@@ -89,6 +92,7 @@ impl Multiplexer {
             };
 
             let mut writer = this.write.lock().await;
+            log::trace!("send: {:02x?}", &cmd);
             writer.send(cmd).await?;
 
             rx.await.map_err(|_| MiniDSPError::TransportClosed)?
@@ -202,7 +206,7 @@ mod test {
         let (mut stream_tx, stream_rx) = mpsc::channel::<Result<Responses, MiniDSPError>>(10);
         let sink_tx = sink_tx.sink_map_err(|_| MiniDSPError::TransportClosed);
 
-        let mplex = Multiplexer::new(Box::pin(stream_rx), Box::pin(sink_tx));
+        let mplex = Multiplexer::from_split(Box::pin(sink_tx), Box::pin(stream_rx));
         let resp1 = mplex.roundtrip(Commands::SetMute { value: true });
         let resp2 = mplex.roundtrip(Commands::ReadHardwareId);
         let answer = async move {

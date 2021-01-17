@@ -72,7 +72,9 @@ where
         self: std::pin::Pin<&mut Self>,
         item: commands::Commands,
     ) -> Result<(), Self::Error> {
-        self.project().inner.start_send(item.to_bytes())
+        self.project()
+            .inner
+            .start_send(packet::frame(item.to_bytes()))
     }
 
     fn poll_flush(

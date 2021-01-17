@@ -4,9 +4,9 @@ mod discover;
 
 use std::sync::Arc;
 
-use super::{frame_codec, multiplexer::Multiplexer, IntoTransport};
+use super::{frame_codec::FrameCodec, multiplexer::Multiplexer, IntoTransport};
 pub(crate) use codec::Codec;
-use futures::{SinkExt, StreamExt, TryStreamExt};
+use futures::{SinkExt, TryStreamExt};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
 
@@ -30,9 +30,7 @@ where
     }
 
     pub fn into_multiplexer(self) -> Arc<Multiplexer> {
-        let framed = frame_codec::FrameCodec::new(self.framed);
-        let (tx, rx) = framed.split();
-        Multiplexer::new(Box::pin(rx), Box::pin(tx.sink_err_into()))
+        Multiplexer::new(FrameCodec::new(self.framed).sink_err_into().err_into())
     }
 
     pub fn into_inner(self) -> Framed<T, Codec> {
