@@ -21,7 +21,7 @@ pub struct FrameCodec<Backend> {
 
 fn parse_response(frame: Bytes) -> Result<Responses, MiniDSPError> {
     let packet = packet::unframe(frame)?;
-    let response = Responses::from_bytes(packet.clone())?;
+    let response = Responses::from_bytes(packet)?;
     Ok(response)
 }
 

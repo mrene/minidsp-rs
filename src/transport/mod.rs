@@ -34,6 +34,7 @@ use hidapi::HidError;
 
 use crate::commands;
 pub mod frame_codec;
+pub mod multiplexer;
 pub mod net;
 
 #[derive(Error, Debug)]
@@ -68,6 +69,9 @@ pub enum MiniDSPError {
 
     #[error("Transport has closed")]
     TransportClosed,
+
+    #[error("Multiple concurrent commands were sent")]
+    ConcurencyError,
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
