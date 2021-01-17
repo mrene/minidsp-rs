@@ -49,7 +49,7 @@ use client::Client;
 pub use source::Source;
 use std::{cell::Cell, convert::TryInto};
 use tokio::{sync::Mutex, time::Duration};
-use transport::Transport;
+use transport::SharedService;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
@@ -76,7 +76,7 @@ pub struct MiniDSP<'a> {
 }
 
 impl<'a> MiniDSP<'a> {
-    pub fn new(transport: Transport, device: &'a device::Device) -> Self {
+    pub fn new(transport: SharedService, device: &'a device::Device) -> Self {
         MiniDSP {
             client: Client::new(transport),
             device,

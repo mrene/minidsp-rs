@@ -21,6 +21,12 @@ impl Codec {
     }
 }
 
+impl Default for Codec {
+    fn default() -> Self {
+        Codec::new()
+    }
+}
+
 impl Decoder for Codec {
     type Item = Bytes;
     type Error = io::Error;

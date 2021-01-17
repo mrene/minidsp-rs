@@ -1,17 +1,10 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{
-    transport::{self, Transport},
-    utils::{decoder::Decoder, recorder::Recorder},
-    MiniDSPError,
-};
-use anyhow::{anyhow, Result};
-use bytes::{Bytes, BytesMut};
-use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt, TryStreamExt};
+use crate::{transport, MiniDSPError};
+use anyhow::Result;
+use bytes::Bytes;
+use futures::{channel::mpsc, Sink, SinkExt, Stream, StreamExt};
 use log::info;
-use std::sync::{Arc, Mutex};
 use tokio::{
-    fs::File,
-    io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream, ToSocketAddrs},
     select,
     sync::broadcast,

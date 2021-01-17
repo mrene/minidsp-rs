@@ -4,10 +4,11 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use minidsp::transport::net;
+use handlers::run_server;
+use minidsp::transport::{multiplexer::Multiplexer, net, IntoTransport, Transport};
 use minidsp::{
     device, discovery, server,
-    transport::{net::StreamTransport, Transport},
+    transport::{net::StreamTransport, SharedService},
     Gain, MiniDSP,
 };
 use std::{
@@ -18,7 +19,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::Mutex};
 
 mod debug;
 mod handlers;
@@ -293,23 +294,22 @@ impl FromStr for ProductId {
         Ok(ProductId { vid, pid })
     }
 }
-
-async fn get_transport(opts: &Opts) -> Result<Arc<Transport>> {
+async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
         let stream = TcpStream::connect(tcp).await?;
-        return Ok(Arc::new(StreamTransport::new(stream)));
+        return Ok(StreamTransport::new(stream).into_transport());
     }
 
     #[cfg(feature = "hid")]
     {
         if let Some(device) = &opts.hid_option {
-            return Ok(Arc::new(device.open().await?));
+            return Ok(device.open().await?);
         }
 
         // If no device was passed, do a best effort to figure out the right device to open
         let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
         if hid_devices.len() == 1 {
-            return Ok(Arc::new(hid_devices[0].open().await?));
+            return Ok(hid_devices[0].open().await?);
         } else if !hid_devices.is_empty() {
             eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
             for device in &hid_devices {
@@ -320,6 +320,14 @@ async fn get_transport(opts: &Opts) -> Result<Arc<Transport>> {
     }
 
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
+}
+
+async fn get_service(transport: Transport) -> Result<SharedService> {
+    let mplex = Multiplexer::from_transport(transport);
+
+    // TODO: Layer tower middlewares here
+
+    Ok(Arc::new(Mutex::new(mplex.to_service())))
 }
 
 async fn run_probe() -> Result<()> {
@@ -359,9 +367,15 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport: Arc<Transport> = get_transport(&opts).await?;
+    let transport = get_raw_transport(&opts).await?;
+    if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        run_server(opts.subcmd.unwrap(), transport).await?;
+        return Ok(());
+    }
 
-    let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
+    let service: SharedService = get_service(transport).await?;
+
+    let device = MiniDSP::new(service, &device::DEVICE_2X4HD);
 
     if let Some(filename) = opts.file {
         let file: Box<dyn Read> = {

@@ -1,14 +1,14 @@
 use crate::{
     commands::{self, Commands, FloatView, MemoryView, Value},
-    transport::{MiniDSPError, Transport},
+    transport::{MiniDSPError, SharedService},
 };
 
 pub struct Client {
-    transport: Transport,
+    transport: SharedService,
 }
 
 impl Client {
-    pub fn new(transport: Transport) -> Self {
+    pub fn new(transport: SharedService) -> Self {
         Self { transport }
     }
 

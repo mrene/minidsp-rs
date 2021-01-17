@@ -8,16 +8,19 @@ use crate::{
     transport::MiniDSPError,
     Result,
 };
-use futures::{channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt};
+use futures::{
+    channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt, TryStreamExt,
+};
 use std::{
     collections::VecDeque,
     pin::Pin,
     sync::{Arc, Mutex},
-    task::{self, Poll},
+    task::{Context, Poll},
 };
-use task::Context;
 use tokio::sync::broadcast;
 use tower::Service;
+
+use super::{frame_codec::FrameCodec, Transport};
 
 type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
 type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
@@ -57,6 +60,14 @@ impl Multiplexer {
             });
         }
         transport
+    }
+
+    pub fn from_transport(transport: Transport) -> Arc<Self> {
+        let (tx, rx) = FrameCodec::new(transport)
+            .sink_err_into()
+            .err_into()
+            .split();
+        Multiplexer::new(Box::pin(rx), Box::pin(tx))
     }
 
     pub fn roundtrip(
@@ -125,6 +136,10 @@ impl Multiplexer {
             None => Err(MiniDSPError::TransportClosed),
         }
     }
+
+    pub fn to_service(self: Arc<Self>) -> MultiplexerService {
+        MultiplexerService::new(self)
+    }
 }
 
 impl Service<Commands> for Arc<Multiplexer> {
@@ -137,7 +152,34 @@ impl Service<Commands> for Arc<Multiplexer> {
     }
 
     fn call(&mut self, req: Commands) -> Self::Future {
-        Box::pin(self.roundtrip(req))
+        let this = self.clone();
+        Box::pin(this.roundtrip(req))
+    }
+}
+/// Wraps a Multiplexer object in a clonable struct implementing tower::Service
+#[derive(Clone)]
+pub struct MultiplexerService {
+    mplex: Arc<Multiplexer>,
+}
+
+impl MultiplexerService {
+    pub fn new(mplex: Arc<Multiplexer>) -> Self {
+        Self { mplex }
+    }
+}
+
+impl Service<Commands> for MultiplexerService {
+    type Response = Responses;
+    type Error = MiniDSPError;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, req: Commands) -> Self::Future {
+        let this = self.mplex.clone();
+        Box::pin(this.roundtrip(req))
     }
 }
 

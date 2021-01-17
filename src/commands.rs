@@ -7,11 +7,8 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::{packet, Source};
-use crate::{
-    transport::{MiniDSPError, Transport},
-    DeviceInfo,
-};
+use crate::Source;
+use crate::{transport::MiniDSPError, DeviceInfo};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::ops::Deref;
@@ -417,7 +414,7 @@ impl Commands {
             | Commands::FirLoadEnd
             | Commands::BulkLoad { .. }
             | Commands::BulkLoadFilterData { .. } => matches!(response, Responses::Ack),
-            Commands::Unknown { .. } => false,
+            Commands::Unknown { .. } => true,
         }
     }
 
