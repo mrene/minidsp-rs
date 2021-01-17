@@ -5,9 +5,11 @@ use std::task;
 use crate::{
     commands::{self, Responses},
     packet,
+    utils::ErrInto,
 };
 use bytes::Bytes;
 use futures::{Sink, Stream};
+use futures_util::ready;
 use pin_project::pin_project;
 use task::Poll;
 
@@ -34,9 +36,10 @@ where
     }
 }
 
-impl<Backend> Stream for FrameCodec<Backend>
+impl<Backend, E> Stream for FrameCodec<Backend>
 where
-    Backend: Stream<Item = Bytes>,
+    Backend: Stream<Item = Result<Bytes, E>>,
+    E: Into<MiniDSPError>,
 {
     type Item = Result<Responses, MiniDSPError>;
 
@@ -44,11 +47,11 @@ where
         self: std::pin::Pin<&mut Self>,
         cx: &mut task::Context<'_>,
     ) -> Poll<Option<Self::Item>> {
-        match self.project().inner.poll_next(cx) {
-            Poll::Ready(Some(frame)) => Poll::Ready(Some(parse_response(frame))),
-            Poll::Ready(None) => Poll::Ready(None),
-            Poll::Pending => Poll::Pending,
-        }
+        let frame = ready!(self.project().inner.poll_next(cx));
+        Poll::Ready(match frame {
+            Some(frame) => Some(parse_response(frame.err_into()?)),
+            None => None,
+        })
     }
 }
 

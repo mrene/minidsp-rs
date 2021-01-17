@@ -1,10 +1,10 @@
 //! Allows talking with the [crate::server] component
-use crate::discovery;
 use crate::transport::{MiniDSPError, Openable, Transport};
+use crate::{discovery, transport::multiplexer::Multiplexer};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::StreamExt;
-use std::{collections::HashMap, fmt, net::SocketAddr, time::Duration};
+use std::{collections::HashMap, fmt, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::net::TcpStream;
 
 use super::StreamTransport;
@@ -22,7 +22,7 @@ impl fmt::Display for Device {
 
 #[async_trait]
 impl Openable for Device {
-    async fn open(&self) -> Result<Transport, MiniDSPError> {
+    async fn open(&self) -> Result<Arc<Multiplexer>, MiniDSPError> {
         Ok(StreamTransport::new(
             TcpStream::connect(SocketAddr::new(self.ip.ip(), 5333)).await?,
         ))

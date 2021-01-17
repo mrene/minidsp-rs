@@ -389,20 +389,20 @@ impl Commands {
 
     pub fn matches_response(&self, response: &Responses) -> bool {
         match self {
-            Commands::ReadMemory { addr, size} => {
+            Commands::ReadMemory { addr, size } => {
                 if let Responses::MemoryData(data) = response {
                     data.base == *addr && data.data.len() == *size as usize
                 } else {
                     false
                 }
-            },
+            }
             Commands::ReadFloats { addr, len } => {
                 if let Responses::FloatData(data) = response {
                     data.base == *addr && data.data.len() == *len as usize
                 } else {
                     false
                 }
-            },
+            }
             Commands::ReadHardwareId => matches!(response, Responses::HardwareId {..}),
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
             Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize {..}),
@@ -609,66 +609,12 @@ pub trait UnaryResponse {
     fn from_packet(packet: Bytes) -> Self;
 }
 
-/// Acquire an exclusive lock to the transport,
-/// send a command and wait for its response.
-/// (to cancel: drop the returned future)
-pub async fn roundtrip<ExpectFn>(
-    transport: &Transport,
-    command: Commands,
-    expect: ExpectFn,
-) -> Result<Responses, MiniDSPError>
-where
-    ExpectFn: Fn(&Responses) -> bool,
-{
-    let mut receiver = transport.subscribe()?;
-    let mut sender = transport.send_lock().await;
-
-    sender.send(packet::frame(command.to_bytes())).await?;
-
-    loop {
-        let frame = receiver.recv().await?;
-        let packet = packet::unframe(frame)?;
-        let response = Responses::from_bytes(packet.clone())?;
-
-        if !expect(&response) {
-            continue;
-        }
-
-        return Ok(response);
-    }
-}
-
 /// Types that can be read from a contiguous memory representation
 pub trait FromMemory<T: Sized>
 where
     Self: Sized,
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
-}
-
-/// Wrapper for common commands
-pub async fn read_memory(
-    transport: &Transport,
-    addr: u16,
-    size: u8,
-) -> Result<MemoryView, MiniDSPError> {
-    roundtrip(transport, Commands::ReadMemory { addr, size }, |r| {
-        r.is_memory_view()
-    })
-    .await?
-    .into_memory_view()
-}
-
-pub async fn read_floats(
-    transport: &Transport,
-    addr: u16,
-    len: u8,
-) -> Result<FloatView, MiniDSPError> {
-    roundtrip(transport, Commands::ReadFloats { addr, len }, |r| {
-        r.is_float_view()
-    })
-    .await?
-    .into_float_view()
 }
 
 #[derive(Debug, Clone, PartialEq)]

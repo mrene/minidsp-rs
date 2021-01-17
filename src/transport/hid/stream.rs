@@ -1,6 +1,7 @@
 use bytes::{BufMut, Bytes, BytesMut};
 use core::panic;
 use futures::{Future, FutureExt, Sink, Stream};
+use futures_util::ready;
 use hidapi::{HidDevice, HidError};
 use log::trace;
 use std::{
@@ -14,14 +15,14 @@ use super::wrapper::HidDeviceWrapper;
 // 65 byte wide: 1 byte report id + 64 bytes data
 const HID_PACKET_SIZE: usize = 65;
 
-type SendFuture = Box<dyn Future<Output = Option<Bytes>> + Send>;
-type RecvFuture = Box<dyn Future<Output = Result<(), HidError>> + Send>;
+type RecvFuture = Box<dyn Future<Output = Result<Bytes, HidError>> + Send>;
+type SendFuture = Box<dyn Future<Output = Result<(), HidError>> + Send>;
 
 /// A stream of HID reports
 pub struct HidStream {
     device: Arc<HidDeviceWrapper>,
-    current_rx: Option<Pin<SendFuture>>,
-    current_tx: Option<Pin<RecvFuture>>,
+    current_rx: Option<Pin<RecvFuture>>,
+    current_tx: Option<Pin<SendFuture>>,
 }
 
 impl HidStream {
@@ -33,7 +34,7 @@ impl HidStream {
         }
     }
 
-    fn recv(&self) -> impl Future<Output = Option<Bytes>> {
+    fn recv(&self) -> impl Future<Output = Result<Bytes, HidError>> {
         let device = self.device.clone();
         async move {
             let mut read_buf = BytesMut::with_capacity(HID_PACKET_SIZE);
@@ -49,12 +50,12 @@ impl HidStream {
                         // successful read
                         read_buf.truncate(size);
                         trace!("read: {:02x?}", read_buf.as_ref());
-                        return Some(read_buf.freeze());
+                        return Ok(read_buf.freeze());
                     }
                     Err(e) => {
                         // device error
                         log::error!("error in hid receive loop: {:?}", e);
-                        return None;
+                        return Err(e);
                     }
                 }
             }
@@ -84,7 +85,7 @@ impl HidStream {
 }
 
 impl Stream for HidStream {
-    type Item = Bytes;
+    type Item = Result<Bytes, HidError>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // Create a read call if we need to
@@ -96,15 +97,11 @@ impl Stream for HidStream {
         };
 
         // Wait for a response
-        let result = fut.as_mut().poll(cx);
-        match result {
-            Poll::Ready(data) => {
-                // Data ready, clear the current future until the next call
-                self.current_rx.take();
-                Poll::Ready(data)
-            }
-            Poll::Pending => Poll::Pending,
+        let result = ready!(fut.as_mut().poll(cx));
+        if result.is_ok() {
+            self.current_rx.take();
         }
+        Poll::Ready(Some(result))
     }
 }
 

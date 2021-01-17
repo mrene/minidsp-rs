@@ -1,14 +1,14 @@
 //! Discovery of local devices
 use super::{initialize_api, HidTransport, VID_MINIDSP};
-use crate::transport::{MiniDSPError, Openable, Transport};
+use crate::transport::{multiplexer::Multiplexer, MiniDSPError, Openable, Transport};
 use anyhow::anyhow;
 use anyhow::Result;
 use async_trait::async_trait;
 use hidapi::{HidApi, HidError};
-use std::fmt;
 use std::fmt::Formatter;
 use std::ops::Deref;
 use std::str::FromStr;
+use std::{fmt, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct Device {
@@ -60,7 +60,7 @@ impl fmt::Display for Device {
 
 #[async_trait]
 impl Openable for Device {
-    async fn open(&self) -> Result<Transport, MiniDSPError> {
+    async fn open(&self) -> Result<Arc<Multiplexer>, MiniDSPError> {
         if let Some(path) = &self.path {
             Ok(HidTransport::with_path(
                 initialize_api()?.deref(),

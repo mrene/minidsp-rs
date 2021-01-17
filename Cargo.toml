@@ -8,6 +8,10 @@ description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
 keywords = ["minidsp", "audio", "dsp"]
 
+[[bin]]
+name="decode"
+required-features=["debug"]
+
 [dependencies]
 anyhow = "1.0.38"
 async-trait = "0.1.42"
@@ -53,6 +57,7 @@ version = "0.6.1"
 [features]
 default = ["hid"]
 hid = ["hidapi"]
+debug = []
 
 [profile.release]
 lto = true

@@ -20,7 +20,8 @@ use tokio::sync::broadcast;
 use tower::Service;
 
 type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
-type BoxStream = Pin<Box<dyn Stream<Item = Responses> + Send>>;
+type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
+
 type PendingCommandTuple = (Commands, oneshot::Sender<Result<Responses, MiniDSPError>>);
 
 pub struct Multiplexer {
@@ -32,11 +33,11 @@ pub struct Multiplexer {
     event_tx: Arc<Mutex<Option<broadcast::Sender<Responses>>>>,
 
     /// Sink for sending commands
-    write: tokio::sync::Mutex<BoxSink<anyhow::Error>>,
+    write: tokio::sync::Mutex<BoxSink<MiniDSPError>>,
 }
 
 impl Multiplexer {
-    pub fn new(rx: BoxStream, tx: BoxSink<anyhow::Error>) -> Arc<Self> {
+    pub fn new(rx: BoxStream, tx: BoxSink<MiniDSPError>) -> Arc<Self> {
         let (recv_send, _) = broadcast::channel::<Responses>(10);
         let transport = Arc::new(Self {
             pending_command: Arc::new(Mutex::new(VecDeque::new())),
@@ -90,7 +91,7 @@ impl Multiplexer {
                 .as_mut()
                 .next()
                 .await
-                .ok_or(MiniDSPError::TransportClosed)?;
+                .ok_or(MiniDSPError::TransportClosed)??;
 
             log::trace!("recv: {:02x?}", data);
 
@@ -142,8 +143,8 @@ impl Service<Commands> for Arc<Multiplexer> {
 
 #[cfg(test)]
 mod test {
-    use crate::commands::BytesWrap;
     use super::*;
+    use crate::commands::BytesWrap;
     use bytes::Bytes;
     use futures::channel::mpsc;
     use futures_util::join;
@@ -151,22 +152,23 @@ mod test {
     #[tokio::test]
     async fn test_golden_path() {
         let (sink_tx, mut sink_rx) = mpsc::channel::<Commands>(10);
-        let (mut stream_tx, stream_rx) = mpsc::channel::<Responses>(10);
+        let (mut stream_tx, stream_rx) = mpsc::channel::<Result<Responses, MiniDSPError>>(10);
+        let sink_tx = sink_tx.sink_map_err(|_| MiniDSPError::TransportClosed);
 
-        let mplex = Multiplexer::new(Box::pin(stream_rx), Box::pin(sink_tx.sink_err_into()));
+        let mplex = Multiplexer::new(Box::pin(stream_rx), Box::pin(sink_tx));
         let resp1 = mplex.roundtrip(Commands::SetMute { value: true });
         let resp2 = mplex.roundtrip(Commands::ReadHardwareId);
         let answer = async move {
             let cmd = sink_rx.next().await.unwrap();
             assert!(matches!(cmd, Commands::SetMute { .. }));
-            stream_tx.send(Responses::Ack).await.unwrap();
+            stream_tx.send(Ok(Responses::Ack)).await.unwrap();
 
             let cmd = sink_rx.next().await.unwrap();
             assert!(matches!(cmd, Commands::ReadHardwareId { .. }));
             stream_tx
-                .send(Responses::HardwareId {
+                .send(Ok(Responses::HardwareId {
                     payload: BytesWrap(Bytes::from_static(b"allo")),
-                })
+                }))
                 .await
                 .unwrap();
         };

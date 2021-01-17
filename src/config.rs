@@ -289,7 +289,7 @@ mod test {
         commands::Commands,
         utils::recorder::{self as recorder},
     };
-    use futures::{Future, StreamExt, TryStreamExt, AsyncReadExt, pin_mut};
+    use futures::{pin_mut, AsyncReadExt, Future, StreamExt, TryStreamExt};
 
     /// Extracts a restore blob from a built-in recorded fixture
     async fn extract_blob<F, Fut>(fixture: &'static [u8], f: F) -> Bytes
