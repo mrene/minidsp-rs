@@ -38,6 +38,7 @@ use crate::{
 
 pub mod frame_codec;
 pub mod multiplexer;
+pub use multiplexer::Multiplexer;
 pub mod net;
 
 #[derive(Error, Debug)]

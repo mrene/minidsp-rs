@@ -6,8 +6,10 @@
 use crate::{
     commands::{Commands, Responses},
     transport::MiniDSPError,
+    utils::StreamSink,
     Result,
 };
+use bytes::Bytes;
 use futures::{
     channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt, TryStreamExt,
 };
@@ -20,7 +22,7 @@ use std::{
 use tokio::sync::broadcast;
 use tower::Service;
 
-use super::{frame_codec::FrameCodec, Transport};
+use super::{frame_codec::FrameCodec};
 
 type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
 type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
@@ -62,7 +64,10 @@ impl Multiplexer {
         transport
     }
 
-    pub fn from_transport(transport: Transport) -> Arc<Self> {
+    pub fn from_transport<T>(transport: T) -> Arc<Self>
+    where
+        T: StreamSink<'static, Result<Bytes, MiniDSPError>, Bytes, MiniDSPError> + Send,
+    {
         let (tx, rx) = FrameCodec::new(transport)
             .sink_err_into()
             .err_into()

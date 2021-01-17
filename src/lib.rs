@@ -4,18 +4,19 @@
 //! an instance of this program running the `server` component, see [`transport::net::NetTransport`].
 //!
 //! ```no_run
-//! use minidsp::{MiniDSP, device::DEVICE_2X4HD, transport, Channel, Gain};
+//! use minidsp::{MiniDSP, device::DEVICE_2X4HD, transport::{hid, Multiplexer}, Channel, Gain};
 //! use anyhow::Result;
 //! use std::sync::Arc;
+//! use tokio::sync::Mutex;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
-//!     let hid_api = transport::hid::initialize_api()?;
+//!     let hid_api = hid::initialize_api()?;
 //!     // Find a locally connected minidsp using usb hid, with the default vendor and product id.
-//!     let transport =  Arc::new(transport::hid::HidTransport::with_product_id(&hid_api, 0x2752, 0x0011)?);
+//!     let transport = Box::new(hid::HidTransport::with_product_id(&hid_api, 0x2752, 0x0011)?.into_multiplexer().to_service());
 //!
 //!     // Instantiate a 2x4HD handler for this device.
-//!     let dsp = MiniDSP::new(transport, &DEVICE_2X4HD);
+//!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE_2X4HD);
 //!     
 //!     let status = dsp.get_master_status().await?;
 //!     println!("Master volume: {:.1}", status.volume.0);
@@ -76,9 +77,9 @@ pub struct MiniDSP<'a> {
 }
 
 impl<'a> MiniDSP<'a> {
-    pub fn new(transport: SharedService, device: &'a device::Device) -> Self {
+    pub fn new(service: SharedService, device: &'a device::Device) -> Self {
         MiniDSP {
-            client: Client::new(transport),
+            client: Client::new(service),
             device,
             device_info: Mutex::new(Cell::new(None)),
         }
