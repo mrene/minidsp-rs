@@ -387,6 +387,40 @@ impl Commands {
         f.freeze()
     }
 
+    pub fn matches_response(&self, response: &Responses) -> bool {
+        match self {
+            Commands::ReadMemory { addr, size} => {
+                if let Responses::MemoryData(data) = response {
+                    data.base == *addr && data.data.len() == *size as usize
+                } else {
+                    false
+                }
+            },
+            Commands::ReadFloats { addr, len } => {
+                if let Responses::FloatData(data) = response {
+                    data.base == *addr && data.data.len() == *len as usize
+                } else {
+                    false
+                }
+            },
+            Commands::ReadHardwareId => matches!(response, Responses::HardwareId {..}),
+            Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
+            Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize {..}),
+            Commands::WriteMemory { .. }
+            | Commands::SetSource { .. }
+            | Commands::SetMute { .. }
+            | Commands::SetVolume { .. }
+            | Commands::WriteBiquad { .. }
+            | Commands::WriteBiquadBypass { .. }
+            | Commands::Write { .. }
+            | Commands::FirLoadData { .. }
+            | Commands::FirLoadEnd
+            | Commands::BulkLoad { .. }
+            | Commands::BulkLoadFilterData { .. } => matches!(response, Responses::Ack),
+            Commands::Unknown { .. } => false,
+        }
+    }
+
     pub fn mute(addr: u16, value: bool) -> Self {
         let value: u16 = if value {
             WriteInt::DISABLED
