@@ -52,7 +52,7 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         }
 
         // Other tools
-        Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
+        Some(SubCommand::Debug { cmd }) => run_debug(&device, cmd).await?,
 
         // Handled earlier
         Some(SubCommand::Server { .. }) => {}

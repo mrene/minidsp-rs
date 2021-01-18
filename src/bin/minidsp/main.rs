@@ -111,7 +111,10 @@ enum SubCommand {
     },
 
     /// Low-level debug utilities
-    Debug(DebugCommands),
+    Debug {
+        #[clap(subcommand)]
+        cmd: DebugCommands,
+    },
 }
 
 #[derive(Clap, Debug)]
