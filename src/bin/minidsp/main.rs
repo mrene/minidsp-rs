@@ -318,6 +318,11 @@ impl FromStr for ProductId {
 }
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
+        let tcp = if tcp.contains(":") {
+            tcp.to_string()
+        } else {
+            format!("{}:5333", tcp)
+        };
         let stream = TcpStream::connect(tcp).await?;
         return Ok(StreamTransport::new(stream).into_transport());
     }
