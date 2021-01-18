@@ -2,10 +2,11 @@
 //! Most of this logic was translated from the cordova app
 
 use super::DeviceInfo;
+use serde::{Deserialize, Serialize};
 use std::fmt::{self, Debug};
 
 #[enumeration(case_insensitive)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, enum_utils::FromStr)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, enum_utils::FromStr, Serialize, Deserialize)]
 pub enum Source {
     NotInstalled,
     Analog,

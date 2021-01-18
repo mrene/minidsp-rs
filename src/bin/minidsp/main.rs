@@ -35,12 +35,16 @@ use std::io::Read;
 use std::ops::Deref;
 use std::time::Duration;
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
     /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
     #[clap(short, long, parse(from_occurrences))]
     verbose: i32,
+
+    #[clap(long)]
+    /// Output responses as JSON
+    json: bool,
 
     #[clap(long, env = "MINIDSP_LOG")]
     /// Log commands and responses to a file
@@ -63,10 +67,13 @@ struct Opts {
     subcmd: Option<SubCommand>,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum SubCommand {
     /// Try to find reachable devices
     Probe,
+
+    /// Prints the master status and current levels
+    Status,
 
     /// Set the master output gain [-127, 0]
     Gain { value: Gain },
@@ -117,7 +124,7 @@ enum SubCommand {
     },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum InputCommand {
     /// Set the input gain for this channel
     Gain {
@@ -150,7 +157,7 @@ enum InputCommand {
     },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum RoutingCommand {
     /// Controls whether the output matrix for this input is enabled for the given output index
     Enable {
@@ -164,7 +171,7 @@ enum RoutingCommand {
     },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum OutputCommand {
     /// Set the output gain for this channel
     Gain {
@@ -241,7 +248,7 @@ enum OutputCommand {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum PEQTarget {
     All,
     One(usize),
@@ -259,7 +266,7 @@ impl FromStr for PEQTarget {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum FilterCommand {
     /// Set coefficients
     Set {
@@ -311,6 +318,11 @@ impl FromStr for ProductId {
 }
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
+        let tcp = if tcp.contains(":") {
+            tcp.to_string()
+        } else {
+            format!("{}:5333", tcp)
+        };
         let stream = TcpStream::connect(tcp).await?;
         return Ok(StreamTransport::new(stream).into_transport());
     }
@@ -447,7 +459,7 @@ async fn main() -> Result<()> {
 
     let device = MiniDSP::new(service, &device::DEVICE_2X4HD);
 
-    if let Some(filename) = opts.file {
+    if let Some(filename) = &opts.file {
         let file: Box<dyn Read> = {
             if filename.to_string_lossy() == "-" {
                 Box::new(std::io::stdin())
@@ -469,8 +481,8 @@ async fn main() -> Result<()> {
             let words = shellwords::split(&cmd)?;
             let prefix = &["minidsp".to_string()];
             let words = prefix.iter().chain(words.iter());
-            let opts = Opts::try_parse_from(words);
-            let opts = match opts {
+            let this_opts = Opts::try_parse_from(words);
+            let this_opts = match this_opts {
                 Ok(x) => x,
                 Err(e) => {
                     eprintln!("While executing: {}\n{}", cmd, e);
@@ -478,10 +490,10 @@ async fn main() -> Result<()> {
                 }
             };
 
-            handlers::run_command(&device, opts.subcmd).await?;
+            handlers::run_command(&device, this_opts.subcmd, &opts).await?;
         }
     } else {
-        handlers::run_command(&device, opts.subcmd).await?;
+        handlers::run_command(&device, opts.subcmd.clone(), &opts).await?;
     }
 
     Ok(())
