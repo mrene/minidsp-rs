@@ -1,11 +1,29 @@
 //! Transport base traits for talking to devices
-//!
+
+//! Wraps a Stream + Sink backend into a transport
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
-use std::ops::DerefMut;
+use commands::Commands;
+use futures::future::BoxFuture;
+use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
-use tokio::sync::{broadcast, OwnedMutexGuard};
+use tokio::sync::{broadcast, Mutex};
+use tower::Service;
+
+pub type SharedService = Arc<
+    Mutex<
+        dyn Service<
+                Commands,
+                Response = Responses,
+                Error = MiniDSPError,
+                Future = BoxFuture<'static, Result<Responses, MiniDSPError>>,
+            > + Send,
+    >,
+>;
+
+pub type Transport =
+    Pin<Box<dyn StreamSink<'static, Result<Bytes, MiniDSPError>, Bytes, MiniDSPError> + Send>>;
 
 #[cfg(feature = "hid")]
 pub mod hid;
@@ -13,8 +31,14 @@ pub mod hid;
 #[cfg(feature = "hid")]
 use hidapi::HidError;
 
-use crate::commands;
+use crate::{
+    commands::{self, Responses},
+    utils::StreamSink,
+};
 
+pub mod frame_codec;
+pub mod multiplexer;
+pub use multiplexer::Multiplexer;
 pub mod net;
 
 #[derive(Error, Debug)]
@@ -44,8 +68,14 @@ pub enum MiniDSPError {
     #[error("Transport error")]
     TransportError(#[from] broadcast::error::RecvError),
 
+    #[error("Transport error: {0}")]
+    TransportFailure(String),
+
     #[error("Transport has closed")]
     TransportClosed,
+
+    #[error("Multiple concurrent commands were sent")]
+    ConcurencyError,
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
@@ -53,38 +83,9 @@ pub enum MiniDSPError {
 
 #[async_trait]
 pub trait Openable {
-    type Transport;
-    async fn open(&self) -> Result<Self::Transport, MiniDSPError>;
+    async fn open(&self) -> Result<Transport, MiniDSPError>;
 }
 
-#[async_trait]
-impl<T> Sender for OwnedMutexGuard<T>
-where
-    T: Sender,
-{
-    async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError> {
-        // self.deref_mut().send() confuses clion
-        T::send(self.deref_mut(), frame).await
-    }
-}
-
-/// Transport trait implemented by different backends
-#[async_trait]
-pub trait Transport: Send + Sync {
-    // Subscribe to all received frames
-    fn subscribe(&self) -> Result<broadcast::Receiver<Bytes>, MiniDSPError>;
-
-    // Acquire an exclusive lock for sending frames on this device
-    async fn send_lock(&self) -> Box<dyn Sender>;
-
-    // Sends a single frame
-    async fn send(&self, frame: Bytes) -> Result<(), MiniDSPError> {
-        let mut tx = self.send_lock().await;
-        tx.send(frame).await
-    }
-}
-
-#[async_trait]
-pub trait Sender: Send + Sync {
-    async fn send(&mut self, frame: Bytes) -> Result<(), MiniDSPError>;
+pub trait IntoTransport {
+    fn into_transport(self) -> Transport;
 }

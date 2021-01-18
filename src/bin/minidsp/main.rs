@@ -4,11 +4,16 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use minidsp::transport::net;
+use futures::{pin_mut, StreamExt};
+use handlers::run_server;
 use minidsp::{
     device, discovery, server,
-    transport::{net::NetTransport, Transport},
+    transport::{net::StreamTransport, SharedService},
     Gain, MiniDSP,
+};
+use minidsp::{
+    transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
+    utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
 use std::{
     fs::File,
@@ -18,7 +23,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::Mutex};
 
 mod debug;
 mod handlers;
@@ -33,6 +38,14 @@ use std::time::Duration;
 #[derive(Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
+    /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
+    #[clap(short, long, parse(from_occurrences))]
+    verbose: i32,
+
+    #[clap(long, env = "MINIDSP_LOG")]
+    /// Log commands and responses to a file
+    log: Option<PathBuf>,
+
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]
     #[cfg(feature = "hid")]
@@ -98,7 +111,10 @@ enum SubCommand {
     },
 
     /// Low-level debug utilities
-    Debug(DebugCommands),
+    Debug {
+        #[clap(subcommand)]
+        cmd: DebugCommands,
+    },
 }
 
 #[derive(Clap, Debug)]
@@ -293,23 +309,22 @@ impl FromStr for ProductId {
         Ok(ProductId { vid, pid })
     }
 }
-
-async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
+async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
         let stream = TcpStream::connect(tcp).await?;
-        return Ok(Arc::new(NetTransport::new(stream)));
+        return Ok(StreamTransport::new(stream).into_transport());
     }
 
     #[cfg(feature = "hid")]
     {
         if let Some(device) = &opts.hid_option {
-            return Ok(Arc::new(device.open().await?));
+            return Ok(device.open().await?);
         }
 
         // If no device was passed, do a best effort to figure out the right device to open
         let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
         if hid_devices.len() == 1 {
-            return Ok(Arc::new(hid_devices[0].open().await?));
+            return Ok(hid_devices[0].open().await?);
         } else if !hid_devices.is_empty() {
             eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
             for device in &hid_devices {
@@ -320,6 +335,67 @@ async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
     }
 
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
+}
+
+fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
+    let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
+    let transport = logger(transport, log_tx);
+
+    let verbose = opts.verbose;
+    let log = opts.log.clone();
+
+    tokio::spawn(async move {
+        let decoder = if verbose > 0 {
+            use termcolor::{ColorChoice, StandardStream};
+            let writer = StandardStream::stderr(ColorChoice::Auto);
+            Some(Arc::new(Mutex::new(Decoder::new(
+                Box::new(writer),
+                verbose == 1,
+            ))))
+        } else {
+            None
+        };
+
+        let mut recorder = match log {
+            Some(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
+            _ => None,
+        };
+
+        pin_mut!(log_rx);
+
+        while let Some(msg) = log_rx.next().await {
+            match msg {
+                utils::Message::Sent(msg) => {
+                    if let Some(decoder) = &decoder {
+                        decoder.lock().await.feed_sent(&msg);
+                    }
+                    if let Some(recorder) = recorder.as_mut() {
+                        recorder.feed_sent(&msg);
+                    }
+                }
+                utils::Message::Received(msg) => {
+                    if let Some(decoder) = &decoder {
+                        decoder.lock().await.feed_recv(&msg);
+                    }
+                    if let Some(recorder) = recorder.as_mut() {
+                        recorder.feed_recv(&msg);
+                    }
+                }
+            }
+        }
+
+        Ok::<(), anyhow::Error>(())
+    });
+
+    Box::pin(transport)
+}
+
+async fn get_service(transport: Transport) -> Result<SharedService> {
+    let mplex = Multiplexer::from_transport(transport);
+
+    // TODO: Layer tower middlewares here
+
+    Ok(Arc::new(Mutex::new(mplex.to_service())))
 }
 
 async fn run_probe() -> Result<()> {
@@ -359,9 +435,17 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport: Arc<dyn Transport> = get_transport(&opts).await?;
+    let transport = get_raw_transport(&opts).await?;
+    let transport = transport_logging(transport, &opts);
 
-    let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
+    if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        run_server(opts.subcmd.unwrap(), transport).await?;
+        return Ok(());
+    }
+
+    let service: SharedService = get_service(transport).await?;
+
+    let device = MiniDSP::new(service, &device::DEVICE_2X4HD);
 
     if let Some(filename) = opts.file {
         let file: Box<dyn Read> = {

@@ -68,8 +68,7 @@ async fn dump(
         .filter_map(recorder::decode_sent_commands)
         .filter_map(|x| async {
             match x {
-                Commands::BulkLoad { payload } => Some(Ok(payload.0)),
-                Commands::Write { .. } => Some(Err(std::io::ErrorKind::UnexpectedEof)),
+                Commands::BulkLoad { payload } => Some(Ok::<_, std::io::Error>(payload.0)),
                 _ => None,
             }
         });

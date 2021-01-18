@@ -1,6 +1,5 @@
-use std::ops::Deref;
-
 use hidapi::HidDevice;
+use std::ops::Deref;
 
 /// Wraps an underlying HidDevice, adding Sync+Send
 pub struct HidDeviceWrapper {
@@ -22,7 +21,5 @@ impl Deref for HidDeviceWrapper {
 }
 
 // hidapi's libusb backend is thread-safe, different threads can read + send and it does its own locking
-// TODO: This might not be the case for other platforms
 unsafe impl Sync for HidDeviceWrapper {}
-
 unsafe impl Send for HidDeviceWrapper {}

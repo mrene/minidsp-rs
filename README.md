@@ -59,7 +59,7 @@ The following settings will be visible after changing them from any source:
 The rest of the settings (filters, delays, routing) will not be reflected in the app.
 
 ```shell
-minidsp 0.0.2-dev
+minidsp 0.0.3
 Mathieu Rene <mathieu.rene@gmail.com>
 
 USAGE:

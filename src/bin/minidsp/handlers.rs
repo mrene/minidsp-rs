@@ -2,9 +2,40 @@ use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
 use crate::{FilterCommand, RoutingCommand, SubCommand};
 use minidsp::{
-    rew::FromRew, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel, Crossover, Fir,
+    rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel,
+    Crossover, Fir,
 };
 use std::{str::FromStr, time::Duration};
+
+pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
+    if let SubCommand::Server {
+        bind_address,
+        advertise,
+        ip,
+    } = subcmd
+    {
+        if let Some(hostname) = advertise {
+            use crate::discovery;
+            use std::net::Ipv4Addr;
+            let mut packet = discovery::DiscoveryPacket {
+                mac_address: [10, 20, 30, 40, 50, 60],
+                ip_address: Ipv4Addr::UNSPECIFIED,
+                hwid: 0,
+                typ: 0,
+                sn: 0,
+                hostname,
+            };
+            if let Some(ip) = ip {
+                packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
+            }
+            let interval = Duration::from_secs(1);
+            tokio::spawn(discovery::server::advertise_packet(packet, interval));
+        }
+        use crate::server;
+        server::serve(bind_address.as_str(), Box::pin(transport)).await?;
+    }
+    Ok(())
+}
 
 pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -> Result<()> {
     match cmd {
@@ -21,34 +52,12 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         }
 
         // Other tools
-        Some(SubCommand::Server {
-            bind_address,
-            advertise,
-            ip,
-        }) => {
-            if let Some(hostname) = advertise {
-                use crate::discovery;
-                use std::net::Ipv4Addr;
-                let mut packet = discovery::DiscoveryPacket {
-                    mac_address: [10, 20, 30, 40, 50, 60],
-                    ip_address: Ipv4Addr::UNSPECIFIED,
-                    hwid: 0,
-                    typ: 0,
-                    sn: 0,
-                    hostname,
-                };
-                if let Some(ip) = ip {
-                    packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
-                }
-                let interval = Duration::from_secs(1);
-                tokio::spawn(discovery::server::advertise_packet(packet, interval));
-            }
-            use crate::server;
-            server::serve(bind_address.as_str(), device.transport.clone()).await?
-        }
+        Some(SubCommand::Debug { cmd }) => run_debug(&device, cmd).await?,
+
         // Handled earlier
+        Some(SubCommand::Server { .. }) => {}
         Some(SubCommand::Probe) => return Ok(()),
-        Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
+
         None => {
             // Always output the current master status and input/output levels
             let master_status = device.get_master_status().await?;
