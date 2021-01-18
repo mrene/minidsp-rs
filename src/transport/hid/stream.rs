@@ -1,9 +1,7 @@
 use bytes::{BufMut, Bytes, BytesMut};
 use core::panic;
-use futures::{Future, FutureExt, Sink, Stream};
-use futures_util::ready;
+use futures::{channel::mpsc, Future, FutureExt, Sink, Stream};
 use hidapi::{HidDevice, HidError};
-use log::trace;
 use std::{
     pin::Pin,
     sync::Arc,
@@ -11,54 +9,35 @@ use std::{
 };
 
 use super::wrapper::HidDeviceWrapper;
+use futures::channel::mpsc::TrySendError;
+use pin_project::pin_project;
 
 // 65 byte wide: 1 byte report id + 64 bytes data
 const HID_PACKET_SIZE: usize = 65;
 
-type RecvFuture = Box<dyn Future<Output = Result<Bytes, HidError>> + Send>;
 type SendFuture = Box<dyn Future<Output = Result<(), HidError>> + Send>;
 
 /// A stream of HID reports
+#[pin_project]
 pub struct HidStream {
     device: Arc<HidDeviceWrapper>,
-    current_rx: Option<Pin<RecvFuture>>,
+
+    #[pin]
+    rx: mpsc::UnboundedReceiver<Result<Bytes, HidError>>,
+
     current_tx: Option<Pin<SendFuture>>,
 }
 
 impl HidStream {
     pub fn new(device: HidDevice) -> Self {
+        let device = Arc::new(HidDeviceWrapper::new(device));
+        let (tx, rx) = mpsc::unbounded();
+        Self::start_recv_loop(device.clone(), tx);
+
         Self {
-            current_rx: None,
+            rx,
             current_tx: None,
-            device: Arc::new(HidDeviceWrapper::new(device)),
-        }
-    }
-
-    fn recv(&self) -> impl Future<Output = Result<Bytes, HidError>> {
-        let device = self.device.clone();
-        async move {
-            let mut read_buf = BytesMut::with_capacity(HID_PACKET_SIZE);
-            read_buf.resize(HID_PACKET_SIZE, 0);
-
-            loop {
-                // Use a short timeout because we want to be able to bail out if the future gets dropped
-                let size = tokio::task::block_in_place(|| device.read_timeout(&mut read_buf, 500));
-                match size {
-                    // read_timeout returns Ok(0) if a timeout has occurred
-                    Ok(0) => continue,
-                    Ok(size) => {
-                        // successful read
-                        read_buf.truncate(size);
-                        trace!("read: {:02x?}", read_buf.as_ref());
-                        return Ok(read_buf.freeze());
-                    }
-                    Err(e) => {
-                        // device error
-                        log::error!("error in hid receive loop: {:?}", e);
-                        return Err(e);
-                    }
-                }
-            }
+            device,
         }
     }
 
@@ -82,26 +61,48 @@ impl HidStream {
             Ok(())
         }
     }
+
+    fn start_recv_loop(
+        device: Arc<HidDeviceWrapper>,
+        tx: mpsc::UnboundedSender<Result<Bytes, HidError>>,
+    ) {
+        std::thread::spawn(move || {
+            loop {
+                if tx.is_closed() {
+                    return Ok::<(), TrySendError<_>>(());
+                }
+
+                let mut read_buf = BytesMut::with_capacity(HID_PACKET_SIZE);
+                read_buf.resize(HID_PACKET_SIZE, 0);
+
+                // Use a short timeout because we want to be able to bail out if the receiver gets
+                // dropped.
+                let size = device.read_timeout(&mut read_buf, 500);
+                match size {
+                    // read_timeout returns Ok(0) if a timeout has occurred
+                    Ok(0) => continue,
+                    Ok(size) => {
+                        // successful read
+                        read_buf.truncate(size);
+                        log::trace!("read: {:02x?}", read_buf.as_ref());
+                        tx.unbounded_send(Ok(read_buf.freeze()))?;
+                    }
+                    Err(e) => {
+                        // device error
+                        log::error!("error in hid receive loop: {:?}", e);
+                        tx.unbounded_send(Err(e))?;
+                    }
+                }
+            }
+        });
+    }
 }
 
 impl Stream for HidStream {
     type Item = Result<Bytes, HidError>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        // Create a read call if we need to
-        let fut = {
-            if self.current_rx.is_none() {
-                self.current_rx = Some(Box::pin(self.recv().fuse()));
-            }
-            self.current_rx.as_mut().unwrap()
-        };
-
-        // Wait for a response
-        let result = ready!(fut.as_mut().poll(cx));
-        if result.is_ok() {
-            self.current_rx.take();
-        }
-        Poll::Ready(Some(result))
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.project().rx.poll_next(cx)
     }
 }
 
