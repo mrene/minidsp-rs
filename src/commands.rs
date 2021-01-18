@@ -11,11 +11,11 @@ use crate::Source;
 use crate::{transport::MiniDSPError, DeviceInfo};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::{convert::TryInto, fmt};
 use std::{fmt::Debug, str::FromStr};
 use thiserror::Error;
-
 #[derive(Error, Debug, Clone)]
 pub enum ParseError {
     #[error("bad cmd id")]
@@ -614,7 +614,7 @@ where
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// The current settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
@@ -644,7 +644,7 @@ where
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, Serialize, Deserialize)]
 /// A gain between the minimum and maximum allowed values
 pub struct Gain(pub f32);
 

@@ -109,7 +109,7 @@ fn dump_floats(view: &FloatView) {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 pub enum DebugCommands {
     /// Send a hex-encoded command
     Send {
