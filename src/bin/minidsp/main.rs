@@ -43,6 +43,7 @@ struct Opts {
     verbose: i32,
 
     #[clap(long, env = "MINIDSP_LOG")]
+    /// Log commands and responses to a file
     log: Option<PathBuf>,
 
     /// The USB vendor and product id (2752:0011 for the 2x4HD)

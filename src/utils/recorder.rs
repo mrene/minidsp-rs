@@ -48,7 +48,6 @@ pub struct Recorder {
 
 impl Recorder {
     pub fn new(file: File) -> Self {
-        // assert!;
         let mut framed = LinesCodec::new().framed(file);
         let (tx, mut rx) = mpsc::unbounded::<Message>();
 
@@ -65,12 +64,12 @@ impl Recorder {
 
     /// Feed a sent frame
     pub fn feed_sent(&mut self, frame: &Bytes) {
-        let _ = self.tx.send(Message::Sent(frame.clone()));
+        let _ = self.tx.unbounded_send(Message::Sent(frame.clone()));
     }
 
     /// Feed a received frame
     pub fn feed_recv(&mut self, frame: &Bytes) {
-        let _ = self.tx.send(Message::Received(frame.clone()));
+        let _ = self.tx.unbounded_send(Message::Received(frame.clone()));
     }
 }
 
