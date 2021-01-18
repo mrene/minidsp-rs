@@ -42,9 +42,11 @@ impl Decoder for Codec {
 
             if src[0] != 0 {
                 let n = src[0] as usize + additional_length;
-                if src.len() >= n {
-                    return Ok(Some(src.split_to(n).freeze()));
-                }
+                return if src.len() >= n {
+                    Ok(Some(src.split_to(n).freeze()))
+                } else {
+                    Ok(None)
+                };
             } else {
                 // Skip zero-padding
                 let zeroes = src.iter().take_while(|x| **x == 0).count();
@@ -93,6 +95,19 @@ mod test {
 
         let decoded = codec.decode(&mut padded_packets).unwrap();
         assert!(decoded.is_none());
+
+        {
+            let mut bm = BytesMut::new();
+            bm.extend_from_slice(&packet[0..4]);
+
+            let decoded = codec.decode(&mut bm).unwrap();
+            assert!(decoded.is_none());
+
+            bm.extend_from_slice(&packet[4..]);
+
+            let decoded = codec.decode(&mut bm).unwrap();
+            assert!(decoded.is_some());
+        }
     }
 
     #[test]
@@ -101,7 +116,7 @@ mod test {
         let mut packet = BytesMut::from(&[0x01][..]);
         let decoded = codec.decode(&mut packet).unwrap().unwrap();
         assert_eq!(decoded.len(), 1);
-        assert!(decoded[0] == 1);
+        assert_eq!(decoded[0], 1);
 
         let mut packet = BytesMut::from(&[0x14, 0x14, 0x00, 0x46][..]);
         packet.resize(20, 0);
