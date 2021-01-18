@@ -84,7 +84,7 @@ where
 
     fn start_send(self: Pin<&mut Self>, item: TSent) -> Result<(), Self::Error> {
         let this = self.project();
-        let _ = this.tx.unbounded_send(Message::Sent(item.clone()));
+        this.tx.unbounded_send(Message::Sent(item.clone())).unwrap();
         this.inner.start_send(item)
     }
 

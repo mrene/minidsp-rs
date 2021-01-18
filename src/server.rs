@@ -2,25 +2,32 @@
 use crate::{transport, MiniDSPError};
 use anyhow::Result;
 use bytes::Bytes;
-use futures::{channel::mpsc, Sink, SinkExt, Stream, StreamExt};
+use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
 use log::info;
 use tokio::{
-    net::{TcpListener, TcpStream, ToSocketAddrs},
+    io::{AsyncRead, AsyncWrite},
+    net::{TcpListener, ToSocketAddrs},
     select,
     sync::broadcast,
 };
 use tokio_util::codec::Framed;
+use transport::net::Codec;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
-async fn forward(
-    tcp: TcpStream,
+async fn forward<T>(
+    tcp: T,
     mut device_tx: mpsc::Sender<Bytes>,
     mut device_rx: broadcast::Receiver<Bytes>,
-) -> Result<()> {
+) -> Result<()>
+where
+    T: AsyncRead + AsyncWrite + 'static,
+{
     // Apply framing to the TCP stream
-    let mut remote = Framed::new(tcp, transport::net::Codec::new());
+    let remote = Framed::new(tcp, Codec::new_server());
+
+    pin_mut!(remote);
 
     loop {
         select! {

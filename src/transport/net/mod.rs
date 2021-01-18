@@ -25,7 +25,7 @@ where
 {
     pub fn new(stream: T) -> StreamTransport<T> {
         StreamTransport {
-            framed: Framed::new(stream, Codec::new()),
+            framed: Framed::new(stream, Codec::new_client()),
         }
     }
 

@@ -165,7 +165,7 @@ impl Service<Commands> for Arc<Multiplexer> {
         Box::pin(this.roundtrip(req))
     }
 }
-/// Wraps a Multiplexer object in a clonable struct implementing tower::Service
+/// Wraps a Multiplexer object in a cloneable struct implementing tower::Service
 #[derive(Clone)]
 pub struct MultiplexerService {
     mplex: Arc<Multiplexer>,

@@ -38,6 +38,13 @@ use std::time::Duration;
 #[derive(Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
+    /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
+    #[clap(short, long, parse(from_occurrences))]
+    verbose: i32,
+
+    #[clap(long, env = "MINIDSP_LOG")]
+    log: Option<PathBuf>,
+
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]
     #[cfg(feature = "hid")]
@@ -326,19 +333,27 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
 }
 
-pub fn transport_logging(transport: Transport) -> Transport {
+fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
     let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
     let transport = logger(transport, log_tx);
 
+    let verbose = opts.verbose;
+    let log = opts.log.clone();
+
     tokio::spawn(async move {
-        let decoder = {
+        let decoder = if verbose > 0 {
             use termcolor::{ColorChoice, StandardStream};
             let writer = StandardStream::stderr(ColorChoice::Auto);
-            Arc::new(Mutex::new(Decoder::new(Box::new(writer), false)))
+            Some(Arc::new(Mutex::new(Decoder::new(
+                Box::new(writer),
+                verbose == 1,
+            ))))
+        } else {
+            None
         };
 
-        let mut recorder = match std::env::var("MINIDSP_LOG") {
-            Ok(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
+        let mut recorder = match log {
+            Some(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
             _ => None,
         };
 
@@ -347,13 +362,17 @@ pub fn transport_logging(transport: Transport) -> Transport {
         while let Some(msg) = log_rx.next().await {
             match msg {
                 utils::Message::Sent(msg) => {
-                    decoder.lock().await.feed_sent(&msg);
+                    if let Some(decoder) = &decoder {
+                        decoder.lock().await.feed_sent(&msg);
+                    }
                     if let Some(recorder) = recorder.as_mut() {
                         recorder.feed_sent(&msg);
                     }
                 }
                 utils::Message::Received(msg) => {
-                    decoder.lock().await.feed_recv(&msg);
+                    if let Some(decoder) = &decoder {
+                        decoder.lock().await.feed_recv(&msg);
+                    }
                     if let Some(recorder) = recorder.as_mut() {
                         recorder.feed_recv(&msg);
                     }
@@ -413,7 +432,7 @@ async fn main() -> Result<()> {
     }
 
     let transport = get_raw_transport(&opts).await?;
-    let transport = transport_logging(transport);
+    let transport = transport_logging(transport, &opts);
 
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         run_server(opts.subcmd.unwrap(), transport).await?;
