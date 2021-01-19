@@ -130,10 +130,8 @@ impl Multiplexer {
                 }
             }
 
-            // This response doesn't relate to a pending command
-            sender
-                .send(data)
-                .map_err(|_| MiniDSPError::TransportClosed)?;
+            // This response doesn't relate to a pending command. Ignore if there are no bound receivers.
+            let _ = sender.send(data);
         }
     }
 
