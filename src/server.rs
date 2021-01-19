@@ -130,10 +130,10 @@ where
                     let result = forward(stream, device_tx, device_rx).await;
 
                     if let Err(e) = result {
-                        log::info!("[{}]: Connection closed: {:?}", addr, e);
+                        log::info!("[{}] Connection closed: {:?}", addr, e);
                     }
 
-                    log::info!("[{:?}]: Closed", addr);
+                    log::info!("[{:?}] Closed", addr);
                 });
            },
            result = stream_rx.recv() => {
