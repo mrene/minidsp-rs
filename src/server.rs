@@ -1,9 +1,8 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{transport, MiniDSPError};
+use crate::{transport, utils::ErrInto, MiniDSPError};
 use anyhow::Result;
 use bytes::Bytes;
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
-use log::info;
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::{TcpListener, ToSocketAddrs},
@@ -55,6 +54,27 @@ where
     let (sink_tx, mut sink_rx) = mpsc::channel::<Bytes>(10);
     let (stream_tx, mut stream_rx) = broadcast::channel::<Bytes>(10);
 
+    // Truncate each HID frame after its ending
+    let stream = stream.map(|frame| {
+        let frame = frame.err_into()?;
+        if frame.is_empty() {
+            return Err(MiniDSPError::MalformedResponse(
+                "Received an empty frame".to_string(),
+            ));
+        }
+
+        let len = frame[0] as usize;
+        if frame.len() < len {
+            return Err(MiniDSPError::MalformedResponse(format!(
+                "Expected frame of length {}, got {}",
+                len,
+                frame.len()
+            )));
+        }
+
+        Ok::<_, MiniDSPError>(frame.slice(0..len))
+    });
+
     // Receive
     {
         let stream_tx = stream_tx.clone();
@@ -87,7 +107,7 @@ where
         select! {
            result = listener.accept() => {
                 let (stream, addr) = result?;
-                info!("New connection: {:?}", addr);
+                log::info!("[{:?}: ]New connection", addr);
 
                 let device_tx = sink_tx.clone();
                 let device_rx = stream_tx.clone().subscribe();
@@ -96,10 +116,10 @@ where
                     let result = forward(stream, device_tx, device_rx).await;
 
                     if let Err(e) = result {
-                        log::error!("err: {:?}", e);
+                        log::info!("[{}]:Connection closed: {:?}", addr, e);
                     }
 
-                    info!("Closed: {:?}", addr);
+                    log::info!("[{:?}]: Closed", addr);
                 });
            },
            result = stream_rx.recv() => {
