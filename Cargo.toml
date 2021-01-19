@@ -62,10 +62,10 @@ default = ["hid"]
 hid = ["hidapi"]
 debug = []
 
-[profile.release]
-lto = true
-codegen-units = 1
-opt-level = 3
+# [profile.release]
+# lto = true
+# codegen-units = 1
+# opt-level = 3
 
 [package.metadata.deb]
 maintainer = "Mathieu Rene <mathieu.rene@gmail.com>"

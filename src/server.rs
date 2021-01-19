@@ -1,5 +1,6 @@
 //! TCP server compatible with the official mobile and desktop application
 use crate::{transport, utils::ErrInto, MiniDSPError};
+use anyhow::Context;
 use anyhow::Result;
 use bytes::Bytes;
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
@@ -31,10 +32,11 @@ where
     loop {
         select! {
             frame = device_rx.recv() => {
-                remote.send(frame?).await?;
+                remote.send(frame?).await.context("remote.send failed")?;
             },
             frame = remote.next() => {
-                device_tx.send(frame.ok_or(MiniDSPError::TransportClosed)??).await?;
+                let frame = frame.ok_or(MiniDSPError::TransportClosed)?;
+                device_tx.send(frame.context("decoding frame")?).await.context("device_tx.send failed")?;
             },
         }
     }
@@ -45,7 +47,7 @@ pub async fn serve<A, T, E>(bind_address: A, transport: T) -> Result<()>
 where
     A: ToSocketAddrs,
     T: Sink<Bytes, Error = E> + Stream<Item = Result<Bytes, E>> + Send + 'static,
-    E: Into<anyhow::Error>,
+    E: Into<anyhow::Error> + Send + 'static,
 {
     // Setup a channel-based forwarder so we can multiplex multiple clients. This could do
     // command-level multiplexing eventually.
@@ -76,35 +78,47 @@ where
     });
 
     // Receive
-    {
+    let mut rx_handle = {
         let stream_tx = stream_tx.clone();
         let mut stream = Box::pin(stream);
         tokio::spawn(async move {
-            while let Some(Ok(frame)) = stream.next().await {
-                stream_tx
-                    .send(frame)
-                    .map_err(|_| MiniDSPError::TransportClosed)?;
+            while let Some(frame) = stream.next().await {
+                if let Ok(frame) = frame {
+                    if let Err(e) = stream_tx.send(frame) {
+                        log::error!("stream tx failed: {:?}", e);
+                    }
+                }
             }
-            Err::<(), _>(MiniDSPError::TransportClosed)
-        });
-    }
+            Ok::<(), E>(())
+        })
+    };
 
     // Send
-    {
+    let mut tx_handle = {
         let mut sink = Box::pin(sink);
         tokio::spawn(async move {
             while let Some(frame) = sink_rx.next().await {
-                sink.send(frame)
-                    .await
-                    .map_err(|_| MiniDSPError::TransportClosed)?;
+                sink.send(frame).await?;
             }
-            Err::<(), _>(MiniDSPError::TransportClosed)
-        });
-    }
+            Ok::<_, E>(())
+        })
+    };
 
     let listener = TcpListener::bind(bind_address).await?;
     loop {
         select! {
+           result = &mut tx_handle => {
+               let result = result.expect("tx joinhandle");
+               if let Err(e) = result {
+                   log::error!("tx error: {}", e.into());
+               }
+           }
+           result = &mut rx_handle => {
+            let result = result.expect("rx joinhandle");
+            if let Err(e) = result {
+                log::error!("rx error: {}", e.into());
+            }
+        }
            result = listener.accept() => {
                 let (stream, addr) = result?;
                 log::info!("[{:?}: ]New connection", addr);
@@ -124,6 +138,7 @@ where
            },
            result = stream_rx.recv() => {
                 if result.is_err() {
+                    log::error!("stream rx: {:?}", &result);
                     return Err(MiniDSPError::TransportClosed.into())
                 }
            }
