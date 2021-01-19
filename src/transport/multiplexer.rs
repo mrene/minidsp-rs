@@ -62,7 +62,10 @@ impl Multiplexer {
             let transport = transport.clone();
             let receiver_tx = transport.event_tx.clone();
             tokio::spawn(async move {
-                let _ = transport.recv_loop(recv_send, rx).await;
+                let result = transport.recv_loop(recv_send, rx).await;
+                if let Err(e) = result {
+                    log::error!("recv loop exit: {:?}", e);
+                }
                 let mut tx = receiver_tx.lock().unwrap();
                 // Set `receiver_tx` to None to mark this as closed
                 tx.take();

@@ -6,6 +6,7 @@ use std::{
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
+    thread, time,
 };
 
 use super::wrapper::HidDeviceWrapper;
@@ -57,7 +58,15 @@ impl HidStream {
 
         let device = self.device.clone();
         async move {
-            tokio::task::block_in_place(|| device.write(&buf))?;
+            tokio::task::block_in_place(|| {
+                let result = device.write(&buf);
+                if let Err(e) = result {
+                    log::warn!("retrying usb write: {:?}", e);
+                    thread::sleep(time::Duration::from_millis(250));
+                    return device.write(&buf);
+                }
+                result
+            })?;
             Ok(())
         }
     }
@@ -66,7 +75,7 @@ impl HidStream {
         device: Arc<HidDeviceWrapper>,
         tx: mpsc::UnboundedSender<Result<Bytes, HidError>>,
     ) {
-        std::thread::spawn(move || {
+        thread::spawn(move || {
             loop {
                 if tx.is_closed() {
                     return Ok::<(), TrySendError<_>>(());

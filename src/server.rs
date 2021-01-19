@@ -121,7 +121,7 @@ where
         }
            result = listener.accept() => {
                 let (stream, addr) = result?;
-                log::info!("[{:?}: ]New connection", addr);
+                log::info!("[{:?}] New connection", addr);
 
                 let device_tx = sink_tx.clone();
                 let device_rx = stream_tx.clone().subscribe();
@@ -130,7 +130,7 @@ where
                     let result = forward(stream, device_tx, device_rx).await;
 
                     if let Err(e) = result {
-                        log::info!("[{}]:Connection closed: {:?}", addr, e);
+                        log::info!("[{}]: Connection closed: {:?}", addr, e);
                     }
 
                     log::info!("[{:?}]: Closed", addr);
