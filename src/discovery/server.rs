@@ -1,6 +1,6 @@
 use super::{DiscoveryPacket, DISCOVERY_PORT};
 use anyhow::Result;
-use log::{debug, error};
+use log::{error, trace};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tokio::net::UdpSocket;
 use tokio::time::{sleep, Duration};
@@ -18,7 +18,7 @@ pub async fn advertise_packet(packet: DiscoveryPacket, interval: Duration) -> Re
         let send_result = socket.send(packet_bytes.as_ref()).await;
         match send_result {
             Ok(_) => {
-                debug!("sent advertisement: {:?}", &packet);
+                trace!("sent advertisement: {:?}", &packet);
             }
             Err(e) => {
                 error!("couldn't send broadcast datagram: {:?}", e);

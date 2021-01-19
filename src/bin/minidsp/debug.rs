@@ -5,37 +5,27 @@ use clap::Clap;
 
 use super::{parse_hex, parse_hex_u16};
 use minidsp::{
-    commands::{read_floats, read_memory, roundtrip, ExtendView, FloatView, MemoryView},
-    source,
-};
-use minidsp::{
     commands::{BytesWrap, Commands},
     MiniDSP,
+};
+use minidsp::{
+    commands::{ExtendView, FloatView, MemoryView},
+    source,
 };
 use std::ops::Deref;
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
     match debug {
-        DebugCommands::Send { value, watch } => {
-            let response = roundtrip(
-                device.transport.as_ref(),
-                Commands::Unknown {
+        DebugCommands::Send { value } => {
+            let response = device
+                .client
+                .roundtrip(Commands::Unknown {
                     cmd_id: value[0],
                     payload: BytesWrap(value.slice(1..)),
-                },
-                |_| true,
-            )
-            .await?;
+                })
+                .await?;
 
             println!("response: {:02x?}", response);
-
-            if watch {
-                let mut sub = device.transport.subscribe()?;
-                // Print out all received packets
-                while let Ok(packet) = sub.recv().await {
-                    println!("> {:02x?}", packet.as_ref());
-                }
-            }
         }
         DebugCommands::Dump { addr, end_addr } => {
             let mut view = MemoryView {
@@ -44,7 +34,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             };
             let end_addr = end_addr.unwrap_or(59);
             for i in (addr..end_addr).step_by(59) {
-                view.extend_with(read_memory(device.transport.as_ref(), i, 59).await?)?;
+                view.extend_with(device.client.read_memory(i, 59).await?)?;
             }
             println!("\n");
             dump_memory(&view);
@@ -53,7 +43,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             let len = 14;
             let end_addr = end_addr.unwrap_or(14);
             for i in (addr..end_addr).step_by(14) {
-                let view = read_floats(device.transport.as_ref(), i, len as u8).await?;
+                let view = device.client.read_floats(i, len as u8).await?;
                 dump_floats(&view);
             }
         }
@@ -84,14 +74,14 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             println!("Detected sources: {:?}", sources);
 
             println!("\nDumping memory:");
-            let mut view = read_memory(device.transport.as_ref(), 0xffa0, 59).await?;
+            let mut view = device.client.read_memory(0xffa0, 59).await?;
 
-            view.extend_with(read_memory(device.transport.as_ref(), 0xffa0 + 59, 59).await?)?;
+            view.extend_with(device.client.read_memory(0xffa0 + 59, 59).await?)?;
             dump_memory(&view);
 
             println!("\n\nDumping readable floats:");
             for addr in (0x00..0xff).step_by(14) {
-                let floats = read_floats(device.transport.as_ref(), addr, 14).await?;
+                let floats = device.client.read_floats(addr, 14).await?;
                 dump_floats(&floats);
             }
         }
@@ -119,14 +109,14 @@ fn dump_floats(view: &FloatView) {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 pub enum DebugCommands {
     /// Send a hex-encoded command
     Send {
         #[clap(parse(try_from_str = parse_hex))]
         value: Bytes,
-        #[clap(long, short)]
-        watch: bool,
+        // #[clap(long, short)]
+        // watch: bool,
     },
 
     /// Dumps memory starting at a given address

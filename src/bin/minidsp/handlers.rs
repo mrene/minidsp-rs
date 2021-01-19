@@ -2,16 +2,101 @@ use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
 use crate::{FilterCommand, RoutingCommand, SubCommand};
 use minidsp::{
-    rew::FromRew, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel, Crossover, Fir,
+    commands::MasterStatus, rew::FromRew, transport::Transport, utils::wav::read_wav_filter,
+    Biquad, BiquadFilter, Channel, Crossover, Fir, Source,
 };
-use std::{str::FromStr, time::Duration};
+use serde::{Deserialize, Serialize};
+use std::{fmt, str::FromStr, time::Duration, writeln};
 
-pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -> Result<()> {
+pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
+    if let SubCommand::Server {
+        bind_address,
+        advertise,
+        ip,
+    } = subcmd
+    {
+        if let Some(hostname) = advertise {
+            use crate::discovery;
+            use std::net::Ipv4Addr;
+            let mut packet = discovery::DiscoveryPacket {
+                mac_address: [10, 20, 30, 40, 50, 60],
+                ip_address: Ipv4Addr::UNSPECIFIED,
+                hwid: 0,
+                typ: 0,
+                sn: 0,
+                hostname,
+            };
+            if let Some(ip) = ip {
+                packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
+            }
+            let interval = Duration::from_secs(1);
+            tokio::spawn(discovery::server::advertise_packet(packet, interval));
+        }
+        use crate::server;
+        server::serve(bind_address.as_str(), Box::pin(transport)).await?;
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StatusSummary {
+    master: MasterStatus,
+    available_sources: Vec<String>,
+    input_levels: Vec<f32>,
+    output_levels: Vec<f32>,
+}
+
+impl StatusSummary {
+    pub async fn fetch(dsp: &MiniDSP<'_>) -> Result<Self> {
+        let master = dsp.get_master_status().await?;
+        let input_levels = dsp.get_input_levels().await?;
+        let output_levels = dsp.get_output_levels().await?;
+
+        let available_sources: Vec<_> = Source::mapping(&dsp.get_device_info().await?)
+            .iter()
+            .map(|x| x.0.to_string())
+            .collect();
+
+        Ok(StatusSummary {
+            master,
+            available_sources,
+            input_levels,
+            output_levels,
+        })
+    }
+}
+
+impl fmt::Display for StatusSummary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{:?}", self.master)?;
+        let strs: Vec<String> = self
+            .input_levels
+            .iter()
+            .map(|x| format!("{:.1}", *x))
+            .collect();
+        writeln!(f, "Input levels: {}", strs.join(", "))?;
+
+        let strs: Vec<String> = self
+            .output_levels
+            .iter()
+            .map(|x| format!("{:.1}", *x))
+            .collect();
+        writeln!(f, "Output levels: {}", strs.join(", "))?;
+
+        Ok(())
+    }
+}
+
+pub(crate) async fn run_command(
+    device: &MiniDSP<'_>,
+    cmd: Option<SubCommand>,
+    opts: &crate::Opts,
+) -> Result<()> {
     match cmd {
         // Master
         Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
         Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
-        Some(SubCommand::Source { value }) => device.set_source(&value).await?,
+        Some(SubCommand::Source { value }) => device.set_source(value).await?,
         Some(SubCommand::Config { value }) => device.set_config(value).await?,
         Some(SubCommand::Input { input_index, cmd }) => {
             run_input(&device, cmd, input_index).await?
@@ -21,46 +106,16 @@ pub(crate) async fn run_command(device: &MiniDSP<'_>, cmd: Option<SubCommand>) -
         }
 
         // Other tools
-        Some(SubCommand::Server {
-            bind_address,
-            advertise,
-            ip,
-        }) => {
-            if let Some(hostname) = advertise {
-                use crate::discovery;
-                use std::net::Ipv4Addr;
-                let mut packet = discovery::DiscoveryPacket {
-                    mac_address: [10, 20, 30, 40, 50, 60],
-                    ip_address: Ipv4Addr::UNSPECIFIED,
-                    hwid: 0,
-                    typ: 0,
-                    sn: 0,
-                    hostname,
-                };
-                if let Some(ip) = ip {
-                    packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
-                }
-                let interval = Duration::from_secs(1);
-                tokio::spawn(discovery::server::advertise_packet(packet, interval));
-            }
-            use crate::server;
-            server::serve(bind_address.as_str(), device.transport.clone()).await?
-        }
+        Some(SubCommand::Debug { cmd }) => run_debug(&device, cmd).await?,
+
         // Handled earlier
+        Some(SubCommand::Server { .. }) => {}
         Some(SubCommand::Probe) => return Ok(()),
-        Some(SubCommand::Debug(debug)) => run_debug(&device, debug).await?,
-        None => {
+
+        Some(SubCommand::Status) | None => {
             // Always output the current master status and input/output levels
-            let master_status = device.get_master_status().await?;
-            println!("{:?}", master_status);
-
-            let input_levels = device.get_input_levels().await?;
-            let strs: Vec<String> = input_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-            println!("Input levels: {}", strs.join(", "));
-
-            let output_levels = device.get_output_levels().await?;
-            let strs: Vec<String> = output_levels.iter().map(|x| format!("{:.1}", *x)).collect();
-            println!("Output levels: {}", strs.join(", "));
+            let summary = StatusSummary::fetch(device).await?;
+            println!("{}", opts.output_format.format(&summary));
         }
     };
 

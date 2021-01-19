@@ -2,10 +2,19 @@
 //! Most of this logic was translated from the cordova app
 
 use super::DeviceInfo;
-use std::fmt::{self, Debug};
 
-#[enumeration(case_insensitive)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, enum_utils::FromStr)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    strum::EnumString,
+    strum::ToString,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+#[strum(serialize_all = "lowercase")]
 pub enum Source {
     NotInstalled,
     Analog,
@@ -17,12 +26,6 @@ pub enum Source {
     Xlr,
     Lan,
     I2S,
-}
-
-impl fmt::Display for Source {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self, f)
-    }
 }
 
 impl Source {

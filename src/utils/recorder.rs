@@ -1,13 +1,9 @@
 use crate::commands::Commands;
 use crate::packet;
 use bytes::Bytes;
-use futures::{SinkExt, Stream, StreamExt};
-use std::fmt;
-use std::fmt::Formatter;
-use std::io::Cursor;
-use tokio::fs::File;
-use tokio::io::{AsyncRead, BufReader};
-use tokio::sync::mpsc;
+use futures::{channel::mpsc, SinkExt, Stream, StreamExt};
+use std::{fmt, io::Cursor};
+use tokio::{fs::File, io::AsyncRead};
 use tokio_util::codec::{Decoder, LinesCodec};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -33,7 +29,7 @@ impl Message {
 }
 
 impl fmt::Display for Message {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Message::Sent(data) => {
                 write!(f, "Sent: {}", hex::encode(data))
@@ -52,12 +48,11 @@ pub struct Recorder {
 
 impl Recorder {
     pub fn new(file: File) -> Self {
-        // assert!;
         let mut framed = LinesCodec::new().framed(file);
-        let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
+        let (tx, mut rx) = mpsc::unbounded::<Message>();
 
         tokio::spawn(async move {
-            while let Some(msg) = rx.recv().await {
+            while let Some(msg) = rx.next().await {
                 if framed.send(msg.to_string()).await.is_err() {
                     break;
                 }
@@ -69,12 +64,12 @@ impl Recorder {
 
     /// Feed a sent frame
     pub fn feed_sent(&mut self, frame: &Bytes) {
-        let _ = self.tx.send(Message::Sent(frame.clone()));
+        let _ = self.tx.unbounded_send(Message::Sent(frame.clone()));
     }
 
     /// Feed a received frame
     pub fn feed_recv(&mut self, frame: &Bytes) {
-        let _ = self.tx.send(Message::Received(frame.clone()));
+        let _ = self.tx.unbounded_send(Message::Received(frame.clone()));
     }
 }
 
@@ -84,7 +79,7 @@ pub fn from_reader<T: AsyncRead + Sized>(reader: T) -> impl Stream<Item = Messag
 }
 
 pub fn fixtures_reader(data: &'static [u8]) -> impl Stream<Item = Message> {
-    let r = BufReader::new(Cursor::new(data));
+    let r = Cursor::new(data);
     from_reader(r)
 }
 
@@ -114,7 +109,7 @@ mod test {
         let data: &'static [u8] = include_bytes!("../test_fixtures/config1/sync.txt");
         let mut x = Box::pin(fixtures_reader(data));
         while let Some(msg) = x.next().await {
-            println!("{:?}", msg);
+            println!("{:02x?}", msg);
         }
     }
 }

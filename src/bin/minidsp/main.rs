@@ -4,13 +4,19 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use minidsp::transport::net;
+use futures::{pin_mut, StreamExt};
+use handlers::run_server;
 use minidsp::{
     device, discovery, server,
-    transport::{net::NetTransport, Transport},
-    Gain, MiniDSP,
+    transport::{net::StreamTransport, SharedService},
+    Gain, MiniDSP, Source,
+};
+use minidsp::{
+    transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
+    utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
 use std::{
+    fmt,
     fs::File,
     io::{BufRead, BufReader},
     num::ParseIntError,
@@ -18,7 +24,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::Mutex};
 
 mod debug;
 mod handlers;
@@ -30,9 +36,21 @@ use std::io::Read;
 use std::ops::Deref;
 use std::time::Duration;
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
+    /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
+    #[clap(short, long, parse(from_occurrences))]
+    verbose: i32,
+
+    /// Output response format (text (default), json, jsonline)
+    #[clap(long = "output", short = 'o', default_value = "text")]
+    output_format: OutputFormat,
+
+    #[clap(long, env = "MINIDSP_LOG")]
+    /// Log commands and responses to a file
+    log: Option<PathBuf>,
+
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]
     #[cfg(feature = "hid")]
@@ -50,10 +68,13 @@ struct Opts {
     subcmd: Option<SubCommand>,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum SubCommand {
     /// Try to find reachable devices
     Probe,
+
+    /// Prints the master status and current levels
+    Status,
 
     /// Set the master output gain [-127, 0]
     Gain { value: Gain },
@@ -64,7 +85,7 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { value: String },
+    Source { value: Source },
 
     /// Set the current active configuration,
     Config { value: u8 },
@@ -98,10 +119,13 @@ enum SubCommand {
     },
 
     /// Low-level debug utilities
-    Debug(DebugCommands),
+    Debug {
+        #[clap(subcommand)]
+        cmd: DebugCommands,
+    },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum InputCommand {
     /// Set the input gain for this channel
     Gain {
@@ -134,7 +158,7 @@ enum InputCommand {
     },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum RoutingCommand {
     /// Controls whether the output matrix for this input is enabled for the given output index
     Enable {
@@ -148,7 +172,7 @@ enum RoutingCommand {
     },
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum OutputCommand {
     /// Set the output gain for this channel
     Gain {
@@ -225,7 +249,7 @@ enum OutputCommand {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum PEQTarget {
     All,
     One(usize),
@@ -243,7 +267,7 @@ impl FromStr for PEQTarget {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clone, Clap, Debug)]
 enum FilterCommand {
     /// Set coefficients
     Set {
@@ -275,6 +299,31 @@ pub struct ProductId {
     pub pid: Option<u16>,
 }
 
+#[derive(Debug, strum::EnumString, strum::ToString, Clone, Copy, Eq, PartialEq)]
+#[strum(serialize_all = "lowercase")]
+pub enum OutputFormat {
+    Text,
+    Json,
+    JsonLine,
+}
+
+impl OutputFormat {
+    pub fn format<T>(self, obj: &T) -> String
+    where
+        T: serde::Serialize + fmt::Display,
+    {
+        match self {
+            OutputFormat::Text => format!("{}", obj),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(obj).expect("couldn't serialize object as json")
+            }
+            OutputFormat::JsonLine => {
+                serde_json::to_string(obj).expect("couldn't serialize object as json")
+            }
+        }
+    }
+}
+
 impl FromStr for ProductId {
     type Err = &'static str;
 
@@ -293,23 +342,27 @@ impl FromStr for ProductId {
         Ok(ProductId { vid, pid })
     }
 }
-
-async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
+async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
+        let tcp = if tcp.contains(':') {
+            tcp.to_string()
+        } else {
+            format!("{}:5333", tcp)
+        };
         let stream = TcpStream::connect(tcp).await?;
-        return Ok(Arc::new(NetTransport::new(stream)));
+        return Ok(StreamTransport::new(stream).into_transport());
     }
 
     #[cfg(feature = "hid")]
     {
         if let Some(device) = &opts.hid_option {
-            return Ok(Arc::new(device.open().await?));
+            return Ok(device.open().await?);
         }
 
         // If no device was passed, do a best effort to figure out the right device to open
         let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
         if hid_devices.len() == 1 {
-            return Ok(Arc::new(hid_devices[0].open().await?));
+            return Ok(hid_devices[0].open().await?);
         } else if !hid_devices.is_empty() {
             eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
             for device in &hid_devices {
@@ -320,6 +373,73 @@ async fn get_transport(opts: &Opts) -> Result<Arc<dyn Transport>> {
     }
 
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
+}
+
+fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
+    let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
+    let transport = logger(transport, log_tx);
+
+    let verbose = opts.verbose;
+    let log = opts.log.clone();
+
+    tokio::spawn(async move {
+        let result = async move {
+            let decoder = if verbose > 0 {
+                use termcolor::{ColorChoice, StandardStream};
+                let writer = StandardStream::stderr(ColorChoice::Auto);
+                Some(Arc::new(Mutex::new(Decoder::new(
+                    Box::new(writer),
+                    verbose == 1,
+                ))))
+            } else {
+                None
+            };
+
+            let mut recorder = match log {
+                Some(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
+                _ => None,
+            };
+
+            pin_mut!(log_rx);
+
+            while let Some(msg) = log_rx.next().await {
+                match msg {
+                    utils::Message::Sent(msg) => {
+                        if let Some(decoder) = &decoder {
+                            decoder.lock().await.feed_sent(&msg);
+                        }
+                        if let Some(recorder) = recorder.as_mut() {
+                            recorder.feed_sent(&msg);
+                        }
+                    }
+                    utils::Message::Received(msg) => {
+                        if let Some(decoder) = &decoder {
+                            decoder.lock().await.feed_recv(&msg);
+                        }
+                        if let Some(recorder) = recorder.as_mut() {
+                            recorder.feed_recv(&msg);
+                        }
+                    }
+                }
+            }
+
+            Ok::<(), anyhow::Error>(())
+        };
+
+        if let Err(e) = result.await {
+            log::error!("transport logging exiting: {}", e);
+        }
+    });
+
+    Box::pin(transport)
+}
+
+async fn get_service(transport: Transport) -> Result<SharedService> {
+    let mplex = Multiplexer::from_transport(transport);
+
+    // TODO: Layer tower middlewares here
+
+    Ok(Arc::new(Mutex::new(mplex.to_service())))
 }
 
 async fn run_probe() -> Result<()> {
@@ -359,11 +479,19 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport: Arc<dyn Transport> = get_transport(&opts).await?;
+    let transport = get_raw_transport(&opts).await?;
+    let transport = transport_logging(transport, &opts);
 
-    let device = MiniDSP::new(transport, &device::DEVICE_2X4HD);
+    if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        run_server(opts.subcmd.unwrap(), transport).await?;
+        return Ok(());
+    }
 
-    if let Some(filename) = opts.file {
+    let service: SharedService = get_service(transport).await?;
+
+    let device = MiniDSP::new(service, &device::DEVICE_2X4HD);
+
+    if let Some(filename) = &opts.file {
         let file: Box<dyn Read> = {
             if filename.to_string_lossy() == "-" {
                 Box::new(std::io::stdin())
@@ -385,8 +513,8 @@ async fn main() -> Result<()> {
             let words = shellwords::split(&cmd)?;
             let prefix = &["minidsp".to_string()];
             let words = prefix.iter().chain(words.iter());
-            let opts = Opts::try_parse_from(words);
-            let opts = match opts {
+            let this_opts = Opts::try_parse_from(words);
+            let this_opts = match this_opts {
                 Ok(x) => x,
                 Err(e) => {
                     eprintln!("While executing: {}\n{}", cmd, e);
@@ -394,10 +522,10 @@ async fn main() -> Result<()> {
                 }
             };
 
-            handlers::run_command(&device, opts.subcmd).await?;
+            handlers::run_command(&device, this_opts.subcmd, &opts).await?;
         }
     } else {
-        handlers::run_command(&device, opts.subcmd).await?;
+        handlers::run_command(&device, opts.subcmd.clone(), &opts).await?;
     }
 
     Ok(())
