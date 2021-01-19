@@ -27,7 +27,7 @@ log = "0.4.13"
 thiserror = "1.0.23"
 tokio-stream = "0.1.2"
 hexplay = "0.2.1"
-enum-utils = "0.1.2"
+strum = { version = "0.20", features = ["derive"] }
 lazy_static = "1.4.0"
 atomic_refcell = "0.1.6"
 termcolor = "1.1.2"

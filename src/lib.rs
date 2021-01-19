@@ -125,10 +125,8 @@ impl MiniDSP<'_> {
     }
 
     /// Sets the current input source
-    pub async fn set_source(&self, source: &str) -> Result<()> {
-        use std::str::FromStr;
+    pub async fn set_source(&self, source: Source) -> Result<()> {
         let device_info = self.get_device_info().await?;
-        let source: Source = Source::from_str(source).map_err(|_| MiniDSPError::InvalidSource)?;
 
         self.client
             .roundtrip(Commands::SetSource {

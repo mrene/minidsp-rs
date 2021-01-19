@@ -9,13 +9,14 @@ use handlers::run_server;
 use minidsp::{
     device, discovery, server,
     transport::{net::StreamTransport, SharedService},
-    Gain, MiniDSP,
+    Gain, MiniDSP, Source,
 };
 use minidsp::{
     transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
 use std::{
+    fmt,
     fs::File,
     io::{BufRead, BufReader},
     num::ParseIntError,
@@ -42,9 +43,9 @@ struct Opts {
     #[clap(short, long, parse(from_occurrences))]
     verbose: i32,
 
-    #[clap(long)]
-    /// Output responses as JSON
-    json: bool,
+    /// Output response format (text (default), json, jsonline)
+    #[clap(long = "output", short = 'o', default_value = "text")]
+    output_format: OutputFormat,
 
     #[clap(long, env = "MINIDSP_LOG")]
     /// Log commands and responses to a file
@@ -84,7 +85,7 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { value: String },
+    Source { value: Source },
 
     /// Set the current active configuration,
     Config { value: u8 },
@@ -298,6 +299,31 @@ pub struct ProductId {
     pub pid: Option<u16>,
 }
 
+#[derive(Debug, strum::EnumString, strum::ToString, Clone, Copy, Eq, PartialEq)]
+#[strum(serialize_all = "lowercase")]
+pub enum OutputFormat {
+    Text,
+    Json,
+    JsonLine,
+}
+
+impl OutputFormat {
+    pub fn format<T>(self, obj: &T) -> String
+    where
+        T: serde::Serialize + fmt::Display,
+    {
+        match self {
+            OutputFormat::Text => format!("{}", obj),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(obj).expect("couldn't serialize object as json")
+            }
+            OutputFormat::JsonLine => {
+                serde_json::to_string(obj).expect("couldn't serialize object as json")
+            }
+        }
+    }
+}
+
 impl FromStr for ProductId {
     type Err = &'static str;
 
@@ -318,7 +344,7 @@ impl FromStr for ProductId {
 }
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
-        let tcp = if tcp.contains(":") {
+        let tcp = if tcp.contains(':') {
             tcp.to_string()
         } else {
             format!("{}:5333", tcp)

@@ -96,7 +96,7 @@ pub(crate) async fn run_command(
         // Master
         Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
         Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
-        Some(SubCommand::Source { value }) => device.set_source(&value).await?,
+        Some(SubCommand::Source { value }) => device.set_source(value).await?,
         Some(SubCommand::Config { value }) => device.set_config(value).await?,
         Some(SubCommand::Input { input_index, cmd }) => {
             run_input(&device, cmd, input_index).await?
@@ -115,15 +115,7 @@ pub(crate) async fn run_command(
         Some(SubCommand::Status) | None => {
             // Always output the current master status and input/output levels
             let summary = StatusSummary::fetch(device).await?;
-            if opts.json {
-                if opts.file.is_some() {
-                    println!("{}", serde_json::to_string(&summary)?);
-                } else {
-                    println!("{}", serde_json::to_string_pretty(&summary)?);
-                }
-            } else {
-                println!("{}", &summary);
-            }
+            println!("{}", opts.output_format.format(&summary));
         }
     };
 
