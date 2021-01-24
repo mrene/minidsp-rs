@@ -157,9 +157,12 @@ pub trait DeviceSpec: Sized {
             }
         };
 
+        let meter = self.resolve_symbol(self.input_meter(input));
+
         quote! {
             Input {
                 gate: #gate,
+                meter: #meter,
                 routing: #routing,
                 peq: #peqs,
             }
@@ -179,6 +182,7 @@ pub trait DeviceSpec: Sized {
 
     fn generate_output(&mut self, output: usize) -> TokenStream {
         let gate = self.generate_gate(self.output_enable(output), self.output_gain(output));
+        let meter = self.resolve_symbol(self.output_meter(output));
 
         let peqs = {
             let it =
@@ -236,6 +240,7 @@ pub trait DeviceSpec: Sized {
         quote! {
             Output {
                 gate: #gate,
+                meter: #meter,
                 peq: #peqs,
                 delay_addr: #delay_addr,
                 invert_addr: #invert_addr,

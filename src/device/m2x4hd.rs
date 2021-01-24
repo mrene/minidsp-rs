@@ -174,6 +174,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_1_0_STATUS,
                 gain: D_GAIN_1_0,
             },
+            meter: METER_02_C1_0,
             routing: &[
                 Gate {
                     enable: MIXER_NX_M_SMOOTHED_1_0_0_STATUS,
@@ -202,6 +203,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_2_0_STATUS,
                 gain: D_GAIN_2_0,
             },
+            meter: METER_02_C1_1,
             routing: &[
                 Gate {
                     enable: MIXER_NX_M_SMOOTHED_1_1_0_STATUS,
@@ -232,6 +234,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_3_0_STATUS,
                 gain: D_GAIN_3_0,
             },
+            meter: METER_10_C1_4,
             peq: &[
                 PEQ_3_10, PEQ_3_9, PEQ_3_8, PEQ_3_7, PEQ_3_6, PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2,
                 PEQ_3_1,
@@ -261,6 +264,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_4_0_STATUS,
                 gain: D_GAIN_4_0,
             },
+            meter: METER_10_C1_5,
             peq: &[
                 PEQ_4_10, PEQ_4_9, PEQ_4_8, PEQ_4_7, PEQ_4_6, PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2,
                 PEQ_4_1,
@@ -290,6 +294,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_5_0_STATUS,
                 gain: D_GAIN_5_0,
             },
+            meter: METER_10_C1_6,
             peq: &[
                 PEQ_5_10, PEQ_5_9, PEQ_5_8, PEQ_5_7, PEQ_5_6, PEQ_5_5, PEQ_5_4, PEQ_5_3, PEQ_5_2,
                 PEQ_5_1,
@@ -319,6 +324,7 @@ pub const DEVICE: Device = Device {
                 enable: D_GAIN_6_0_STATUS,
                 gain: D_GAIN_6_0,
             },
+            meter: METER_10_C1_7,
             peq: &[
                 PEQ_6_10, PEQ_6_9, PEQ_6_8, PEQ_6_7, PEQ_6_6, PEQ_6_5, PEQ_6_4, PEQ_6_3, PEQ_6_2,
                 PEQ_6_1,

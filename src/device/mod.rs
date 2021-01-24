@@ -30,6 +30,8 @@ pub struct Device {
 pub struct Input {
     /// Mute and Gain
     pub gate: Gate,
+    /// Volume Meter
+    pub meter: u16,
     /// Parametric Equalizers
     pub peq: &'static [u16],
     /// Routing matrix, one entry per output channel connected to this input
@@ -41,6 +43,8 @@ pub struct Input {
 pub struct Output {
     /// Mute and Gain
     pub gate: Gate,
+    /// Volume Meter
+    pub meter: u16,
     /// Address of the delay value
     pub delay_addr: u16,
     /// Address of the invert toggle
@@ -51,7 +55,6 @@ pub struct Output {
     pub xover: Crossover,
     /// Compressor
     pub compressor: Compressor,
-    // XXX: TODO: active=2 bypass=3 via 0x13 0x80
     /// Address of the FIR bypass toggle
     pub fir: Fir,
 }
