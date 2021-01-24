@@ -41,7 +41,7 @@
 pub use crate::commands::Gain;
 use crate::{
     commands::{Commands, FromMemory, MasterStatus},
-    device::{Gate, PEQ},
+    device::Gate,
     transport::MiniDSPError,
 };
 use anyhow::anyhow;
@@ -197,7 +197,7 @@ pub struct DeviceInfo {
 pub trait Channel {
     /// internal: Returns the address for this channel to include mute/gain functions
     #[doc(hidden)]
-    fn _channel(&self) -> (&MiniDSP, &device::Gate, &device::PEQ);
+    fn _channel(&self) -> (&MiniDSP, &device::Gate, &'static [u16]);
 
     /// Sets the current mute setting
     async fn set_mute(&self, value: bool) -> Result<()> {
@@ -217,12 +217,14 @@ pub trait Channel {
     /// Get an object for configuring the parametric equalizer associated to this channel
     fn peq(&self, index: usize) -> BiquadFilter<'_> {
         let (dsp, _, peq) = self._channel();
-        BiquadFilter::new(dsp, peq.at(index))
+        BiquadFilter::new(dsp, peq[index])
     }
 
     fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
         let (dsp, _, peq) = self._channel();
-        peq.iter().map(move |x| BiquadFilter::new(dsp, x)).collect()
+        peq.iter()
+            .map(move |x| BiquadFilter::new(dsp, *x))
+            .collect()
     }
 }
 
@@ -255,7 +257,7 @@ impl<'a> Input<'a> {
 }
 
 impl Channel for Input<'_> {
-    fn _channel(&self) -> (&MiniDSP, &Gate, &PEQ) {
+    fn _channel(&self) -> (&MiniDSP, &Gate, &'static [u16]) {
         (self.dsp, &self.spec.gate, &self.spec.peq)
     }
 }
@@ -308,7 +310,7 @@ impl<'a> Output<'a> {
 }
 
 impl Channel for Output<'_> {
-    fn _channel(&self) -> (&MiniDSP, &Gate, &PEQ) {
+    fn _channel(&self) -> (&MiniDSP, &Gate, &'static [u16]) {
         (self.dsp, &self.spec.gate, &self.spec.peq)
     }
 }
@@ -371,7 +373,8 @@ impl<'a> Crossover<'a> {
     }
 
     pub async fn clear(&self, group: usize) -> Result<()> {
-        for addr in self.spec.peqs[group].iter() {
+        let start = self.spec.peqs[group];
+        for addr in (start..(start + 5 * 4)).step_by(5) {
             BiquadFilter::new(self.dsp, addr).clear().await?;
         }
 
@@ -386,7 +389,7 @@ impl<'a> Crossover<'a> {
         index: usize,
         coefficients: &[f32],
     ) -> Result<()> {
-        let addr = self.spec.peqs[group].at(index);
+        let addr = self.spec.peqs[group] + (index as u16) * 5;
         let filter = BiquadFilter::new(self.dsp, addr);
         filter.set_coefficients(coefficients).await
     }
@@ -394,7 +397,7 @@ impl<'a> Crossover<'a> {
     /// Sets the bypass for a given crossover biquad group.
     /// There are usually two groups (0 and 1), each grouping 4 biquads
     pub async fn set_bypass(&self, group: usize, bypass: bool) -> Result<()> {
-        let addr = self.spec.bypass[group];
+        let addr = self.spec.peqs[group];
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
@@ -410,7 +413,7 @@ impl<'a> Crossover<'a> {
     }
 
     pub fn num_filter_per_group(&self) -> usize {
-        self.spec.peqs[0].len
+        4
     }
 }
 
