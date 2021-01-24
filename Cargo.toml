@@ -13,6 +13,10 @@ default-run = "minidsp"
 name="decode"
 required-features=["debug"]
 
+[[bin]]
+name="codegen"
+required-features=["codegen"]
+
 [dependencies]
 anyhow = "1.0.38"
 async-trait = "0.1.42"
@@ -40,8 +44,14 @@ tower = { version = "0.4", features=["util"] }
 serde = { version = "1.0.120", features=["derive"] }
 serde_json = "1.0.61"
 
+# Codegen only
+quote = { version = "1.0.8", optional = true }
+proc-macro2 = { version = "1.0.24", optional = true }
+Inflector = { version = "0.11.4", optional = true }
+
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
+
 
 [dependencies.hidapi]
 optional = true
@@ -58,9 +68,10 @@ features = ["net", "codec", "io"]
 version = "0.6.2"
 
 [features]
-default = ["hid"]
+default = ["hid", "codegen"]
 hid = ["hidapi"]
 debug = []
+codegen = [ "quote", "proc-macro2", "Inflector"]
 
 [profile.release]
 lto = true
