@@ -1,6 +1,6 @@
 use strong_xml::XmlRead;
 
-use super::{DeviceSpec, FirSpec, SymbolMap};
+use super::{CompressorSpec, DeviceSpec, FirSpec, SymbolMap};
 use crate::config::Setting;
 
 pub struct Spec {
@@ -108,28 +108,15 @@ impl DeviceSpec for Spec {
         format!("BPF_{}_{}", output + 3, group)
     }
 
-    fn output_compressor_threshold(&self, output: usize) -> String {
-        format!("COMP_{}_0_threshold", output + 3)
-    }
-
-    fn output_compressor_bypass(&self, output: usize) -> String {
-        format!("COMP_{}_0_status", output + 3)
-    }
-
-    fn output_compressor_ratio(&self, output: usize) -> String {
-        format!("COMP_{}_0_ratio", output + 3)
-    }
-
-    fn output_compressor_attack(&self, output: usize) -> String {
-        format!("COMP_{}_0_atime", output + 3)
-    }
-
-    fn output_compressor_release(&self, output: usize) -> String {
-        format!("COMP_{}_0_rtime", output + 3)
-    }
-
-    fn output_compressor_meter(&self, output: usize) -> String {
-        format!("Meter10_C1_{}", output)
+    fn output_compressor(&self, output: usize) -> CompressorSpec {
+        CompressorSpec {
+            threshold: format!("COMP_{}_0_threshold", output + 3),
+            bypass: format!("COMP_{}_0_status", output + 3),
+            ratio: format!("COMP_{}_0_ratio", output + 3),
+            attack: format!("COMP_{}_0_atime", output + 3),
+            release: format!("COMP_{}_0_rtime", output + 3),
+            meter: format!("Meter10_C1_{}", output),
+        }
     }
 
     fn output_fir(&self, output: usize) -> FirSpec {

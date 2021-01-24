@@ -16,6 +16,15 @@ pub struct FirSpec {
     pub max_coefficients: u32,
 }
 
+pub struct CompressorSpec {
+    pub bypass: String,
+    pub threshold: String,
+    pub ratio: String,
+    pub attack: String,
+    pub release: String,
+    pub meter: String,
+}
+
 pub trait DeviceSpec: Sized {
     fn num_inputs(&self) -> usize;
     fn num_outputs(&self) -> usize;
@@ -47,13 +56,7 @@ pub trait DeviceSpec: Sized {
 
     fn output_xover(&self, output: usize, group: usize) -> String;
 
-    fn output_compressor_bypass(&self, output: usize) -> String;
-    fn output_compressor_threshold(&self, output: usize) -> String;
-    fn output_compressor_ratio(&self, output: usize) -> String;
-    fn output_compressor_attack(&self, output: usize) -> String;
-    fn output_compressor_release(&self, output: usize) -> String;
-    fn output_compressor_meter(&self, output: usize) -> String;
-
+    fn output_compressor(&self, output: usize) -> CompressorSpec;
     fn output_fir(&self, output: usize) -> FirSpec;
 
     fn fir_max_taps(&self) -> usize;
@@ -202,12 +205,14 @@ pub trait DeviceSpec: Sized {
         };
 
         let compressor = {
-            let bypass = self.resolve_symbol(self.output_compressor_bypass(output));
-            let threshold = self.resolve_symbol(self.output_compressor_threshold(output));
-            let ratio = self.resolve_symbol(self.output_compressor_ratio(output));
-            let attack = self.resolve_symbol(self.output_compressor_attack(output));
-            let release = self.resolve_symbol(self.output_compressor_release(output));
-            let meter = self.resolve_symbol(self.output_compressor_meter(output));
+            let spec = self.output_compressor(output);
+            let bypass = self.resolve_symbol(spec.bypass);
+            let threshold = self.resolve_symbol(spec.threshold);
+            let ratio = self.resolve_symbol(spec.ratio);
+            let attack = self.resolve_symbol(spec.attack);
+            let release = self.resolve_symbol(spec.release);
+            let meter = self.resolve_symbol(spec.meter);
+
             quote! {
                 Compressor {
                     bypass: #bypass,
