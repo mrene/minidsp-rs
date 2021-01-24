@@ -100,8 +100,6 @@ impl DeviceSpec for Spec {
     }
 
     fn output_xover(&self, output: usize, group: usize) -> String {
-        //BPF_3_1 BPF_3_5
-        // TODO: Which one is first?
         let group = match group {
             0 => 1,
             1 => 5,

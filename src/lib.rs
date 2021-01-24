@@ -374,7 +374,7 @@ impl<'a> Crossover<'a> {
 
     pub async fn clear(&self, group: usize) -> Result<()> {
         let start = self.spec.peqs[group];
-        for addr in start..(start + 4) {
+        for addr in (start..(start + 5 * 4)).step_by(5) {
             BiquadFilter::new(self.dsp, addr).clear().await?;
         }
 

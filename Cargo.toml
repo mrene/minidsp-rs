@@ -68,7 +68,7 @@ features = ["net", "codec", "io"]
 version = "0.6.2"
 
 [features]
-default = ["hid", "codegen"]
+default = ["hid"]
 hid = ["hidapi"]
 debug = []
 codegen = [ "quote", "proc-macro2", "Inflector"]
