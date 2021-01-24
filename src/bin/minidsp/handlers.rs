@@ -130,7 +130,7 @@ pub(crate) async fn run_input(
     use InputCommand::*;
     use RoutingCommand::*;
 
-    let input = dsp.input(input_index);
+    let input = dsp.input(input_index)?;
     match cmd {
         InputCommand::Gain { value } => input.set_gain(value).await?,
         Mute { value } => input.set_mute(value).await?,
@@ -155,7 +155,7 @@ pub(crate) async fn run_output(
     cmd: OutputCommand,
 ) -> Result<()> {
     use OutputCommand::*;
-    let output = dsp.output(output_index);
+    let output = dsp.output(output_index)?;
 
     match cmd {
         OutputCommand::Gain { value } => output.set_gain(value).await?,

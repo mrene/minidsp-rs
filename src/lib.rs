@@ -100,12 +100,16 @@ impl MiniDSP<'_> {
 
     /// Gets the current input levels
     pub async fn get_input_levels(&self) -> Result<Vec<f32>> {
-        Ok(self.client.read_floats(0x0044, 2).await?.data)
+        self.client
+            .read_floats_multi(self.device.inputs.iter().map(|idx| idx.meter))
+            .await
     }
 
     /// Gets the current output levels
     pub async fn get_output_levels(&self) -> Result<Vec<f32>> {
-        Ok(self.client.read_floats(0x004a, 4).await?.data)
+        self.client
+            .read_floats_multi(self.device.outputs.iter().map(|idx| idx.meter))
+            .await
     }
 
     /// Sets the current master volume
@@ -148,18 +152,26 @@ impl MiniDSP<'_> {
     }
 
     /// Gets an object wrapping an input channel
-    pub fn input(&self, index: usize) -> Input {
-        Input {
-            dsp: &self,
-            spec: &self.device.inputs[index],
+    pub fn input(&self, index: usize) -> Result<Input> {
+        if index >= self.device.inputs.len() {
+            Err(MiniDSPError::OutOfRange)
+        } else {
+            Ok(Input {
+                dsp: &self,
+                spec: &self.device.inputs[index],
+            })
         }
     }
 
     /// Gets an object wrapping an output channel
-    pub fn output(&self, index: usize) -> Output {
-        Output {
-            dsp: &self,
-            spec: &self.device.outputs[index],
+    pub fn output(&self, index: usize) -> Result<Output> {
+        if index >= self.device.outputs.len() {
+            Err(MiniDSPError::OutOfRange)
+        } else {
+            Ok(Output {
+                dsp: &self,
+                spec: &self.device.outputs[index],
+            })
         }
     }
 

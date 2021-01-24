@@ -79,6 +79,9 @@ pub enum MiniDSPError {
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
+
+    #[error("Specified channel is out of range")]
+    OutOfRange,
 }
 
 #[async_trait]

@@ -16,6 +16,10 @@ use std::ops::Deref;
 use std::{convert::TryInto, fmt};
 use std::{fmt::Debug, str::FromStr};
 use thiserror::Error;
+
+/// Maximum number of floats that can be read in a single command
+pub const READ_FLOATS_MAX: usize = 14;
+
 #[derive(Error, Debug, Clone)]
 pub enum ParseError {
     #[error("bad cmd id")]
