@@ -41,7 +41,7 @@ bimap = "0.6.0"
 wav = "0.5.0"
 pin-project = "1.0.4"
 tower = { version = "0.4", features=["util"] }
-serde = { version = "1.0.120", features=["derive"] }
+serde = { version = "1.0.122", features=["derive"] }
 serde_json = "1.0.61"
 
 # Codegen only
