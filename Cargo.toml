@@ -41,7 +41,7 @@ bimap = "0.6.0"
 wav = "0.5.0"
 pin-project = "1.0.4"
 tower = { version = "0.4", features=["util"] }
-serde = { version = "1.0.120", features=["derive"] }
+serde = { version = "1.0.123", features=["derive"] }
 serde_json = "1.0.61"
 
 # Codegen only
@@ -61,7 +61,7 @@ default_features = false
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.0.2"
+version = "1.1.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]

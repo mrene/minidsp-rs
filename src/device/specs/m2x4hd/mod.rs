@@ -1,7 +1,7 @@
 use strong_xml::XmlRead;
 
 use super::{CompressorSpec, DeviceSpec, FirSpec, SymbolMap};
-use crate::config::Setting;
+use crate::xml_config::Setting;
 
 pub struct Spec {
     pub sym_map: SymbolMap,

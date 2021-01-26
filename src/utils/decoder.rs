@@ -9,7 +9,7 @@ use bytes::Bytes;
 use termcolor::{Color, ColorSpec, WriteColor};
 
 use crate::commands::{Commands, Responses};
-use crate::config::Setting;
+use crate::xml_config::Setting;
 use crate::{commands, packet};
 use bimap::BiMap;
 use lazy_static::lazy_static;

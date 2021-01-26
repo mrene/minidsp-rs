@@ -26,11 +26,11 @@
 //!
 //!     // Set the input gain for both input channels
 //!     for i in 0..2 {
-//!         dsp.input(i).set_gain(Gain(-10.)).await?;
+//!         dsp.input(i)?.set_gain(Gain(-10.)).await?;
 //!     }
 //!
 //!     // Mute the last output channel
-//!     dsp.output(3).set_mute(true).await?;
+//!     dsp.output(3)?.set_mute(true).await?;
 //!
 //!     Ok(())
 //! }
@@ -48,7 +48,7 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
 pub use source::Source;
-use std::{cell::Cell, convert::TryInto};
+use std::convert::TryInto;
 use tokio::{sync::Mutex, time::Duration};
 use transport::SharedService;
 
@@ -56,7 +56,6 @@ pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
 pub mod commands;
-pub mod config;
 pub mod device;
 pub mod discovery;
 pub mod packet;
@@ -65,6 +64,7 @@ pub mod server;
 pub mod source;
 pub mod transport;
 pub mod utils;
+pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
 
@@ -73,7 +73,7 @@ pub struct MiniDSP<'a> {
     pub client: Client,
     pub device: &'a device::Device,
 
-    device_info: Mutex<Cell<Option<DeviceInfo>>>,
+    device_info: Mutex<Option<DeviceInfo>>,
 }
 
 impl<'a> MiniDSP<'a> {
@@ -81,7 +81,7 @@ impl<'a> MiniDSP<'a> {
         MiniDSP {
             client: Client::new(service),
             device,
-            device_info: Mutex::new(Cell::new(None)),
+            device_info: Mutex::new(None),
         }
     }
 }
@@ -177,8 +177,8 @@ impl MiniDSP<'_> {
 
     /// Gets the hardware id and dsp version, used internally to determine per-device configuration
     pub async fn get_device_info(&self) -> Result<DeviceInfo> {
-        let self_device_info = self.device_info.lock().await;
-        if let Some(info) = self_device_info.get() {
+        let mut self_device_info = self.device_info.lock().await;
+        if let Some(info) = *self_device_info {
             return Ok(info);
         }
 
@@ -193,7 +193,7 @@ impl MiniDSP<'_> {
             hw_id,
             dsp_version: view.read_u8(0xffa1),
         };
-        self_device_info.set(Some(info));
+        *self_device_info = Some(info);
         Ok(info)
     }
 }
