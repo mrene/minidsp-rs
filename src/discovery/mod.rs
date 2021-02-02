@@ -11,7 +11,7 @@ pub mod server;
 
 pub const DISCOVERY_PORT: u16 = 3999;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiscoveryPacket {
     pub mac_address: [u8; 6],
     pub ip_address: Ipv4Addr,

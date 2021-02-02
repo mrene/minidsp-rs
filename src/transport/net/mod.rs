@@ -6,11 +6,10 @@ use std::sync::Arc;
 
 use super::{frame_codec::FrameCodec, multiplexer::Multiplexer, IntoTransport};
 pub(crate) use codec::Codec;
+pub use discover::{discover, discover_timeout};
 use futures::{SinkExt, TryStreamExt};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
-
-pub use discover::*;
 
 pub struct StreamTransport<T>
 where

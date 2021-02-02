@@ -457,7 +457,7 @@ async fn run_probe() -> Result<()> {
     }
 
     println!("Probing for network devices...");
-    let devices = net::discover(Duration::from_secs(2)).await?;
+    let devices = net::discover_timeout(Duration::from_secs(2)).await?;
     if devices.is_empty() {
         println!("No network devices detected")
     } else {

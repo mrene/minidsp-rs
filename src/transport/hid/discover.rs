@@ -10,7 +10,7 @@ use std::fmt::Formatter;
 use std::ops::Deref;
 use std::str::FromStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {
     pub id: Option<(u16, u16)>,
     pub path: Option<String>,
@@ -54,7 +54,7 @@ impl fmt::Display for Device {
             None => "".to_owned(),
         };
 
-        write!(f, "[{}] {}", id, path,)
+        write!(f, "[{}] {}", id, path)
     }
 }
 
@@ -76,6 +76,10 @@ impl Openable for Device {
                 "invalid device, no path or id"
             )))
         }
+    }
+
+    fn to_string(&self) -> String {
+        ToString::to_string(self)
     }
 }
 

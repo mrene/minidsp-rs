@@ -3,12 +3,13 @@ use crate::discovery;
 use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::StreamExt;
+use futures::{Stream, StreamExt};
 use std::{collections::HashMap, fmt, net::SocketAddr, time::Duration};
 use tokio::net::TcpStream;
 
 use super::StreamTransport;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {
     pub packet: discovery::DiscoveryPacket,
     pub ip: SocketAddr,
@@ -28,10 +29,22 @@ impl Openable for Device {
                 .into_transport(),
         )
     }
+
+    fn to_string(&self) -> String {
+        ToString::to_string(self)
+    }
+}
+
+pub async fn discover() -> Result<impl Stream<Item = Device>> {
+    let stream = discovery::client::discover().await?;
+    Ok(stream.filter_map(|item| async {
+        let (packet, ip) = item.ok()?;
+        Some(Device { packet, ip })
+    }))
 }
 
 /// Gather discovery packets during the timeout period and return a de-duplicated list by ip
-pub async fn discover(timeout: Duration) -> Result<Vec<Device>, anyhow::Error> {
+pub async fn discover_timeout(timeout: Duration) -> Result<Vec<Device>, anyhow::Error> {
     let mut devices = Box::new(HashMap::new());
     let mut stream = discovery::client::discover().await?;
 

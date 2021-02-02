@@ -87,6 +87,7 @@ pub enum MiniDSPError {
 #[async_trait]
 pub trait Openable {
     async fn open(&self) -> Result<Transport, MiniDSPError>;
+    fn to_string(&self) -> String;
 }
 
 pub trait IntoTransport {

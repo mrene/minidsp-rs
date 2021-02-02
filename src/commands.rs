@@ -729,6 +729,16 @@ impl UnaryResponse for FloatView {
 }
 
 /// A contiguous bytes view read from the device
+// ## EEPROM Addresses
+// 0xFFA1 (1) Firmware version
+// 0xFFC8 (4) Timestamp
+// 0xFFD8 (1) Preset
+// 0xFFD9 (1) Source ("Digital IO")
+// 0xFFDA (1) Master Volume "Codec mute?"
+// 0xFFDB (1) Mute
+// 0xFFE0 (1) Master FIR bypass
+// 0xFFE5 (1) "Channel mode"
+// 0xFFFC (2) Serial (+ 900000) ("board id")
 #[derive(Clone, Default)]
 pub struct MemoryView {
     pub base: u16,
