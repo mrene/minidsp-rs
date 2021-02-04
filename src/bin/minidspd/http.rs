@@ -72,23 +72,3 @@ pub async fn main() {
     let _ = gotham::init_server(addr, router()).await;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use gotham::test::TestServer;
-
-    #[test]
-    fn receive_hello_world_response() {
-        let test_server = TestServer::new(|| Ok(say_hello)).unwrap();
-        let response = test_server
-            .client()
-            .get("http://localhost")
-            .perform()
-            .unwrap();
-
-        assert_eq!(response.status(), gotham::hyper::StatusCode::OK);
-
-        let body = response.read_body().unwrap();
-        assert_eq!(&body[..], b"Hello World!");
-    }
-}
