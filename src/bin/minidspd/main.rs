@@ -1,15 +1,23 @@
 use anyhow::Result;
-use discovery::Registry;
+use atomic_refcell::AtomicRefCell;
+use discovery::{DiscoveryEvent, Registry};
+use futures::StreamExt;
 use lazy_static::lazy_static;
-use minidsp::utils::DropJoinHandle;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use minidsp::{
+    transport::{self, SharedService},
+    utils::DropJoinHandle,
+    MiniDSP,
+};
+use std::sync::{Arc, Weak};
+use tokio::sync::{Mutex, RwLock};
+use url2::Url2;
 
 mod discovery;
+mod http;
 
 lazy_static! {
     /// The global application instance.
-    /// Note: The rwlock is always to be locked for read except during initialization
+    /// Note: The rwlock is always to be read-locked except during initialization
     static ref APP: Arc<RwLock<App>> = App::new();
 }
 
@@ -17,6 +25,7 @@ lazy_static! {
 pub struct App {
     registry: Registry,
     handles: Option<Handles>,
+    devices: RwLock<Vec<Arc<Device>>>,
 }
 
 impl App {
@@ -62,21 +71,111 @@ struct Handles {
     discovery_net: DropJoinHandle<Result<()>>,
 }
 
-#[tokio::main]
-pub async fn main() {
-    let app = APP.clone();
+struct Device {
+    // future: Option<Box<dyn Future<Output = Result<()>> + Send + 'static>>,
+    /// Handle to the task controlling this device's lifecycle
+    // handle: ,
+    url: String,
 
-    loop {
-        // Print device list
+    service: RwLock<Option<SharedService>>,
+
+    #[allow(dead_code)]
+    join_handle: AtomicRefCell<Option<DropJoinHandle<Result<()>>>>,
+}
+
+impl Device {
+    pub fn start(url: String) -> Arc<Self> {
+        let dev = Arc::new(Self {
+            url,
+            service: RwLock::new(None),
+            join_handle: AtomicRefCell::new(None),
+        });
+
+        let handle_dev = dev.clone();
+        let handle = tokio::spawn(async move {
+            let dev = Arc::downgrade(&handle_dev.clone());
+            Device::run(dev).await
+        });
+
+        dev.join_handle
+            .borrow_mut()
+            .replace(DropJoinHandle::new(handle));
+        dev
+    }
+
+    pub async fn run(this: Weak<Self>) -> anyhow::Result<()> {
+        // This future is being dropped when the object is dropped
+        // a weak reference is used in order to prevent a cycle, but we
+        // can safely .unwrap() the weak ref since it the closure wouldn't be running
+        // if the object had been free'd
+
+        // Open the transport by URL
+
+        let url = {
+            let this = this.upgrade().unwrap();
+            this.url.clone()
+        };
+
+        log::info!("Connecting to {}", url.as_str());
+
+        let service = {
+            let url = Url2::try_parse(url.as_str()).unwrap();
+            let stream = transport::open_url(url).await?;
+            let mplex = transport::Multiplexer::from_transport(stream);
+            Arc::new(Mutex::new(mplex.to_service()))
+        };
+
         {
-            let app = app.read().await;
-            let registry = app.registry.inner.read().unwrap();
-            let devices = registry.hid_devices.iter();
-            for dev in devices {
-                println!("{}", dev.0);
-            }
+            let this = this.upgrade().unwrap();
+            this.service.write().await.replace(service.clone());
         }
 
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        // TODO: Detect device type
+        let dev = MiniDSP::new(service, &minidsp::device::DEVICE_2X4HD);
+        let info = dev.get_device_info().await?;
+        println!("INFO: {:?}", &info);
+
+        Ok(())
     }
+}
+
+pub async fn discovery_task() {
+    let app = APP.clone();
+    let app = app.read().await;
+
+    let mut discovery_events = app.registry.subscribe();
+
+    loop {
+        while let Some(event) = discovery_events.next().await {
+            println!("{:?}", &event);
+            match event {
+                DiscoveryEvent::Added(id) => {
+                    let mut devices = app.devices.write().await;
+                    devices.push(Device::start(id));
+                }
+                DiscoveryEvent::Timeout { id, last_seen } => {
+                    log::info!(
+                        "Device hasn't been seen since timeout period: {} (last seen at {:?})",
+                        id,
+                        last_seen
+                    );
+
+                    // Remove that device from the list
+                    let mut devices = app.devices.write().await;
+                    devices.retain(|d| !d.url.eq(id.as_str()));
+                }
+            }
+        }
+    }
+}
+
+#[tokio::main]
+pub async fn main() {
+    env_logger::init();
+
+    // Handle devices being discovered locally and on the network
+    let mut _discovery_handle = DropJoinHandle::new(tokio::spawn(discovery_task()));
+    let mut _http_handle = DropJoinHandle::new(tokio::spawn(http::main()));
+
+    let _ = _discovery_handle.await;
 }

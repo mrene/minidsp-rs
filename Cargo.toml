@@ -43,6 +43,14 @@ pin-project = "1.0.5"
 tower = { version = "0.4", features=["util"] }
 serde = { version = "1.0.123", features=["derive"] }
 serde_json = "1.0.61"
+urlencoding = "1.1.1"
+url2 = "0.0.6"
+gotham = {git="https://github.com/gotham-rs/gotham"}
+async-compat = "0.2.0"
+tokio-compat = "0.1.6"
+mime = "0.3.16"
+
+# Config
 toml = "0.5.8"
 
 # Codegen only

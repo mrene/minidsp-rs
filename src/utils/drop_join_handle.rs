@@ -1,5 +1,10 @@
-use std::ops::Deref;
+use std::{
+    ops::{Deref, DerefMut},
+    pin::Pin,
+    task::{Context, Poll},
+};
 
+use futures::Future;
 use tokio::task::JoinHandle;
 /// Cancels a tokio task when dropped
 pub struct DropJoinHandle<T>(JoinHandle<T>);
@@ -18,6 +23,12 @@ impl<T> Deref for DropJoinHandle<T> {
     }
 }
 
+impl<T> DerefMut for DropJoinHandle<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl<T> Drop for DropJoinHandle<T> {
     fn drop(&mut self) {
         self.0.abort();
@@ -27,5 +38,15 @@ impl<T> Drop for DropJoinHandle<T> {
 impl<T> From<JoinHandle<T>> for DropJoinHandle<T> {
     fn from(from: JoinHandle<T>) -> Self {
         Self::new(from)
+    }
+}
+
+impl<T> Future for DropJoinHandle<T> {
+    type Output = <tokio::task::JoinHandle<T> as Future>::Output;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        // Safety: &mut Self is already pinned so we're guaranteed no moves will happen
+        let item = unsafe { Pin::new_unchecked(&mut self.get_mut().0) };
+        item.poll(cx)
     }
 }

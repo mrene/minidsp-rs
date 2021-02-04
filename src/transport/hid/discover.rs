@@ -16,6 +16,12 @@ pub struct Device {
     pub path: Option<String>,
 }
 
+impl Device {
+    pub fn to_url(&self) -> String {
+        ToString::to_string(&self)
+    }
+}
+
 impl FromStr for Device {
     type Err = &'static str;
 
@@ -44,17 +50,17 @@ impl FromStr for Device {
 }
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let id = match self.id {
-            Some((vid, pid)) => format!("{:04x}:{:04x}", vid, pid),
-            None => "unknown".to_owned(),
-        };
-
-        let path = match &self.path {
-            Some(path) => format!("path={}", path),
+        let query = match self.id {
+            Some((vid, pid)) => format!("?vid={:04x}&pid={:04x}", vid, pid),
             None => "".to_owned(),
         };
 
-        write!(f, "[{}] {}", id, path)
+        let path = match &self.path {
+            Some(path) => urlencoding::encode(path.as_str()),
+            None => "".to_owned(),
+        };
+
+        write!(f, "hid:{}{}", path, query)
     }
 }
 

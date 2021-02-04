@@ -15,9 +15,20 @@ pub struct Device {
     pub ip: SocketAddr,
 }
 
+impl Device {
+    pub fn to_url(&self) -> String {
+        ToString::to_string(&self)
+    }
+}
+
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:5333 {}", self.ip.ip(), self.packet.hostname)
+        write!(
+            f,
+            "tcp://{}:5333?name={}",
+            self.ip.ip(),
+            urlencoding::encode(self.packet.hostname.as_str())
+        )
     }
 }
 
