@@ -39,7 +39,7 @@ strong-xml = "0.6.0"
 shellwords = "1.1.0"
 bimap = "0.6.0"
 wav = "0.5.0"
-pin-project = "1.0.4"
+pin-project = "1.0.5"
 tower = { version = "0.4", features=["util"] }
 serde = { version = "1.0.123", features=["derive"] }
 serde_json = "1.0.61"
