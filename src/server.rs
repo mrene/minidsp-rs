@@ -1,7 +1,6 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{transport, utils::ErrInto, MiniDSPError};
-use anyhow::Context;
-use anyhow::Result;
+use crate::{transport::net::Codec, utils::ErrInto, MiniDSPError};
+use anyhow::{Context, Result};
 use bytes::Bytes;
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
 use tokio::{
@@ -11,7 +10,6 @@ use tokio::{
     sync::broadcast,
 };
 use tokio_util::codec::Framed;
-use transport::net::Codec;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the

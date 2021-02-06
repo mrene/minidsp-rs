@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 name = "minidsp"
-version = "0.0.5"
+version = "0.0.5-dev"
 license = "MIT"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
@@ -89,7 +89,7 @@ opt-level = 3
 
 [package.metadata.deb]
 maintainer = "Mathieu Rene <mathieu.rene@gmail.com>"
-copyright = "2020, Mathieu Rene <mathieu.rene@gmail.com>"
+copyright = "2021, Mathieu Rene <mathieu.rene@gmail.com>"
 maintainer-scripts = "debian/"
 systemd-units = { enable = false }
 depends = "libusb-1.0-0 (>= 2:1.0.22), libc6 (>= 2.17), libudev1 (>= 183)"
