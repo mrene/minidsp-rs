@@ -42,7 +42,7 @@ wav = "0.5.0"
 pin-project = "1.0.5"
 tower = { version = "0.4", features=["util"] }
 serde = { version = "1.0.123", features=["derive"] }
-serde_json = "1.0.61"
+serde_json = "1.0.62"
 
 # Codegen only
 quote = { version = "1.0.8", optional = true }
