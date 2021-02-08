@@ -29,7 +29,7 @@ futures-util = "0.3.12"
 hex = "0.4.2"
 log = "0.4.14"
 thiserror = "1.0.23"
-tokio-stream = "0.1.2"
+tokio-stream = "0.1.3"
 hexplay = "0.2.1"
 strum = { version = "0.20", features = ["derive"] }
 lazy_static = "1.4.0"
