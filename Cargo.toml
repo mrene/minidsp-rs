@@ -61,7 +61,7 @@ default_features = false
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.1.1"
+version = "1.2.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
