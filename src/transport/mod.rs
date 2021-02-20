@@ -40,8 +40,8 @@ use crate::{
 pub mod frame_codec;
 pub mod multiplexer;
 pub use multiplexer::Multiplexer;
-pub mod net;
 pub mod hub;
+pub mod net;
 pub use hub::Hub;
 
 #[derive(Error, Debug)]

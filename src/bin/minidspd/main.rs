@@ -135,10 +135,10 @@ impl Device {
 
         {
             let this = this.upgrade().unwrap();
-            this.inner.write().await.replace(Inner {
-                service,
-                transport,
-            });
+            this.inner
+                .write()
+                .await
+                .replace(Inner { service, transport });
         }
 
         Ok(())

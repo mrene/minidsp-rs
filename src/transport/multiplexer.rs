@@ -138,7 +138,7 @@ impl Multiplexer {
                 }
             }
 
-            // This response doesn't relate to a pending command. Forward it to the event channel, 
+            // This response doesn't relate to a pending command. Forward it to the event channel,
             // and ignore any errors that would arise if there were no bound receivers.
             let _ = sender.send(data);
         }
@@ -233,6 +233,6 @@ mod test {
 
         let (resp1, resp2, _) = futures_util::join!(resp1, resp2, answer);
         assert!(matches!(resp1.unwrap(), Responses::Ack));
-        assert!(matches!(resp2.unwrap(), Responses::HardwareId{..}));
+        assert!(matches!(resp2.unwrap(), Responses::HardwareId { .. }));
     }
 }

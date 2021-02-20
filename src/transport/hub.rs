@@ -1,7 +1,7 @@
 //! Provides a way to share a transport on a frame level, all received frames are forward to all clients.
 
 use super::{MiniDSPError, Transport};
-use crate::{utils::DropJoinHandle};
+use crate::utils::DropJoinHandle;
 use bytes::Bytes;
 use futures::{channel::mpsc, Sink, SinkExt, Stream, StreamExt};
 use futures_util::ready;
