@@ -404,9 +404,9 @@ impl Commands {
                     false
                 }
             }
-            Commands::ReadHardwareId => matches!(response, Responses::HardwareId {..}),
+            Commands::ReadHardwareId => matches!(response, Responses::HardwareId { .. }),
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
-            Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize {..}),
+            Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize { .. }),
             Commands::WriteMemory { .. }
             | Commands::SetSource { .. }
             | Commands::SetMute { .. }

@@ -227,6 +227,6 @@ mod test {
 
         let (resp1, resp2, _) = join!(resp1, resp2, answer);
         assert!(matches!(resp1.unwrap(), Responses::Ack));
-        assert!(matches!(resp2.unwrap(), Responses::HardwareId{..}));
+        assert!(matches!(resp2.unwrap(), Responses::HardwareId { .. }));
     }
 }
