@@ -13,3 +13,6 @@ pub use logger::{logger, Message};
 
 mod drop_join_handle;
 pub use drop_join_handle::DropJoinHandle;
+
+mod combine;
+pub use combine::Combine;

@@ -1,4 +1,3 @@
-//! A Hello World example application for working with Gotham.
 use gotham::{
     handler::{HandlerError, IntoResponse},
     helpers::http::response::create_response,
@@ -19,10 +18,10 @@ pub async fn master_status(state: &mut State) -> Result<impl IntoResponse, Handl
     if !devices.is_empty() {
         let dev = devices.get(0).unwrap();
 
-        let service = dev.service.try_read();
-        let service = service.unwrap().as_ref().unwrap().clone();
+        let inner = dev.inner.try_read().unwrap();
+        let inner = inner.as_ref().unwrap();
 
-        let dsp = MiniDSP::new(service.clone(), &minidsp::device::DEVICE_2X4HD);
+        let dsp = MiniDSP::new(inner.service.clone(), &minidsp::device::DEVICE_2X4HD);
         let status = dsp.get_master_status().await?;
 
         let res = create_response(
@@ -49,9 +48,5 @@ fn router() -> Router {
 pub async fn main() {
     let addr = "127.0.0.1:7878";
     println!("Listening for requests at http://{}", addr);
-    // tokio::task::block_in_place(|| {
-    //     gotham::start(addr, || Ok(master_status));
-    // });
-
     let _ = gotham::init_server(addr, router()).await;
 }

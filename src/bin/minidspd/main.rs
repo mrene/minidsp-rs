@@ -77,7 +77,7 @@ struct Device {
     // handle: ,
     url: String,
 
-    service: RwLock<Option<SharedService>>,
+    inner: RwLock<Option<Inner>>,
 
     #[allow(dead_code)]
     join_handle: AtomicRefCell<Option<DropJoinHandle<Result<()>>>>,
@@ -87,7 +87,7 @@ impl Device {
     pub fn start(url: String) -> Arc<Self> {
         let dev = Arc::new(Self {
             url,
-            service: RwLock::new(None),
+            inner: RwLock::new(None),
             join_handle: AtomicRefCell::new(None),
         });
 
@@ -106,11 +106,10 @@ impl Device {
     pub async fn run(this: Weak<Self>) -> anyhow::Result<()> {
         // This future is being dropped when the object is dropped
         // a weak reference is used in order to prevent a cycle, but we
-        // can safely .unwrap() the weak ref since it the closure wouldn't be running
+        // can safely .unwrap() the weak ref since it the future wouldn't be running
         // if the object had been free'd
 
         // Open the transport by URL
-
         let url = {
             let this = this.upgrade().unwrap();
             this.url.clone()
@@ -118,25 +117,37 @@ impl Device {
 
         log::info!("Connecting to {}", url.as_str());
 
-        let service = {
+        let transport = {
             let url = Url2::try_parse(url.as_str()).unwrap();
             let stream = transport::open_url(url).await?;
-            let mplex = transport::Multiplexer::from_transport(stream);
+            transport::Hub::new(stream)
+        };
+
+        let service = {
+            let mplex = transport::Multiplexer::from_transport(transport.clone());
             Arc::new(Mutex::new(mplex.to_service()))
         };
 
-        {
-            let this = this.upgrade().unwrap();
-            this.service.write().await.replace(service.clone());
-        }
-
         // TODO: Detect device type
-        let dev = MiniDSP::new(service, &minidsp::device::DEVICE_2X4HD);
+        let dev = MiniDSP::new(service.clone(), &minidsp::device::DEVICE_2X4HD);
         let info = dev.get_device_info().await?;
         println!("INFO: {:?}", &info);
 
+        {
+            let this = this.upgrade().unwrap();
+            this.inner.write().await.replace(Inner {
+                service,
+                transport,
+            });
+        }
+
         Ok(())
     }
+}
+
+pub struct Inner {
+    service: SharedService,
+    transport: transport::Hub,
 }
 
 pub async fn discovery_task() {

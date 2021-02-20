@@ -63,9 +63,9 @@ impl HidTransport {
             return HidTransport::with_product_id(hid, vid, pid);
         }
 
-        return Err(HidError::HidApiError {
+        Err(HidError::HidApiError {
             message: "malformed url".to_string(),
-        });
+        })
     }
 
     pub fn with_path(hid: &HidApi, path: String) -> Result<HidTransport, HidError> {

@@ -28,6 +28,11 @@ type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
 type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
 type PendingCommandTuple = (Commands, oneshot::Sender<Result<Responses, MiniDSPError>>);
 
+/// A command-response multiplexer capable of handling multiple clients
+/// This differs from a typical pipeline command multiplexer by the fact that it must handle
+/// unsolicited event frames from the upstream device. Each command contains logic to determine its appropriate response
+/// so that unrelated responses are ignored. This is required because the device sends events formatted the same way
+/// as normal responses, without any tag associating commands to responses.
 pub struct Multiplexer {
     /// If applicable, the last command that was sent, and a channel towards which the response
     /// should be sent.
@@ -133,7 +138,8 @@ impl Multiplexer {
                 }
             }
 
-            // This response doesn't relate to a pending command. Ignore if there are no bound receivers.
+            // This response doesn't relate to a pending command. Forward it to the event channel, 
+            // and ignore any errors that would arise if there were no bound receivers.
             let _ = sender.send(data);
         }
     }
@@ -147,6 +153,7 @@ impl Multiplexer {
         }
     }
 
+    /// Constructs a MultiplexerServive which implements the tower::Service trait
     pub fn to_service(self: Arc<Self>) -> MultiplexerService {
         MultiplexerService::new(self)
     }
@@ -199,7 +206,6 @@ mod test {
     use crate::commands::BytesWrap;
     use bytes::Bytes;
     use futures::channel::mpsc;
-    use futures_util::join;
 
     #[tokio::test]
     async fn test_golden_path() {
@@ -225,7 +231,7 @@ mod test {
                 .unwrap();
         };
 
-        let (resp1, resp2, _) = join!(resp1, resp2, answer);
+        let (resp1, resp2, _) = futures_util::join!(resp1, resp2, answer);
         assert!(matches!(resp1.unwrap(), Responses::Ack));
         assert!(matches!(resp2.unwrap(), Responses::HardwareId{..}));
     }
