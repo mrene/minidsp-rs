@@ -1,21 +1,21 @@
 [package]
-authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
+authors = [ "Mathieu Rene <mathieu.rene@gmail.com>" ]
 edition = "2018"
 name = "minidsp"
 version = "0.0.5"
 license = "MIT"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
-keywords = ["minidsp", "audio", "dsp"]
+keywords = [ "minidsp", "audio", "dsp" ]
 default-run = "minidsp"
 
 [[bin]]
-name="decode"
-required-features=["debug"]
+name = "decode"
+required-features = [ "debug" ]
 
 [[bin]]
-name="codegen"
-required-features=["codegen"]
+name = "codegen"
+required-features = [ "codegen" ]
 
 [dependencies]
 anyhow = "1.0.38"
@@ -33,45 +33,42 @@ hexplay = "0.2.1"
 lazy_static = "1.4.0"
 log = "0.4.14"
 pin-project = "1.0.5"
-serde = { version = "1.0.123", features=["derive"] }
+serde = { version = "1.0.123", features = [ "derive" ] }
 serde_json = "1.0.64"
 shellwords = "1.1.0"
 strong-xml = "0.6.0"
-strum = { version = "0.20", features = ["derive"] }
+strum = { version = "0.20", features = [ "derive" ] }
 termcolor = "1.1.2"
 thiserror = "1.0.24"
 tokio-stream = "0.1.3"
-tower = { version = "0.4.6", features=["util"] }
+tower = { version = "0.4.6", features = [ "util" ] }
 wav = "0.5.0"
-
-# Codegen only
-quote = { version = "1.0.9", optional = true }
-proc-macro2 = { version = "1.0.24", optional = true }
-Inflector = { version = "0.11.4", optional = true }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
-
+Inflector = { version = "0.11.4", optional = true } # Codegen
+proc-macro2 = { version = "1.0.24", optional = true } # Codegen
+quote = { version = "1.0.9", optional = true } # Codegen
 
 [dependencies.hidapi]
 optional = true
 version = "1.2.5"
-features = ["linux-static-libusb"]
+features = [ "linux-static-libusb" ]
 default_features = false
 
 [dependencies.tokio]
-features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
+features = [ "rt-multi-thread", "net", "fs", "macros", "io-util" ]
 version = "1.2.0"
 
 [dependencies.tokio-util]
-features = ["net", "codec", "io"]
+features = [ "net", "codec", "io" ]
 version = "0.6.3"
 
 [features]
-default = ["hid"]
-hid = ["hidapi"]
-debug = []
-codegen = [ "quote", "proc-macro2", "Inflector"]
+default = [ "hid" ]
+hid = [ "hidapi" ]
+debug = [ ]
+codegen = [ "quote", "proc-macro2", "Inflector" ]
 
 [profile.release]
 lto = true
@@ -90,8 +87,8 @@ extended-description = """\
 Provides a way to control a MiniDSP 2x4HD and other compatible variants from the command line\
 """
 assets = [
-    ["target/release/minidsp", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/minidsp/README", "644"],
-    ["debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
-    ["debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"]
+    [ "target/release/minidsp", "usr/bin/", "755" ],
+    [ "README.md", "usr/share/doc/minidsp/README", "644" ],
+    [ "debian/minidsp.service", "lib/systemd/system/minidsp.service", "644" ],
+    [ "debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644" ]
 ]
