@@ -4,6 +4,9 @@
 //!
 use super::Source::{self as Source, *};
 
+mod probe;
+pub use probe::probe;
+
 #[cfg(feature = "codegen")]
 pub mod specs;
 
@@ -13,6 +16,8 @@ pub use m2x4hd::DEVICE as DEVICE_2X4HD;
 /// Defines how the high level api should interact with the device based on its memory layout
 #[derive(Debug)]
 pub struct Device {
+    /// The name identifying the product, e.g. "2x4HD"
+    pub product_name: &'static str,
     /// The name of the input sources
     pub sources: &'static [Source],
     /// The definitions for all input channels

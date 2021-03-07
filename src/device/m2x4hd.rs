@@ -167,6 +167,7 @@ pub mod sym {
 }
 use sym::*;
 pub const DEVICE: Device = Device {
+    product_name: "2x4HD",
     sources: &[Analog, Toslink, Usb],
     inputs: &[
         Input {

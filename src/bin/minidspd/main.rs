@@ -1,12 +1,14 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use atomic_refcell::AtomicRefCell;
 use discovery::{DiscoveryEvent, Registry};
 use futures::StreamExt;
 use lazy_static::lazy_static;
 use minidsp::{
+    client::{self, Client},
+    device,
     transport::{self, SharedService},
     utils::DropJoinHandle,
-    MiniDSP,
+    DeviceInfo, MiniDSP,
 };
 use std::sync::{Arc, Weak};
 use tokio::sync::{Mutex, RwLock};
@@ -72,9 +74,6 @@ struct Handles {
 }
 
 struct Device {
-    // future: Option<Box<dyn Future<Output = Result<()>> + Send + 'static>>,
-    /// Handle to the task controlling this device's lifecycle
-    // handle: ,
     url: String,
 
     inner: RwLock<Option<Inner>>,
@@ -93,7 +92,7 @@ impl Device {
 
         let handle_dev = dev.clone();
         let handle = tokio::spawn(async move {
-            let dev = Arc::downgrade(&handle_dev.clone());
+            let dev = Arc::downgrade(&handle_dev);
             Device::run(dev).await
         });
 
@@ -103,7 +102,7 @@ impl Device {
         dev
     }
 
-    pub async fn run(this: Weak<Self>) -> anyhow::Result<()> {
+    pub async fn run(this: Weak<Self>) -> Result<()> {
         // This future is being dropped when the object is dropped
         // a weak reference is used in order to prevent a cycle, but we
         // can safely .unwrap() the weak ref since it the future wouldn't be running
@@ -111,14 +110,14 @@ impl Device {
 
         // Open the transport by URL
         let url = {
-            let this = this.upgrade().unwrap();
+            let this = this.upgrade().expect("unable to upgrade self");
             this.url.clone()
         };
 
         log::info!("Connecting to {}", url.as_str());
 
         let transport = {
-            let url = Url2::try_parse(url.as_str()).unwrap();
+            let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
             let stream = transport::open_url(url).await?;
             transport::Hub::new(stream)
         };
@@ -128,17 +127,20 @@ impl Device {
             Arc::new(Mutex::new(mplex.to_service()))
         };
 
-        // TODO: Detect device type
-        let dev = MiniDSP::new(service.clone(), &minidsp::device::DEVICE_2X4HD);
-        let info = dev.get_device_info().await?;
-        println!("INFO: {:?}", &info);
+        let client = Client::new(service.clone());
+        let device_info = client.get_device_info().await.ok();
+        let device_spec = device_info
+            .map(|dev| device::probe(&dev))
+            .unwrap_or_default();
 
         {
             let this = this.upgrade().unwrap();
-            this.inner
-                .write()
-                .await
-                .replace(Inner { service, transport });
+            this.inner.write().await.replace(Inner {
+                service,
+                transport,
+                device_spec,
+                device_info,
+            });
         }
 
         Ok(())
@@ -146,8 +148,10 @@ impl Device {
 }
 
 pub struct Inner {
-    service: SharedService,
-    transport: transport::Hub,
+    pub service: SharedService,
+    pub transport: transport::Hub,
+    pub device_info: Option<DeviceInfo>,
+    pub device_spec: Option<&'static minidsp::device::Device>,
 }
 
 pub async fn discovery_task() {
@@ -158,7 +162,7 @@ pub async fn discovery_task() {
 
     loop {
         while let Some(event) = discovery_events.next().await {
-            println!("{:?}", &event);
+            log::trace!("{:?}", &event);
             match event {
                 DiscoveryEvent::Added(id) => {
                     let mut devices = app.devices.write().await;

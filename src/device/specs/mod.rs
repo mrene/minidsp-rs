@@ -26,6 +26,7 @@ pub struct CompressorSpec {
 }
 
 pub trait DeviceSpec: Sized {
+    fn product_name(&self) -> String;
     fn num_inputs(&self) -> usize;
     fn num_outputs(&self) -> usize;
 
@@ -85,6 +86,7 @@ pub trait DeviceSpec: Sized {
 
         let fir_max_taps = Literal::usize_unsuffixed(self.fir_max_taps());
         let internal_sampling_rate = Literal::u32_unsuffixed(self.internal_sampling_rate());
+        let product_name = Literal::string(self.product_name().as_str());
 
         quote! {
             use super::*;
@@ -92,6 +94,7 @@ pub trait DeviceSpec: Sized {
             #symbols
 
             pub const #name: Device = Device {
+                product_name: #product_name,
                 sources: &[#(#sources),*],
                 inputs: &[ #(#inputs),* ],
                 outputs: &[ #(#outputs),* ],
@@ -135,7 +138,6 @@ pub trait DeviceSpec: Sized {
             name.as_ref().to_screaming_snake_case().as_ref(),
             Span::call_site(),
         );
-        // Literal::isize_unsuffixed(addr as isize).into_token_stream()
         quote! { #name }
     }
 
