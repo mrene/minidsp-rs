@@ -1,9 +1,7 @@
 use super::{DiscoveryEvent, Registry};
 use anyhow::Result;
-use atomic_refcell::AtomicRefCell;
 use futures::StreamExt;
-use gotham::handler;
-use lazy_static::lazy_static;
+
 use minidsp::{
     client::Client,
     device,
@@ -11,12 +9,14 @@ use minidsp::{
     utils::{DropJoinHandle, ErrInto},
     DeviceInfo, MiniDSP,
 };
-use std::sync::{Arc, Weak};
-use tokio::sync::{Mutex, RwLock};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use url2::Url2;
 
 pub struct DeviceManager {
+    #[allow(dead_code)]
     inner: Arc<std::sync::RwLock<DeviceManagerInner>>,
+    #[allow(dead_code)]
     handles: Vec<DropJoinHandle<Result<(), anyhow::Error>>>,
 }
 
@@ -73,6 +73,11 @@ impl DeviceManager {
         DeviceManager { inner, handles }
     }
 
+    pub fn devices(&self) -> Vec<Arc<Device>> {
+        let inner = self.inner.read().unwrap();
+        inner.devices.clone()
+    }
+
     async fn task(inner: Arc<std::sync::RwLock<DeviceManagerInner>>) {
         let mut discovery_events = {
             let inner = inner.read().unwrap();
@@ -86,7 +91,7 @@ impl DeviceManager {
                 let mut inner = inner.write().unwrap();
                 match event {
                     DiscoveryEvent::Added(id) => {
-                        inner.devices.push(Device::new(id));
+                        inner.devices.push(Device::new(id).into());
                     }
                     DiscoveryEvent::Timeout { id, last_seen } => {
                         log::info!(
@@ -107,12 +112,14 @@ impl DeviceManager {
 #[derive(Default)]
 pub struct DeviceManagerInner {
     registry: Registry,
-    devices: Vec<Device>,
+    devices: Vec<Arc<Device>>,
 }
 
 pub struct Device {
     url: String,
+    #[allow(dead_code)]
     inner: Arc<std::sync::RwLock<DeviceInner>>,
+    #[allow(dead_code)]
     handles: Vec<DropJoinHandle<Result<(), anyhow::Error>>>,
 }
 
@@ -126,9 +133,7 @@ impl Device {
         let mut handles = Vec::new();
         {
             let inner = inner.clone();
-            let handle = tokio::spawn(async move {
-                Device::task(inner).await
-            });
+            let handle = tokio::spawn(async move { Device::task(inner).await });
             handles.push(handle.into());
         }
 
@@ -137,6 +142,11 @@ impl Device {
             inner,
             handles,
         }
+    }
+
+    pub fn to_minidsp(&self) -> MiniDSP<'static> {
+        let inner = self.inner.read().unwrap();
+        inner.handle.as_ref().unwrap().to_minidsp()
     }
 
     async fn task(inner: Arc<std::sync::RwLock<DeviceInner>>) -> anyhow::Result<()> {
@@ -164,7 +174,6 @@ impl Device {
             .map(|dev| device::probe(&dev))
             .unwrap_or_default();
 
-    
         let handle = DeviceHandle {
             service,
             transport,
@@ -172,11 +181,19 @@ impl Device {
             device_info,
         };
 
+        log::debug!(
+            "Identified {} ({:?})",
+            device_spec
+                .map(|spec| spec.product_name)
+                .unwrap_or("(unknown device)"),
+            device_info
+        );
+
         {
             let mut inner = inner.write().unwrap();
             inner.handle.replace(handle);
         }
-        
+
         // TODO: Select things to make sure the device is still alive, exit once it's gone.
 
         Ok(())
@@ -185,9 +202,8 @@ impl Device {
 #[derive(Default, Clone)]
 pub struct DeviceInner {
     url: String,
-    handle: Option<DeviceHandle>
+    handle: Option<DeviceHandle>,
 }
-
 #[derive(Clone)]
 pub struct DeviceHandle {
     // A pre-configured multiplexer ready to be bound to a `Client`

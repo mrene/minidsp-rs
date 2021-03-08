@@ -8,20 +8,17 @@ use gotham::{
     },
     state::State,
 };
-use mime;
-use minidsp::MiniDSP;
+// use mime;
 
 pub async fn master_status(state: &mut State) -> Result<impl IntoResponse, HandlerError> {
     let app = super::APP.clone();
     let app = app.read().await;
-    let devices = app.devices.read().await;
+    let devices = app.device_manager.devices();
     if !devices.is_empty() {
-        let dev = devices.get(0).unwrap();
+        let dev = devices.get(0).unwrap().clone();
 
-        let inner = dev.inner.try_read().unwrap();
-        let inner = inner.as_ref().unwrap();
+        let dsp = dev.to_minidsp();
 
-        let dsp = MiniDSP::new(inner.service.clone(), &minidsp::device::DEVICE_2X4HD);
         let status = dsp.get_master_status().await?;
 
         let res = create_response(

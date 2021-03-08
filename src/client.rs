@@ -1,4 +1,8 @@
-use crate::{DeviceInfo, commands::{self, Commands, FloatView, MemoryView, Value}, transport::{MiniDSPError, SharedService}};
+use crate::{
+    commands::{self, Commands, FloatView, MemoryView, Value},
+    transport::{MiniDSPError, SharedService},
+    DeviceInfo,
+};
 
 pub struct Client {
     transport: SharedService,

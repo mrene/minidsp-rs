@@ -22,8 +22,7 @@ pub async fn hid_discovery_task(register: impl Fn(&str)) -> Result<()> {
     }
 }
 
-pub async fn net_discovery_task(register: impl Fn(&str)) -> Result<()> 
-{
+pub async fn net_discovery_task(register: impl Fn(&str)) -> Result<()> {
     let stream = transport::net::discover().await?;
     pin_mut!(stream);
     while let Some(device) = stream.next().await {

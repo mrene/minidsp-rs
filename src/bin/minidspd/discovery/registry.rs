@@ -93,7 +93,6 @@ impl Inner {
     }
 }
 
-
 pub struct Device {
     pub last_seen: time::Instant,
 }
@@ -109,8 +108,6 @@ impl Device {
         self.last_seen = time::Instant::now();
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub enum DiscoveryEvent {
