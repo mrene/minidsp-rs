@@ -1,11 +1,4 @@
-//! Device discovery
-//! Maintains an up-to-date list of devices that can be reached,
-//! clears up devices after they haven't been seen in 5 minutes
-
-use anyhow::Result;
-use futures::{channel::mpsc, pin_mut, StreamExt};
-use log::warn;
-use minidsp::transport;
+use futures::channel::mpsc;
 use std::{collections::HashMap, sync::RwLock, time};
 
 pub struct Registry {
@@ -99,6 +92,8 @@ impl Inner {
         });
     }
 }
+
+
 pub struct Device {
     pub last_seen: time::Instant,
 }
@@ -115,6 +110,8 @@ impl Device {
     }
 }
 
+
+
 #[derive(Debug, Clone)]
 pub enum DiscoveryEvent {
     /// A new device has been discovered and added to the list
@@ -125,33 +122,6 @@ pub enum DiscoveryEvent {
         id: String,
         last_seen: time::Instant,
     },
-}
-
-pub async fn hid_discovery_task(registry: &Registry) -> Result<()> {
-    let api = transport::hid::initialize_api()?;
-    loop {
-        match transport::hid::discover(&api) {
-            Ok(devices) => {
-                for device in devices {
-                    registry.register(device.to_url().as_str());
-                }
-            }
-            Err(e) => {
-                warn!("failed to enumerate hid devices: {}", e);
-            }
-        }
-
-        tokio::time::sleep(time::Duration::from_secs(5)).await;
-    }
-}
-
-pub async fn net_discovery_task(registry: &Registry) -> Result<()> {
-    let stream = transport::net::discover().await?;
-    pin_mut!(stream);
-    while let Some(device) = stream.next().await {
-        registry.register(device.to_url().as_str());
-    }
-    Ok(())
 }
 
 #[cfg(test)]

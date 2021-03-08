@@ -1,21 +1,17 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use discovery::{DiscoveryEvent, Registry};
 use futures::StreamExt;
 use lazy_static::lazy_static;
-use minidsp::{
-    client::{self, Client},
-    device,
-    transport::{self, SharedService},
-    utils::DropJoinHandle,
-    DeviceInfo, MiniDSP,
-};
+use minidsp::{DeviceInfo, MiniDSP, client::Client, device, transport::{self, SharedService}, utils::DropJoinHandle};
 use std::sync::{Arc, Weak};
 use tokio::sync::{Mutex, RwLock};
 use url2::Url2;
 
 mod discovery;
+mod device_manager;
 mod http;
+
 
 lazy_static! {
     /// The global application instance.
@@ -32,9 +28,7 @@ pub struct App {
 
 impl App {
     pub fn new() -> Arc<RwLock<Self>> {
-        let app = Arc::new(RwLock::new(Self {
-            ..Default::default()
-        }));
+        let app = Arc::new(RwLock::new(App::default()));
 
         {
             let mut app_mut = app.try_write().unwrap();
@@ -43,7 +37,8 @@ impl App {
                 let app = app.clone();
                 tokio::spawn(async move {
                     let app = app.read().await;
-                    discovery::hid_discovery_task(&app.registry).await
+                    // discovery::tasks::hid_discovery_task(&app.registry).await
+                    Ok(())
                 })
                 .into()
             };
@@ -52,7 +47,8 @@ impl App {
                 let app = app.clone();
                 tokio::spawn(async move {
                     let app = app.read().await;
-                    discovery::net_discovery_task(&app.registry).await
+                    // discovery::tasks::net_discovery_task(&app.registry).await
+                    Ok(())
                 })
                 .into()
             };
@@ -76,7 +72,7 @@ struct Handles {
 struct Device {
     url: String,
 
-    inner: RwLock<Option<Inner>>,
+    inner: RwLock<Option<DeviceInner>>,
 
     #[allow(dead_code)]
     join_handle: AtomicRefCell<Option<DropJoinHandle<Result<()>>>>,
@@ -135,7 +131,7 @@ impl Device {
 
         {
             let this = this.upgrade().unwrap();
-            this.inner.write().await.replace(Inner {
+            this.inner.write().await.replace(DeviceInner {
                 service,
                 transport,
                 device_spec,
@@ -147,11 +143,26 @@ impl Device {
     }
 }
 
-pub struct Inner {
+#[derive(Clone)]
+pub struct DeviceInner {
+    // A pre-configured multiplexer ready to be bound to a `Client`
     pub service: SharedService,
+
+    // Frame-level multiplexer
     pub transport: transport::Hub,
+
+    // Probed hardware id and dsp version
     pub device_info: Option<DeviceInfo>,
+
+    // Device spec structure indicating the address of every component
     pub device_spec: Option<&'static minidsp::device::Device>,
+}
+
+impl DeviceInner {
+    pub fn to_minidsp(&self) -> MiniDSP<'static> {
+        // TODO: This should fail properly
+        MiniDSP::new(self.service.clone(), self.device_spec.expect("device spec not available"))
+    }
 }
 
 pub async fn discovery_task() {
