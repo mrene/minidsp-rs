@@ -1,7 +1,7 @@
 use anyhow::Result;
 use discovery::{DiscoveryEvent, Registry};
 use lazy_static::lazy_static;
-use minidsp::utils::DropJoinHandle;
+use minidsp::utils::OwnedJoinHandle;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -11,7 +11,6 @@ mod http;
 
 lazy_static! {
     /// The global application instance.
-    /// Note: The rwlock is always to be read-locked except during initialization
     static ref APP: Arc<RwLock<App>> = Arc::new(App::new().into());
 }
 
@@ -19,7 +18,7 @@ pub struct App {
     #[allow(dead_code)]
     device_manager: device_manager::DeviceManager,
     #[allow(dead_code)]
-    handles: Vec<DropJoinHandle<Result<(), anyhow::Error>>>,
+    handles: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>>,
 }
 
 impl App {

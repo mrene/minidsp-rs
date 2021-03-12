@@ -6,7 +6,7 @@ use minidsp::{
     client::Client,
     device,
     transport::{self, SharedService},
-    utils::{DropJoinHandle, ErrInto},
+    utils::{OwnedJoinHandle, ErrInto},
     DeviceInfo, MiniDSP,
 };
 use std::sync::Arc;
@@ -17,7 +17,7 @@ pub struct DeviceManager {
     #[allow(dead_code)]
     inner: Arc<std::sync::RwLock<DeviceManagerInner>>,
     #[allow(dead_code)]
-    handles: Vec<DropJoinHandle<Result<(), anyhow::Error>>>,
+    handles: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>>,
 }
 
 impl DeviceManager {
@@ -120,7 +120,7 @@ pub struct Device {
     #[allow(dead_code)]
     inner: Arc<std::sync::RwLock<DeviceInner>>,
     #[allow(dead_code)]
-    handles: Vec<DropJoinHandle<Result<(), anyhow::Error>>>,
+    handles: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>>,
 }
 
 impl Device {
@@ -204,6 +204,7 @@ pub struct DeviceInner {
     url: String,
     handle: Option<DeviceHandle>,
 }
+
 #[derive(Clone)]
 pub struct DeviceHandle {
     // A pre-configured multiplexer ready to be bound to a `Client`

@@ -19,7 +19,7 @@
 //!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE_2X4HD);
 //!     
 //!     let status = dsp.get_master_status().await?;
-//!     println!("Master volume: {:.1}", status.volume.0);
+//!     println!("Master volume: {:.1}", status.volume.unwrap().0);
 //!
 //!     // Activate a different configuration
 //!     dsp.set_config(2).await?;
@@ -39,8 +39,9 @@
 //! ```   
 
 pub use crate::commands::Gain;
+pub use crate::model::MasterStatus;
 use crate::{
-    commands::{Commands, FromMemory, MasterStatus},
+    commands::{Commands, FromMemory},
     device::Gate,
     transport::MiniDSPError,
 };
@@ -67,6 +68,7 @@ pub mod utils;
 pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
+pub mod model;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -549,7 +551,7 @@ impl<'a> Fir<'a> {
             .into_ack()?;
 
         // Set the master mute status back
-        self.dsp.set_master_mute(master_status.mute).await?;
+        self.dsp.set_master_mute(master_status.mute.unwrap()).await?;
 
         Ok(())
     }

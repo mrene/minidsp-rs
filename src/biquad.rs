@@ -1,6 +1,9 @@
 //! Basic biquad definition
 
-#[derive(Debug, PartialEq)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Biquad {
     pub index: u16,
     pub b0: f32,
@@ -26,5 +29,11 @@ impl Default for Biquad {
             a1: 0.,
             a2: 0.,
         }
+    }
+}
+
+impl Into<[f32; 5]> for &Biquad {
+    fn into(self) -> [f32; 5] {
+        [self.b0, self.b1, self.b2, self.a1, self.a2 ]
     }
 }

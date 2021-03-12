@@ -1,7 +1,7 @@
 //! Provides a way to share a transport on a frame level, all received frames are forward to all clients.
 
 use super::{MiniDSPError, Transport};
-use crate::utils::DropJoinHandle;
+use crate::utils::OwnedJoinHandle;
 use bytes::Bytes;
 use futures::{channel::mpsc, Sink, SinkExt, Stream, StreamExt};
 use futures_util::ready;
@@ -37,7 +37,7 @@ impl Hub {
         let read_handle = {
             let read_tx = read_tx.clone();
 
-            DropJoinHandle::new(tokio::spawn(async move {
+            OwnedJoinHandle::new(tokio::spawn(async move {
                 while let Some(frame) = device_rx.next().await {
                     match frame {
                         Ok(frame) => {
@@ -57,7 +57,7 @@ impl Hub {
             }))
         };
 
-        let send_handle = DropJoinHandle::new(tokio::spawn({
+        let send_handle = OwnedJoinHandle::new(tokio::spawn({
             async move {
                 while let Some(frame) = send_rx.next().await {
                     let res = device_tx.send(frame).await;
@@ -145,9 +145,9 @@ impl Sink<Bytes> for Hub {
 struct Inner {
     // Join handle containing the wrapped transport
     #[allow(dead_code)]
-    read_handle: DropJoinHandle<()>,
+    read_handle: OwnedJoinHandle<()>,
     #[allow(dead_code)]
-    send_handle: DropJoinHandle<()>,
+    send_handle: OwnedJoinHandle<()>,
 
     // Broadcast sender used for creating receivers through .subscribe()
     device_rx: broadcast::Sender<Bytes>,
@@ -155,8 +155,8 @@ struct Inner {
 
 impl Inner {
     pub fn new(
-        read_handle: DropJoinHandle<()>,
-        send_handle: DropJoinHandle<()>,
+        read_handle: OwnedJoinHandle<()>,
+        send_handle: OwnedJoinHandle<()>,
         device_rx: broadcast::Sender<Bytes>,
     ) -> Self {
         Self {

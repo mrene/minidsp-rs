@@ -2,7 +2,7 @@ use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
 use crate::{FilterCommand, RoutingCommand, SubCommand};
 use minidsp::{
-    commands::MasterStatus, rew::FromRew, transport::Transport, utils::wav::read_wav_filter,
+    MasterStatus, rew::FromRew, transport::Transport, utils::wav::read_wav_filter,
     Biquad, BiquadFilter, Channel, Crossover, Fir, Source,
 };
 use serde::{Deserialize, Serialize};
