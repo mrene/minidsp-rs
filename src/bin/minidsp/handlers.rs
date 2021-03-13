@@ -139,7 +139,7 @@ pub(crate) async fn run_input(
             RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
         },
         PEQ { index, cmd } => match index {
-            PEQTarget::One(index) => run_peq(&[input.peq(index)], cmd).await?,
+            PEQTarget::One(index) => run_peq(&[input.peq(index)?], cmd).await?,
             PEQTarget::All => {
                 let eqs = input.peqs_all();
                 run_peq(eqs.as_ref(), cmd).await?
@@ -166,7 +166,7 @@ pub(crate) async fn run_output(
         }
         Invert { value } => output.set_invert(value).await?,
         OutputCommand::PEQ { index, cmd } => match index {
-            PEQTarget::One(index) => run_peq(&[output.peq(index)], cmd).await?,
+            PEQTarget::One(index) => run_peq(&[output.peq(index)?], cmd).await?,
             PEQTarget::All => {
                 let eqs = output.peqs_all();
                 run_peq(eqs.as_ref(), cmd).await?

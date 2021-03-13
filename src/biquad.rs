@@ -1,8 +1,9 @@
 //! Basic biquad definition
 
 use serde::{Serialize, Deserialize};
+use schemars::JsonSchema;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Biquad {
     pub index: u16,

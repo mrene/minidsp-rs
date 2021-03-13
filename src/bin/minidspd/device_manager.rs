@@ -116,7 +116,7 @@ pub struct DeviceManagerInner {
 }
 
 pub struct Device {
-    url: String,
+    pub url: String,
     #[allow(dead_code)]
     inner: Arc<std::sync::RwLock<DeviceInner>>,
     #[allow(dead_code)]

@@ -1,20 +1,13 @@
-/*! Revised object model
+////! Remote control object model
+/// Exposes configurable components in a (de)serializable format, suitable for various RPC protocols. Each field is optional, and will trigger an action if set.
 
-The objective is to represent most/all of the config state into a single object, and to implement a trait to apply them
-based on a device definition.
-
-This will mostly mimic the device structure where all the addresses are identified.
-Would there be a way to generate one from the other?
-There still needs to be a way to "bind" a component to an instance by mapping the right addresses in place
-*/
-
+use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 use anyhow::anyhow;
-use crate::{Biquad, Gain, Source, client::Client, commands::{Commands, WriteInt}, device, transport::MiniDSPError};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-/// The current settings applying to all outputs
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+/// Settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
     pub preset: Option<u8>,
@@ -29,59 +22,76 @@ pub struct MasterStatus {
     pub mute: Option<bool>,
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+impl MasterStatus {
+    pub async fn apply(&self, dsp: &MiniDSP<'_>) -> Result<(), MiniDSPError> {
+        if let Some(config) = self.preset {
+            dsp.set_config(config).await?;
+        }
+
+        if let Some(source) = self.source {
+            dsp.set_source(source).await?;
+        }
+
+        if let Some(value) = self.volume {
+            dsp.set_master_volume(value).await?;
+        }
+
+        if let Some(value) = self.mute {
+            dsp.set_master_mute(value).await?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
+/// Top-level configuration object that can be applied to a device
 pub struct Config {
+    pub master_status: Option<MasterStatus>,
     pub inputs: Vec<Input>,
 }
 
 impl Config {
-    async fn apply(&self, client: &Client, spec: &device::Device) -> Result<(), MiniDSPError> {
+    pub async fn apply(&self, dsp: &MiniDSP<'_>) -> Result<(), MiniDSPError> {
+        // Always set master status first, since it might change the current active preset
+        if let Some(master_status) = &self.master_status {
+            master_status.apply(&dsp).await?;
+        }
+
         for input in &self.inputs {
             let input_index = input.index.ok_or(MiniDSPError::InternalError(anyhow!(
                 "missing input index field"
             )))?;
-            if input_index >= spec.inputs.len() {
-                return Err(MiniDSPError::InternalError(anyhow!(
-                    "Input index out of range ({} >= {})",
-                    input_index,
-                    spec.inputs.len()
-                )));
-            }
-            input.apply(client, &spec.inputs[input_index]).await?;
+            input.apply(&dsp.input(input_index)?).await?;
         }
 
         Ok(())
     }
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Gate {
-    pub enable: Option<bool>,
+    pub mute: Option<bool>,
     pub gain: Option<Gain>,
 }
 
 impl Gate {
-    async fn apply(&self, client: &Client, spec: &device::Gate) -> Result<(), MiniDSPError> {
-        if let Some(enable) = self.enable {
-            let value = if enable {
-                WriteInt::ENABLED
-            } else {
-                WriteInt::DISABLED
-            };
-            client.write_dsp(spec.enable, value).await?;
+    pub async fn apply<C: Channel + Send + Sync>(&self, channel: &C) -> Result<(), MiniDSPError> {
+        if let Some(mute) = self.mute {
+            channel.set_mute(mute).await?;
         }
 
         if let Some(gain) = self.gain {
-            client.write_dsp(spec.gain, gain.0).await?;
+            channel.set_gain(gain).await?;
         }
 
         Ok(())
     }
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Input {
     pub index: Option<usize>,
@@ -91,27 +101,21 @@ pub struct Input {
 }
 
 impl Input {
-    async fn apply(&self, client: &Client, spec: &device::Input) -> Result<(), MiniDSPError> {
-        self.gate.apply(client, &spec.gate).await?;
+    pub async fn apply(&self, input: &crate::Input<'_>) -> Result<(), MiniDSPError> {
+        self.gate.apply(input).await?;
+
         for peq in &self.peq {
             let peq_index = peq.index.ok_or(MiniDSPError::InternalError(anyhow!(
                 "missing peq index field"
             )))?;
 
-            if peq_index >= spec.peq.len() {
-                return Err(MiniDSPError::InternalError(anyhow!(
-                    "PEQ index out of range ({} >= {})",
-                    peq_index,
-                    spec.peq.len()
-                )));
-            }
-            peq.apply(client, spec.peq[peq_index]).await?;
+            peq.apply(&input.peq(peq_index)?).await?;
         }
         Ok(())
     }
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Peq {
     pub index: Option<usize>,
@@ -120,72 +124,15 @@ pub struct Peq {
 }
 
 impl Peq {
-    async fn apply(&self, client: &Client, addr: u16) -> Result<(), MiniDSPError> {
+    pub async fn apply(&self, peq: &BiquadFilter<'_>) -> Result<(), MiniDSPError> {
         if let Some(bypass) = self.bypass {
-            client
-                .roundtrip(Commands::WriteBiquadBypass {
-                    addr,
-                    value: bypass,
-                })
-                .await?
-                .into_ack()?;
+            peq.set_bypass(bypass).await?;
         }
 
         if let Some(ref coeff) = self.coeff {
-            client
-                .roundtrip(Commands::WriteBiquad {
-                    addr,
-                    data: coeff.into(),
-                })
-                .await?
-                .into_ack()?;
+            peq.set_coefficients(&coeff.to_array()[..]).await?;
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    // use serde_json::to_string_pretty;
-
-    #[test]
-    fn foo() {
-        let cfg = Config {
-            inputs: vec![
-                Input {
-                    index: Some(0),
-                    gate: Gate {
-                        enable: Some(true),
-                        gain: Some(Gain(-40.)),
-                    },
-                    peq: Vec::new(),
-                },
-                Input::default(),
-            ],
-        };
-
-        let cfgs = serde_json::to_string_pretty(&cfg).unwrap();
-
-        println!("{}", cfgs);
-
-        let s = r#"
-        {
-            "inputs": [
-                {
-                    "index": 0,
-                    "peq": [{"index": 0, "bypass": true}]
-                }
-            ]
-        }
-        "#;
-
-        let wtf: Config = serde_json::from_str(s).unwrap();
-        println!("{:#?}", &wtf);
-
-        let b = serde_cbor::to_vec(&wtf).unwrap();
-        println!("{}", hex::encode(&b));
     }
 }

@@ -13,6 +13,7 @@ use super::DeviceInfo;
     strum::ToString,
     serde::Serialize,
     serde::Deserialize,
+    schemars::JsonSchema,
 )]
 #[strum(serialize_all = "lowercase")]
 pub enum Source {

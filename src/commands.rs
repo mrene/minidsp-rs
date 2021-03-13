@@ -634,7 +634,7 @@ where
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 /// A gain between the minimum and maximum allowed values
 pub struct Gain(pub f32);
 

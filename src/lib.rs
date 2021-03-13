@@ -69,6 +69,7 @@ pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
 pub mod model;
+pub mod model2;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -229,9 +230,13 @@ pub trait Channel {
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
-    fn peq(&self, index: usize) -> BiquadFilter<'_> {
+    fn peq(&self, index: usize) -> Result<BiquadFilter<'_>> {
         let (dsp, _, peq) = self._channel();
-        BiquadFilter::new(dsp, peq[index])
+        if index >= peq.len() {
+            Err(MiniDSPError::OutOfRange)
+        } else {
+            Ok(BiquadFilter::new(dsp, peq[index]))
+        }
     }
 
     fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
@@ -551,7 +556,9 @@ impl<'a> Fir<'a> {
             .into_ack()?;
 
         // Set the master mute status back
-        self.dsp.set_master_mute(master_status.mute.unwrap()).await?;
+        self.dsp
+            .set_master_mute(master_status.mute.unwrap())
+            .await?;
 
         Ok(())
     }

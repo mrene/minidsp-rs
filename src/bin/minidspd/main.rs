@@ -7,7 +7,8 @@ use tokio::sync::RwLock;
 
 mod device_manager;
 mod discovery;
-mod http;
+mod http_gotham;
+mod http_rocket;
 
 lazy_static! {
     /// The global application instance.
@@ -46,7 +47,7 @@ pub async fn main() {
     let app = APP.clone();
     let _app = app.read().await;
 
-    http::main().await;
+    http_rocket::main().await;
 
     // Handle devices being discovered locally and on the network
     // app.handles.first().unwrap()
