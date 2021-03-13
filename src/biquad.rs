@@ -1,12 +1,12 @@
 //! Basic biquad definition
 
-use serde::{Serialize, Deserialize};
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Biquad {
-    pub index: u16,
+    pub index: Option<u16>,
     pub b0: f32,
     pub b1: f32,
     pub b2: f32,
@@ -23,7 +23,7 @@ impl Biquad {
 impl Default for Biquad {
     fn default() -> Self {
         Biquad {
-            index: 1,
+            index: None,
             b0: 1.,
             b1: 0.,
             b2: 0.,
@@ -35,6 +35,6 @@ impl Default for Biquad {
 
 impl Into<[f32; 5]> for &Biquad {
     fn into(self) -> [f32; 5] {
-        [self.b0, self.b1, self.b2, self.a1, self.a2 ]
+        [self.b0, self.b1, self.b2, self.a1, self.a2]
     }
 }

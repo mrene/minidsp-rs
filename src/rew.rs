@@ -35,7 +35,7 @@ impl FromRew for Biquad {
         let a2 = parse_component(lines.next()?, "a2=")?;
 
         Some(Biquad {
-            index,
+            index: Some(index),
             b0,
             b1,
             b2,
@@ -49,7 +49,12 @@ impl ToRew for Biquad {
     fn to_rew(&self) -> String {
         format!(
             "biquad{},\nb0={},\nb1={},\nb2={},\na1={},\na2={},\n",
-            self.index, self.b0, self.b1, self.b2, self.a1, self.a2
+            self.index.unwrap_or_default(),
+            self.b0,
+            self.b1,
+            self.b2,
+            self.a1,
+            self.a2
         )
     }
 }

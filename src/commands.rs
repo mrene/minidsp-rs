@@ -7,7 +7,7 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::{Source, model::MasterStatus};
+use crate::{model::MasterStatus, Source};
 use crate::{transport::MiniDSPError, DeviceInfo};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -101,12 +101,7 @@ impl fmt::Debug for Value {
                 )
             }
             &Value::Float(val) => {
-                write!(
-                    f,
-                    "Value {{ Float: {:?} (Bytes: {:x?}) }}",
-                    val,
-                    b.as_ref()
-                )
+                write!(f, "Value {{ Float: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
             &Value::Int(val) => {
                 write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
@@ -380,7 +375,10 @@ impl Commands {
                 f.put_u8(0x06);
                 f.put(payload.0.clone());
             }
-            &Commands::Unknown { cmd_id, ref payload } => {
+            &Commands::Unknown {
+                cmd_id,
+                ref payload,
+            } => {
                 f.put_u8(cmd_id);
                 f.put(payload.0.clone());
             }
@@ -503,7 +501,10 @@ impl Responses {
                     f.put_f32_le(item);
                 }
             }
-            &Responses::Unknown { cmd_id, ref payload } => {
+            &Responses::Unknown {
+                cmd_id,
+                ref payload,
+            } => {
                 f.put_u8(cmd_id);
                 f.put(payload.0.clone());
             }
@@ -617,8 +618,6 @@ where
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
 }
-
-
 
 impl FromMemory<MasterStatus> for MasterStatus
 where

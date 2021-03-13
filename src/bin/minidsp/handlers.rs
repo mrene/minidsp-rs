@@ -2,8 +2,8 @@ use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
 use crate::{FilterCommand, RoutingCommand, SubCommand};
 use minidsp::{
-    MasterStatus, rew::FromRew, transport::Transport, utils::wav::read_wav_filter,
-    Biquad, BiquadFilter, Channel, Crossover, Fir, Source,
+    rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel,
+    Crossover, Fir, MasterStatus, Source,
 };
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr, time::Duration, writeln};
@@ -233,7 +233,11 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: FilterCommand) -> Re
             for (i, peq) in peqs.iter().enumerate() {
                 if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
                     peq.set_coefficients(biquad.to_array().as_ref()).await?;
-                    println!("PEQ {}: Applied imported filter: biquad{}", i, biquad.index);
+                    println!(
+                        "PEQ {}: Applied imported filter: biquad{}",
+                        i,
+                        biquad.index.unwrap_or_default()
+                    );
                 } else {
                     println!("PEQ {}: Cleared filter", i);
                     peq.clear().await?;
@@ -288,7 +292,9 @@ pub(crate) async fn run_xover(
                         .await?;
                     println!(
                         "Xover {}.{}: Applied imported filter: biquad{}",
-                        group, i, biquad.index
+                        group,
+                        i,
+                        biquad.index.unwrap_or_default()
                     );
                 } else {
                     println!("Xover {}.{}: Cleared filter", group, i);

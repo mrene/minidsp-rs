@@ -410,6 +410,10 @@ impl<'a> Crossover<'a> {
         index: usize,
         coefficients: &[f32],
     ) -> Result<()> {
+        if group >= self.num_groups() || index >= self.num_filter_per_group() {
+            return Err(MiniDSPError::OutOfRange);
+        }
+
         let addr = self.spec.peqs[group] + (index as u16) * 5;
         let filter = BiquadFilter::new(self.dsp, addr);
         filter.set_coefficients(coefficients).await
@@ -418,6 +422,10 @@ impl<'a> Crossover<'a> {
     /// Sets the bypass for a given crossover biquad group.
     /// There are usually two groups (0 and 1), each grouping 4 biquads
     pub async fn set_bypass(&self, group: usize, bypass: bool) -> Result<()> {
+        if group >= self.num_groups() {
+            return Err(MiniDSPError::OutOfRange);
+        }
+
         let addr = self.spec.peqs[group];
         self.dsp
             .client

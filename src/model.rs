@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 ////! Remote control object model
 /// Exposes configurable components in a (de)serializable format, suitable for various RPC protocols. Each field is optional, and will trigger an action if set.
-
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 use anyhow::anyhow;
 use schemars::JsonSchema;
@@ -50,6 +51,7 @@ impl MasterStatus {
 pub struct Config {
     pub master_status: Option<MasterStatus>,
     pub inputs: Vec<Input>,
+    pub outputs: Vec<Output>,
 }
 
 impl Config {
@@ -60,9 +62,9 @@ impl Config {
         }
 
         for input in &self.inputs {
-            let input_index = input.index.ok_or_else(|| MiniDSPError::InternalError(anyhow!(
-                "missing input index field"
-            )))?;
+            let input_index = input
+                .index
+                .ok_or_else(|| MiniDSPError::InternalError(anyhow!("missing input index field")))?;
             input.apply(&dsp.input(input_index)?).await?;
         }
 
@@ -105,12 +107,98 @@ impl Input {
         self.gate.apply(input).await?;
 
         for peq in &self.peq {
-            let peq_index = peq.index.ok_or_else(|| MiniDSPError::InternalError(anyhow!(
-                "missing peq index field"
-            )))?;
+            let peq_index = peq
+                .index
+                .ok_or_else(|| MiniDSPError::InternalError(anyhow!("missing peq index field")))?;
 
             peq.apply(&input.peq(peq_index)?).await?;
         }
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct Output {
+    #[serde(flatten)]
+    pub gate: Gate,
+    pub peq: Vec<Peq>,
+    pub invert: Option<bool>,
+    pub delay: Option<Duration>,
+    pub crossover: Vec<Crossover>,
+    pub compressor: Option<Compressor>,
+    pub fir: Option<Fir>,
+}
+
+impl Output {
+    pub async fn apply(&self, output: &crate::Output<'_>) -> Result<(), MiniDSPError> {
+        self.gate.apply(output).await?;
+
+        for peq in &self.peq {
+            let peq_index = peq
+                .index
+                .ok_or_else(|| MiniDSPError::InternalError(anyhow!("missing peq index field")))?;
+
+            peq.apply(&output.peq(peq_index)?).await?;
+        }
+
+        if let Some(invert) = self.invert {
+            output.set_invert(invert).await?;
+        }
+
+        if let Some(delay) = self.delay {
+            output.set_delay(delay).await?;
+        }
+
+        for xover in &self.crossover {
+            xover.apply(&output.crossover()).await?;
+        }
+
+        if let Some(compressor) = &self.compressor {
+            compressor.apply(&output.compressor()).await?;
+        }
+
+        if let Some(fir) = &self.fir {
+            fir.apply(&output.fir()).await?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct Crossover {
+    // Crossover group index (most likely 0 or 1)
+    pub index: Option<usize>,
+    pub coeff: Vec<Biquad>,
+    pub bypass: Option<bool>,
+}
+
+impl Crossover {
+    pub async fn apply(&self, xover: &crate::Crossover<'_>) -> Result<(), MiniDSPError> {
+        let group = self
+            .index
+            .ok_or_else(|| MiniDSPError::InternalError(anyhow!("Invalid crossover group index")))?;
+
+        for c in &self.coeff {
+            if c.index.is_none() {
+                return Err(MiniDSPError::InternalError(anyhow!(
+                    "biquad index not specified"
+                )));
+            }
+        }
+
+        for c in &self.coeff {
+            xover
+                .set_coefficients(group, c.index.unwrap() as usize, &c.to_array()[..])
+                .await?;
+        }
+
+        if let Some(bypass) = self.bypass {
+            xover.set_bypass(group, bypass).await?;
+        }
+
         Ok(())
     }
 }
@@ -133,6 +221,61 @@ impl Peq {
             peq.set_coefficients(&coeff.to_array()[..]).await?;
         }
 
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct Compressor {
+    pub bypass: Option<bool>,
+    pub threshold: Option<f32>,
+    pub ratio: Option<f32>,
+    pub attack: Option<f32>,
+    pub release: Option<f32>,
+}
+
+impl Compressor {
+    pub async fn apply(&self, compressor: &crate::Compressor<'_>) -> Result<(), MiniDSPError> {
+        if let Some(bypass) = self.bypass {
+            compressor.set_bypass(bypass).await?;
+        }
+        if let Some(threshold) = self.threshold {
+            compressor.set_threshold(threshold).await?;
+        }
+        if let Some(ratio) = self.ratio {
+            compressor.set_ratio(ratio).await?;
+        }
+        if let Some(attack) = self.attack {
+            compressor.set_attack(attack).await?;
+        }
+        if let Some(release) = self.release {
+            compressor.set_release(release).await?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct Fir {
+    pub bypass: Option<bool>,
+    pub coefficients: Option<Vec<f32>>,
+}
+
+impl Fir {
+    pub async fn apply(&self, fir: &crate::Fir<'_>) -> Result<(), MiniDSPError> {
+        if let Some(bypass) = self.bypass {
+            fir.set_bypass(bypass).await?;
+        }
+        if let Some(coefficients) = &self.coefficients {
+            if coefficients.is_empty() {
+                fir.clear().await?;
+            } else {
+                fir.set_coefficients(coefficients).await?;
+            }
+        }
         Ok(())
     }
 }

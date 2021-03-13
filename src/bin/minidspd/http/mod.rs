@@ -2,10 +2,11 @@ use crate::{device_manager, App};
 use minidsp::{model::Config, transport::MiniDSPError, MasterStatus, MiniDSP};
 use rocket::{get, post, routes};
 use rocket_contrib::json::Json;
-use thiserror::Error;
 use serde::Serialize;
+use thiserror::Error;
 
 #[derive(Clone, Debug, Serialize, Error)]
+#[serde(tag = "type")]
 pub enum Error {
     #[error(
         "device index was out of range. provided value {provided} was not in range [0, {actual})"
@@ -69,7 +70,6 @@ fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedE
     Ok(devices[index].to_minidsp())
 }
 
-
 /// Gets a list of available devices
 #[get("/")]
 async fn devices() -> Json<Vec<Device>> {
@@ -84,7 +84,7 @@ async fn devices() -> Json<Vec<Device>> {
         .into()
 }
 
-/// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index 
+/// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index
 #[get("/<index>")]
 async fn master_status(index: usize) -> Result<Json<MasterStatus>, Json<FormattedError>> {
     let app = super::APP.clone();
@@ -121,7 +121,7 @@ async fn post_master_status(
 }
 
 /// Updates the device's configuration based on the defined elements. Anything set will be changed and anything else will be ignored.
-/// If a `master_status` object is passed, and the active configuration is changed, it will be applied before anything else. it is therefore 
+/// If a `master_status` object is passed, and the active configuration is changed, it will be applied before anything else. it is therefore
 /// safe to change config and apply other changes to the target config using a single call.
 #[post("/<index>/config", data = "<data>")]
 async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {

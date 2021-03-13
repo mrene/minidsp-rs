@@ -6,7 +6,7 @@ use minidsp::{
     client::Client,
     device,
     transport::{self, SharedService},
-    utils::{OwnedJoinHandle, ErrInto},
+    utils::{ErrInto, OwnedJoinHandle},
     DeviceInfo, MiniDSP,
 };
 use std::sync::Arc;
