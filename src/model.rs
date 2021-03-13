@@ -60,7 +60,7 @@ impl Config {
         }
 
         for input in &self.inputs {
-            let input_index = input.index.ok_or(MiniDSPError::InternalError(anyhow!(
+            let input_index = input.index.ok_or_else(|| MiniDSPError::InternalError(anyhow!(
                 "missing input index field"
             )))?;
             input.apply(&dsp.input(input_index)?).await?;
@@ -105,7 +105,7 @@ impl Input {
         self.gate.apply(input).await?;
 
         for peq in &self.peq {
-            let peq_index = peq.index.ok_or(MiniDSPError::InternalError(anyhow!(
+            let peq_index = peq.index.ok_or_else(|| MiniDSPError::InternalError(anyhow!(
                 "missing peq index field"
             )))?;
 

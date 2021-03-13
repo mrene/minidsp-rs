@@ -1,12 +1,11 @@
-use std::sync::Arc;
-
 use crate::{device_manager, App};
-use minidsp::{MasterStatus, MiniDSP, model::Config, transport::MiniDSPError, utils::ErrInto};
-use rocket::{catchers, get, post, routes};
-use rocket_contrib::json::{Json, JsonValue};
+use minidsp::{model::Config, transport::MiniDSPError, MasterStatus, MiniDSP};
+use rocket::{get, post, routes};
+use rocket_contrib::json::Json;
 use thiserror::Error;
+use serde::Serialize;
 
-#[derive(serde::Serialize, Clone, Debug, Error)]
+#[derive(Clone, Debug, Serialize, Error)]
 pub enum Error {
     #[error(
         "device index was out of range. provided value {provided} was not in range [0, {actual})"
@@ -24,7 +23,7 @@ impl From<MiniDSPError> for Error {
     }
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct FormattedError {
     message: String,
     error: Error,
@@ -45,7 +44,7 @@ impl From<Error> for FormattedError {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Device {
     pub url: String,
 }
@@ -70,33 +69,36 @@ fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedE
     Ok(devices[index].to_minidsp())
 }
 
+
+/// Gets a list of available devices
 #[get("/")]
 async fn devices() -> Json<Vec<Device>> {
     let app = super::APP.clone();
     let app = app.read().await;
-    Json(
-        app.device_manager
-            .devices()
-            .into_iter()
-            .map(|d| d.as_ref().into())
-            .collect::<Vec<_>>()
-            .into(),
-    )
+
+    app.device_manager
+        .devices()
+        .iter()
+        .map(|d| d.as_ref().into())
+        .collect::<Vec<_>>()
+        .into()
 }
+
+/// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index 
 #[get("/<index>")]
 async fn master_status(index: usize) -> Result<Json<MasterStatus>, Json<FormattedError>> {
     let app = super::APP.clone();
     let app = app.read().await;
     let device = get_device(&app, index)?;
 
-    Ok(Json(
-        device
-            .get_master_status()
-            .await
-            .map_err(FormattedError::from)?,
-    ))
+    Ok(device
+        .get_master_status()
+        .await
+        .map_err(FormattedError::from)?
+        .into())
 }
 
+/// Updates the device's master status directly
 #[post("/<index>", data = "<data>")]
 async fn post_master_status(
     index: usize,
@@ -118,11 +120,11 @@ async fn post_master_status(
     ))
 }
 
+/// Updates the device's configuration based on the defined elements. Anything set will be changed and anything else will be ignored.
+/// If a `master_status` object is passed, and the active configuration is changed, it will be applied before anything else. it is therefore 
+/// safe to change config and apply other changes to the target config using a single call.
 #[post("/<index>/config", data = "<data>")]
-async fn post_config(
-    index: usize,
-    data: Json<Config>,
-) -> Result<(), Json<FormattedError>> {
+async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {
     let app = super::APP.clone();
     let app = app.read().await;
     let device = get_device(&app, index)?;

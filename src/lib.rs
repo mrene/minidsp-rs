@@ -38,6 +38,9 @@
 //!
 //! ```   
 
+// Silence clippy warning inside JsonSchema derived code
+#![allow(clippy::field_reassign_with_default)]
+
 pub use crate::commands::Gain;
 pub use crate::model::MasterStatus;
 use crate::{
@@ -69,7 +72,6 @@ pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
 pub mod model;
-pub mod model2;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
