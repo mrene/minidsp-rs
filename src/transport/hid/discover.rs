@@ -60,7 +60,7 @@ impl fmt::Display for Device {
             None => "".to_owned(),
         };
 
-        write!(f, "hid:{}{}", path, query)
+        write!(f, "usb:{}{}", path, query)
     }
 }
 
