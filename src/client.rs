@@ -27,10 +27,12 @@ impl Client {
             .await?
             .into_hardware_id()?;
 
-        let view = self.read_memory(0xffa1, 1).await?;
+        let dsp_version_view = self.read_memory(0xffa1, 1).await?;
+        let serial_view = self.read_memory(0xfffc, 2).await?;
         let info = DeviceInfo {
             hw_id,
-            dsp_version: view.read_u8(0xffa1),
+            dsp_version: dsp_version_view.read_u8(0xffa1),
+            serial: 900000 + (serial_view.read_u16(0xfffc) as u32),
         };
         Ok(info)
     }

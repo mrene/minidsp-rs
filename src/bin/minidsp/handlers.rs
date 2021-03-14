@@ -2,11 +2,10 @@ use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, PEQTarget};
 use crate::{FilterCommand, RoutingCommand, SubCommand};
 use minidsp::{
-    rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad, BiquadFilter, Channel,
-    Crossover, Fir, MasterStatus, Source,
+    model::StatusSummary, rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad,
+    BiquadFilter, Channel, Crossover, Fir,
 };
-use serde::{Deserialize, Serialize};
-use std::{fmt, str::FromStr, time::Duration, writeln};
+use std::{str::FromStr, time::Duration};
 
 pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
     if let SubCommand::Server {
@@ -36,55 +35,6 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
         server::serve(bind_address.as_str(), Box::pin(transport)).await?;
     }
     Ok(())
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct StatusSummary {
-    master: MasterStatus,
-    available_sources: Vec<String>,
-    input_levels: Vec<f32>,
-    output_levels: Vec<f32>,
-}
-
-impl StatusSummary {
-    pub async fn fetch(dsp: &MiniDSP<'_>) -> Result<Self> {
-        let master = dsp.get_master_status().await?;
-        let input_levels = dsp.get_input_levels().await?;
-        let output_levels = dsp.get_output_levels().await?;
-
-        let available_sources: Vec<_> = Source::mapping(&dsp.get_device_info().await?)
-            .iter()
-            .map(|x| x.0.to_string())
-            .collect();
-
-        Ok(StatusSummary {
-            master,
-            available_sources,
-            input_levels,
-            output_levels,
-        })
-    }
-}
-
-impl fmt::Display for StatusSummary {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{:?}", self.master)?;
-        let strs: Vec<String> = self
-            .input_levels
-            .iter()
-            .map(|x| format!("{:.1}", *x))
-            .collect();
-        writeln!(f, "Input levels: {}", strs.join(", "))?;
-
-        let strs: Vec<String> = self
-            .output_levels
-            .iter()
-            .map(|x| format!("{:.1}", *x))
-            .collect();
-        writeln!(f, "Output levels: {}", strs.join(", "))?;
-
-        Ok(())
-    }
 }
 
 pub(crate) async fn run_command(

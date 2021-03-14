@@ -80,14 +80,14 @@ mod test {
         }
 
         assert_eq!(filters.len(), 10);
-        assert_eq!(filters[0].index, 1);
+        assert_eq!(filters[0].index, Some(1));
         assert_eq!(filters[0].b0, 0.999194903557377f32);
         assert_eq!(filters[0].b1, -1.9973354686174658);
         assert_eq!(filters[0].b2, 0.9981886333563846);
         assert_eq!(filters[0].a1, 1.9973354686174658);
         assert_eq!(filters[0].a2, -0.9973835369137615);
 
-        assert_eq!(filters[9].index, 10);
+        assert_eq!(filters[9].index, Some(10));
         assert_eq!(filters[9].b0, 0.8784231224481471);
         assert_eq!(filters[9].b1, -1.2978927199484762);
         assert_eq!(filters[9].b2, 0.7320089079645271);
@@ -97,7 +97,7 @@ mod test {
     #[test]
     fn test_string() {
         let b = Biquad {
-            index: 1,
+            index: Some(1),
             b0: 1.,
             b1: 2.,
             b2: 3.,

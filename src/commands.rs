@@ -847,6 +847,7 @@ mod test {
         let device_info = DeviceInfo {
             hw_id: 10,
             dsp_version: 100,
+            serial: 0,
         };
         let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
         assert_eq!(

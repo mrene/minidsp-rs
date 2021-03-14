@@ -1,7 +1,7 @@
+///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
 use super::{DiscoveryEvent, Registry};
 use anyhow::Result;
 use futures::StreamExt;
-
 use minidsp::{
     client::Client,
     device,
@@ -144,9 +144,19 @@ impl Device {
         }
     }
 
-    pub fn to_minidsp(&self) -> MiniDSP<'static> {
+    pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
         let inner = self.inner.read().unwrap();
-        inner.handle.as_ref().unwrap().to_minidsp()
+        Some(inner.handle.as_ref()?.to_minidsp())
+    }
+
+    pub fn device_info(&self) -> Option<DeviceInfo> {
+        let inner = self.inner.read().unwrap();
+        inner.handle.as_ref()?.device_info
+    }
+
+    pub fn device_spec(&self) -> Option<&'static minidsp::device::Device> {
+        let inner = self.inner.read().unwrap();
+        inner.handle.as_ref()?.device_spec
     }
 
     async fn task(inner: Arc<std::sync::RwLock<DeviceInner>>) -> anyhow::Result<()> {

@@ -6,5 +6,3 @@ mod registry;
 pub mod tasks;
 
 pub use registry::{DiscoveryEvent, Registry};
-
-pub trait DeviceMediator {}

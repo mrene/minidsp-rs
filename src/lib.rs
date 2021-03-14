@@ -92,6 +92,10 @@ impl<'a> MiniDSP<'a> {
 }
 
 impl MiniDSP<'_> {
+    pub async fn set_device_info(&mut self, dev: DeviceInfo) {
+        self.device_info.lock().await.replace(dev);
+    }
+
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
@@ -187,27 +191,18 @@ impl MiniDSP<'_> {
             return Ok(info);
         }
 
-        let hw_id = self
-            .client
-            .roundtrip(Commands::ReadHardwareId)
-            .await?
-            .into_hardware_id()?;
-
-        let view = self.client.read_memory(0xffa1, 1).await?;
-        let info = DeviceInfo {
-            hw_id,
-            dsp_version: view.read_u8(0xffa1),
-        };
+        let info = self.client.get_device_info().await?;
         *self_device_info = Some(info);
         Ok(info)
     }
 }
 
 /// Hardware id and dsp version
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, schemars::JsonSchema)]
 pub struct DeviceInfo {
     pub hw_id: u8,
     pub dsp_version: u8,
+    pub serial: u32,
 }
 
 #[async_trait]

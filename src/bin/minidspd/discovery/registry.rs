@@ -1,3 +1,7 @@
+///! Device registry
+/// This module is responsible for keeping track of discovered urls. Other components are free
+/// to call `register` with urls that they want to probe, they will be added to the registry and events will fire,
+/// triggering any external probing logic.
 use futures::channel::mpsc;
 use std::{collections::HashMap, sync::RwLock, time};
 
@@ -30,17 +34,16 @@ impl Default for Registry {
         Registry::new()
     }
 }
-
+#[derive(Default, Debug)]
 pub struct Inner {
-    // This should be a per-device state machine
-    pub hid_devices: HashMap<String, Device>,
+    pub devices: HashMap<String, Device>,
     pub sender: Option<mpsc::UnboundedSender<DiscoveryEvent>>,
 }
 
 impl Inner {
     pub fn new() -> Self {
         Self {
-            hid_devices: HashMap::new(),
+            devices: HashMap::new(),
             sender: None,
         }
     }
@@ -58,14 +61,14 @@ impl Inner {
     /// Adds a device to the list of reachable devices if it doesn't exist.
     pub fn register(&mut self, dev: &str) {
         let id = dev.to_string();
-        let device = self.hid_devices.get_mut(id.as_str());
+        let device = self.devices.get_mut(id.as_str());
 
         match device {
             None => {
                 if let Some(ref sender) = self.sender {
                     let _ = sender.unbounded_send(DiscoveryEvent::Added(id.clone()));
                 }
-                self.hid_devices.insert(id, Device::new());
+                self.devices.insert(id, Device::new());
             }
             Some(device) => device.mark_seen(),
         }
@@ -75,7 +78,7 @@ impl Inner {
 
     /// Removes devices that haven't been seen since 5 minutes
     fn cleanup(&mut self) {
-        let hid_devices = &mut self.hid_devices;
+        let hid_devices = &mut self.devices;
         let sender = &self.sender;
 
         hid_devices.retain(|id, dev| {
@@ -93,6 +96,7 @@ impl Inner {
     }
 }
 
+#[derive(Debug)]
 pub struct Device {
     pub last_seen: time::Instant,
 }
@@ -130,6 +134,6 @@ mod test {
         let discovery = Registry::new();
         discovery.register("mock:");
         let inner = discovery.inner.read().unwrap();
-        assert!(inner.hid_devices.len() == 1);
+        assert!(inner.devices.len() == 1);
     }
 }

@@ -1,11 +1,60 @@
-use std::time::Duration;
-
-////! Remote control object model
+///! Remote control object model
 /// Exposes configurable components in a (de)serializable format, suitable for various RPC protocols. Each field is optional, and will trigger an action if set.
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 use anyhow::anyhow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::{fmt, time::Duration};
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct StatusSummary {
+    #[serde(flatten)]
+    pub master: MasterStatus,
+    pub available_sources: Vec<String>,
+    pub input_levels: Vec<f32>,
+    pub output_levels: Vec<f32>,
+}
+
+impl StatusSummary {
+    pub async fn fetch(dsp: &MiniDSP<'_>) -> Result<Self, MiniDSPError> {
+        let master = dsp.get_master_status().await?;
+        let input_levels = dsp.get_input_levels().await?;
+        let output_levels = dsp.get_output_levels().await?;
+
+        let available_sources: Vec<_> = Source::mapping(&dsp.get_device_info().await?)
+            .iter()
+            .map(|(source, _)| source.to_string())
+            .collect();
+
+        Ok(StatusSummary {
+            master,
+            available_sources,
+            input_levels,
+            output_levels,
+        })
+    }
+}
+
+impl fmt::Display for StatusSummary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{:?}", self.master)?;
+        let strs: Vec<String> = self
+            .input_levels
+            .iter()
+            .map(|x| format!("{:.1}", *x))
+            .collect();
+        writeln!(f, "Input levels: {}", strs.join(", "))?;
+
+        let strs: Vec<String> = self
+            .output_levels
+            .iter()
+            .map(|x| format!("{:.1}", *x))
+            .collect();
+        writeln!(f, "Output levels: {}", strs.join(", "))?;
+
+        Ok(())
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 /// Settings applying to all outputs
@@ -49,8 +98,13 @@ impl MasterStatus {
 #[serde(default)]
 /// Top-level configuration object that can be applied to a device
 pub struct Config {
+    /// Global settings not affected by config presets
     pub master_status: Option<MasterStatus>,
+
+    /// Input channels, only the relevant inputs need to be included
     pub inputs: Vec<Input>,
+
+    /// Output channels, only the relevant outputs need to be included
     pub outputs: Vec<Output>,
 }
 
@@ -75,7 +129,10 @@ impl Config {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Gate {
+    // If set, controls whether this channel is muted
     pub mute: Option<bool>,
+
+    // If set, sets the channel gain
     pub gain: Option<Gain>,
 }
 
@@ -96,9 +153,12 @@ impl Gate {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Input {
+    /// The 0-based index of this input (required)
     pub index: Option<usize>,
     #[serde(flatten)]
     pub gate: Gate,
+
+    /// Parametric equalizers
     pub peq: Vec<Peq>,
 }
 
@@ -122,11 +182,23 @@ impl Input {
 pub struct Output {
     #[serde(flatten)]
     pub gate: Gate,
+
+    /// Parametric equalizers
     pub peq: Vec<Peq>,
+
+    /// Phrase inversion
     pub invert: Option<bool>,
+
+    /// Time delay
     pub delay: Option<Duration>,
+
+    /// Crossover (cascading biquads)
     pub crossover: Vec<Crossover>,
+
+    /// Compressor settings
     pub compressor: Option<Compressor>,
+
+    /// Finite Impulse Response filter
     pub fir: Option<Fir>,
 }
 
@@ -260,7 +332,12 @@ impl Compressor {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Fir {
+    /// If set, bypasses the FIR filter
     pub bypass: Option<bool>,
+
+    /// Filter coefficients
+    /// Automatically sets the number of active taps and re-enables audio after setting the filter's coefficients.
+    /// An empty array will clear the filter and reset its coefficients.
     pub coefficients: Option<Vec<f32>>,
 }
 

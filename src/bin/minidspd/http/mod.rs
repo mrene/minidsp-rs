@@ -1,5 +1,9 @@
 use crate::{device_manager, App};
-use minidsp::{model::Config, transport::MiniDSPError, MasterStatus, MiniDSP};
+use minidsp::{
+    model::{Config, StatusSummary},
+    transport::MiniDSPError,
+    MasterStatus, MiniDSP,
+};
 use rocket::{get, post, routes};
 use rocket_contrib::json::Json;
 use serde::Serialize;
@@ -12,6 +16,9 @@ pub enum Error {
         "device index was out of range. provided value {provided} was not in range [0, {actual})"
     )]
     DeviceIndexOutOfRange { provided: usize, actual: usize },
+
+    #[error("the specified device is not ready to accept requests")]
+    DeviceNotReady,
 
     #[error("an internal error occurred: {0}")]
     InternalError(String),
@@ -48,11 +55,19 @@ impl From<Error> for FormattedError {
 #[derive(Clone, Debug, Serialize)]
 pub struct Device {
     pub url: String,
+    pub version: Option<minidsp::DeviceInfo>,
+    pub product_name: Option<String>,
 }
 
 impl From<&device_manager::Device> for Device {
     fn from(dm: &device_manager::Device) -> Self {
+        let version = dm.device_info();
+        let device_spec = dm.device_spec();
+        let product_name = device_spec.map(|d| d.product_name.to_string());
+
         Self {
+            version,
+            product_name,
             url: dm.url.clone(),
         }
     }
@@ -60,6 +75,17 @@ impl From<&device_manager::Device> for Device {
 
 fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedError> {
     let devices = app.device_manager.devices();
+
+    // Try to find a device whose serial matches the index passed as an argument
+    let serial_match = devices.iter().find(|d| match d.device_info() {
+        Some(device_info) => device_info.serial == index as u32,
+        None => false,
+    });
+
+    if let Some(device) = serial_match {
+        return Ok(device.to_minidsp().ok_or(Error::DeviceNotReady)?);
+    }
+
     if index >= devices.len() {
         return Err(FormattedError::from(Error::DeviceIndexOutOfRange {
             actual: devices.len(),
@@ -67,7 +93,7 @@ fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedE
         }));
     }
 
-    Ok(devices[index].to_minidsp())
+    Ok(devices[index].to_minidsp().ok_or(Error::DeviceNotReady)?)
 }
 
 /// Gets a list of available devices
@@ -76,8 +102,8 @@ async fn devices() -> Json<Vec<Device>> {
     let app = super::APP.clone();
     let app = app.read().await;
 
-    app.device_manager
-        .devices()
+    let devices = app.device_manager.devices();
+    devices
         .iter()
         .map(|d| d.as_ref().into())
         .collect::<Vec<_>>()
@@ -86,13 +112,11 @@ async fn devices() -> Json<Vec<Device>> {
 
 /// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index
 #[get("/<index>")]
-async fn master_status(index: usize) -> Result<Json<MasterStatus>, Json<FormattedError>> {
+async fn master_status(index: usize) -> Result<Json<StatusSummary>, Json<FormattedError>> {
     let app = super::APP.clone();
     let app = app.read().await;
     let device = get_device(&app, index)?;
-
-    Ok(device
-        .get_master_status()
+    Ok(StatusSummary::fetch(&device)
         .await
         .map_err(FormattedError::from)?
         .into())
@@ -112,12 +136,11 @@ async fn post_master_status(
     let status = data.into_inner();
     status.apply(&device).await.map_err(FormattedError::from)?;
 
-    Ok(Json(
-        device
-            .get_master_status()
-            .await
-            .map_err(FormattedError::from)?,
-    ))
+    Ok(device
+        .get_master_status()
+        .await
+        .map_err(FormattedError::from)?
+        .into())
 }
 
 /// Updates the device's configuration based on the defined elements. Anything set will be changed and anything else will be ignored.
@@ -140,7 +163,6 @@ pub async fn main() {
         "/devices",
         routes![devices, master_status, post_master_status, post_config],
     );
-
     let result = ship.launch().await;
     match result {
         Ok(_) => {

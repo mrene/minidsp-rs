@@ -1,3 +1,6 @@
+///! Main entrypoint
+/// Launches the application by instantiating all components
+///
 use anyhow::Result;
 use discovery::{DiscoveryEvent, Registry};
 use lazy_static::lazy_static;
@@ -25,7 +28,15 @@ impl App {
     pub fn new() -> Self {
         let registry = Registry::new();
         let device_mgr = device_manager::DeviceManager::new(registry);
-        let handles = vec![];
+        let mut handles = vec![];
+
+        handles.push(
+            tokio::spawn(async move {
+                http::main().await;
+                Ok(())
+            })
+            .into(),
+        );
 
         App {
             device_manager: device_mgr,
@@ -44,12 +55,7 @@ impl Default for App {
 pub async fn main() {
     env_logger::init();
     let _ = APP.clone();
-    // let _app = app.read().await;
 
-    http::main().await;
-
-    // Handle devices being discovered locally and on the network
-    // app.handles.first().unwrap()
     loop {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
