@@ -1,5 +1,9 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{transport::net::Codec, utils::ErrInto, MiniDSPError};
+use crate::{
+    transport::net::Codec,
+    utils::{ErrInto, OwnedJoinHandle},
+    MiniDSPError,
+};
 use anyhow::{Context, Result};
 use bytes::Bytes;
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
@@ -79,7 +83,7 @@ where
     let mut rx_handle = {
         let stream_tx = stream_tx.clone();
         let mut stream = Box::pin(stream);
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             while let Some(frame) = stream.next().await {
                 if let Ok(frame) = frame {
                     if let Err(e) = stream_tx.send(frame) {
@@ -88,18 +92,20 @@ where
                 }
             }
             Ok::<(), E>(())
-        })
+        });
+        OwnedJoinHandle::new(handle)
     };
 
     // Send
     let mut tx_handle = {
         let mut sink = Box::pin(sink);
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             while let Some(frame) = sink_rx.next().await {
                 sink.send(frame).await?;
             }
             Ok::<_, E>(())
-        })
+        });
+        OwnedJoinHandle::new(handle)
     };
 
     let listener = TcpListener::bind(bind_address).await?;
@@ -112,11 +118,11 @@ where
                }
            }
            result = &mut rx_handle => {
-            let result = result.expect("rx joinhandle");
-            if let Err(e) = result {
-                log::error!("rx error: {}", e.into());
+                let result = result.expect("rx joinhandle");
+                if let Err(e) = result {
+                    log::error!("rx error: {}", e.into());
+                }
             }
-        }
            result = listener.accept() => {
                 let (stream, addr) = result?;
                 log::info!("[{:?}] New connection", addr);

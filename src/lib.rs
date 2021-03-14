@@ -46,7 +46,6 @@ pub use crate::model::MasterStatus;
 use crate::{
     commands::{Commands, FromMemory},
     device::Gate,
-    transport::MiniDSPError,
 };
 use anyhow::anyhow;
 use async_trait::async_trait;
@@ -54,6 +53,7 @@ use client::Client;
 pub use source::Source;
 use std::convert::TryInto;
 use tokio::{sync::Mutex, time::Duration};
+pub use transport::MiniDSPError;
 use transport::SharedService;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;

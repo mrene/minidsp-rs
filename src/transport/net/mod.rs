@@ -5,7 +5,7 @@ mod discover;
 use std::sync::Arc;
 
 use super::{frame_codec::FrameCodec, multiplexer::Multiplexer, IntoTransport, MiniDSPError};
-pub(crate) use codec::Codec;
+pub use codec::Codec;
 pub use discover::{discover, discover_timeout};
 use futures::{SinkExt, TryStreamExt};
 use tokio::{

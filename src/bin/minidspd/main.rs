@@ -11,6 +11,7 @@ use tokio::sync::RwLock;
 mod device_manager;
 mod discovery;
 mod http;
+mod tcp;
 
 lazy_static! {
     /// The global application instance.
@@ -33,6 +34,14 @@ impl App {
         handles.push(
             tokio::spawn(async move {
                 http::main().await;
+                Ok(())
+            })
+            .into(),
+        );
+
+        handles.push(
+            tokio::spawn(async move {
+                tcp::main().await;
                 Ok(())
             })
             .into(),

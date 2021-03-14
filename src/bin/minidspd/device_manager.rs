@@ -144,9 +144,18 @@ impl Device {
         }
     }
 
+    pub fn is_local(&self) -> bool {
+        self.url.starts_with("usb:")
+    }
+
+    pub fn to_hub(&self) -> Option<transport::Hub> {
+        let inner = self.inner.read().unwrap();
+        Some(inner.handle.as_ref()?.to_hub())
+    }
+
     pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
         let inner = self.inner.read().unwrap();
-        Some(inner.handle.as_ref()?.to_minidsp())
+        Some(inner.handle.as_ref()?.to_minidsp()?)
     }
 
     pub fn device_info(&self) -> Option<DeviceInfo> {
@@ -159,6 +168,8 @@ impl Device {
         inner.handle.as_ref()?.device_spec
     }
 
+    /// Main device task
+    /// This is spawned when the device is first discovered and manages it's complete lifecycle.
     async fn task(inner: Arc<std::sync::RwLock<DeviceInner>>) -> anyhow::Result<()> {
         let url = {
             let inner = inner.read().unwrap();
@@ -167,22 +178,26 @@ impl Device {
 
         log::info!("Connecting to {}", url.as_str());
 
+        // Connect to the device by url, and get a frame-level transport
         let transport = {
             let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
             let stream = transport::open_url(url).await?;
             transport::Hub::new(stream)
         };
 
+        // Wrap the transport into a multiplexed service for command-level multiplexing
         let service = {
             let mplex = transport::Multiplexer::from_transport(transport.clone());
             Arc::new(Mutex::new(mplex.to_service()))
         };
 
+        // Probe the device hardware id and dsp version in order to get the right specs
+        // Keep going if we do not know the device type, but it has successfully responsed to
+        // probing commands. This can be used to support a common subset of features without
+        // knowing the device-specific memory layout.
         let client = Client::new(service.clone());
         let device_info = client.get_device_info().await.ok();
-        let device_spec = device_info
-            .map(|dev| device::probe(&dev))
-            .unwrap_or_default();
+        let device_spec = device_info.and_then(|dev| device::probe(&dev));
 
         let handle = DeviceHandle {
             service,
@@ -231,11 +246,12 @@ pub struct DeviceHandle {
 }
 
 impl DeviceHandle {
-    pub fn to_minidsp(&self) -> MiniDSP<'static> {
-        // TODO: This should fail properly
-        MiniDSP::new(
-            self.service.clone(),
-            self.device_spec.expect("device spec not available"),
-        )
+    pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
+        // TODO: Convert this failure to an error type
+        Some(MiniDSP::new(self.service.clone(), self.device_spec?))
+    }
+
+    pub fn to_hub(&self) -> transport::Hub {
+        self.transport.clone()
     }
 }
