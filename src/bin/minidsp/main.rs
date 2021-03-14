@@ -8,12 +8,13 @@ use futures::{pin_mut, StreamExt};
 use handlers::run_server;
 use minidsp::{
     device, discovery, server,
-    transport::{net::StreamTransport, SharedService},
-    Gain, MiniDSP, Source,
-};
-use minidsp::{
-    transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
+    transport::{
+        multiplexer::Multiplexer,
+        net::{self, StreamTransport},
+        IntoTransport, SharedService, Transport,
+    },
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
+    Gain, MiniDSP, Source,
 };
 use std::{
     fmt,

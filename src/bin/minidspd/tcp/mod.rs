@@ -65,6 +65,9 @@ pub async fn main() -> Result<(), MiniDSPError> {
     let app = super::APP.clone();
     let app = app.read().await;
 
+    // TODO: Move udp broadcast advertisement here
+
+    // TODO: Let the bind address be customized in the config
     let bind_address = "0.0.0.0:5333";
     let listener = TcpListener::bind(bind_address).await?;
     log::info!("Listening on {}", bind_address);
@@ -74,10 +77,12 @@ pub async fn main() -> Result<(), MiniDSPError> {
                 let (stream, addr) = result?;
                 log::info!("[{:?}] New connection", addr);
 
+                // TODO: There could be an unavailable local device before a legitimate one, this should
+                // get the first device that returns a valid transport::Hub
                 let device = {
                     let mut devices = app.device_manager.devices();
                     devices.sort_by_key(|dev| !dev.is_local());
-                    devices.first().map(|dev| dev.clone())
+                    devices.first().cloned()
                 };
 
                 log::info!("[{:?}] New connection assiged to {}",

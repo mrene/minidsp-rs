@@ -92,8 +92,12 @@ impl<'a> MiniDSP<'a> {
 }
 
 impl MiniDSP<'_> {
-    pub async fn set_device_info(&mut self, dev: DeviceInfo) {
-        self.device_info.lock().await.replace(dev);
+    pub fn set_device_info(&mut self, dev: DeviceInfo) {
+        // Since we have a &mut self, the lock is guaranteed to not be locked and try_lock will always succeed
+        self.device_info
+            .try_lock()
+            .expect("unable to lock device_info mutex")
+            .replace(dev);
     }
 
     /// Returns a `MasterStatus` object containing the current state

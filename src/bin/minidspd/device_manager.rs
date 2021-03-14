@@ -1,3 +1,5 @@
+use crate::logging;
+
 ///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
 use super::{DiscoveryEvent, Registry};
 use anyhow::Result;
@@ -182,6 +184,12 @@ impl Device {
         let transport = {
             let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
             let stream = transport::open_url(url).await?;
+
+            // If we have any logging options, log this stream
+            let app = super::APP.clone();
+            let app = app.read().await;
+            let stream = logging::transport_logging(stream, &app.opts);
+
             transport::Hub::new(stream)
         };
 
@@ -248,7 +256,11 @@ pub struct DeviceHandle {
 impl DeviceHandle {
     pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
         // TODO: Convert this failure to an error type
-        Some(MiniDSP::new(self.service.clone(), self.device_spec?))
+        let mut dsp = MiniDSP::new(self.service.clone(), self.device_spec?);
+        if let Some(device_info) = self.device_info {
+            dsp.set_device_info(device_info);
+        }
+        Some(dsp)
     }
 
     pub fn to_hub(&self) -> transport::Hub {

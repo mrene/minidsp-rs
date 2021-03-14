@@ -2,15 +2,17 @@
 /// Launches the application by instantiating all components
 ///
 use anyhow::Result;
+use clap::Clap;
 use discovery::{DiscoveryEvent, Registry};
 use lazy_static::lazy_static;
 use minidsp::utils::OwnedJoinHandle;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use tokio::sync::RwLock;
 
 mod device_manager;
 mod discovery;
 mod http;
+mod logging;
 mod tcp;
 
 lazy_static! {
@@ -18,7 +20,20 @@ lazy_static! {
     static ref APP: Arc<RwLock<App>> = Arc::new(App::new().into());
 }
 
+#[derive(Clone, Clap, Debug, Default)]
+#[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
+pub struct Opts {
+    /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
+    #[clap(short, long, parse(from_occurrences))]
+    verbose: i32,
+
+    #[clap(long, env = "MINIDSP_LOG")]
+    /// Log commands and responses to a file
+    log: Option<PathBuf>,
+}
+
 pub struct App {
+    opts: Opts,
     #[allow(dead_code)]
     device_manager: device_manager::DeviceManager,
     #[allow(dead_code)]
@@ -41,15 +56,17 @@ impl App {
 
         handles.push(
             tokio::spawn(async move {
-                tcp::main().await;
+                tcp::main().await?;
                 Ok(())
             })
             .into(),
         );
 
+        let opts: Opts = Opts::parse();
         App {
             device_manager: device_mgr,
             handles,
+            opts,
         }
     }
 }
