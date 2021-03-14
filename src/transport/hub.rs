@@ -20,12 +20,16 @@ const CAPACITY: usize = 100;
 #[pin_project]
 pub struct Hub {
     // Shared data between clients
-    inner: Arc<Mutex<Inner>>,
+    inner: Arc<Mutex<Option<Inner>>>,
 
     #[pin]
     device_rx: BroadcastStream<Bytes>,
     #[pin]
     device_tx: mpsc::Sender<Bytes>,
+
+    // Join handle containing the wrapped transport
+    read_handle: Arc<OwnedJoinHandle<()>>,
+    send_handle: Arc<OwnedJoinHandle<()>>,
 }
 
 impl Hub {
@@ -33,9 +37,14 @@ impl Hub {
         let (read_tx, read_rx) = broadcast::channel::<Bytes>(CAPACITY);
         let (send_tx, mut send_rx) = mpsc::channel(CAPACITY);
         let (mut device_tx, mut device_rx) = transport.split();
+        let inner = Arc::new(Mutex::new(Some(Inner::new(read_tx))));
 
         let read_handle = {
-            let read_tx = read_tx.clone();
+            let inner = inner.clone();
+            let read_tx = {
+                let inner = inner.lock().unwrap();
+                inner.as_ref().unwrap().device_rx.clone()
+            };
 
             OwnedJoinHandle::new(tokio::spawn(async move {
                 while let Some(frame) = device_rx.next().await {
@@ -54,40 +63,47 @@ impl Hub {
                         }
                     }
                 }
+                inner.lock().unwrap().take();
             }))
         };
 
-        let send_handle = OwnedJoinHandle::new(tokio::spawn({
-            async move {
-                while let Some(frame) = send_rx.next().await {
-                    let res = device_tx.send(frame).await;
-                    if let Err(e) = res {
-                        log::error!("device_tx: {}", e);
-                        break;
+        let send_handle = {
+            OwnedJoinHandle::new(tokio::spawn({
+                let inner = inner.clone();
+                async move {
+                    while let Some(frame) = send_rx.next().await {
+                        let res = device_tx.send(frame).await;
+                        if let Err(e) = res {
+                            log::error!("device_tx: {}", e);
+                            break;
+                        }
                     }
+                    inner.lock().unwrap().take();
                 }
-            }
-        }));
+            }))
+        };
 
-        // let send_handle = (send_handle);
-        let inner = Inner::new(read_handle, send_handle, read_tx);
         Self {
-            inner: Arc::new(Mutex::new(inner)),
+            inner,
             device_rx: BroadcastStream::new(read_rx),
             device_tx: send_tx,
+
+            send_handle: Arc::new(send_handle),
+            read_handle: Arc::new(read_handle),
         }
     }
-}
 
-impl Clone for Hub {
-    fn clone(&self) -> Self {
+    /// Clones the transport if it is still available, returns None if it has been closed
+    pub fn duplicate(&self) -> Option<Self> {
         let inner = self.inner.lock().unwrap();
-        let device_rx = BroadcastStream::new(inner.device_rx.subscribe());
-        Self {
+        let device_rx = BroadcastStream::new(inner.as_ref()?.device_rx.subscribe());
+        Some(Self {
             inner: self.inner.clone(),
             device_rx,
             device_tx: self.device_tx.clone(),
-        }
+            send_handle: self.send_handle.clone(),
+            read_handle: self.read_handle.clone(),
+        })
     }
 }
 
@@ -143,27 +159,13 @@ impl Sink<Bytes> for Hub {
 }
 
 struct Inner {
-    // Join handle containing the wrapped transport
-    #[allow(dead_code)]
-    read_handle: OwnedJoinHandle<()>,
-    #[allow(dead_code)]
-    send_handle: OwnedJoinHandle<()>,
-
     // Broadcast sender used for creating receivers through .subscribe()
     device_rx: broadcast::Sender<Bytes>,
 }
 
 impl Inner {
-    pub fn new(
-        read_handle: OwnedJoinHandle<()>,
-        send_handle: OwnedJoinHandle<()>,
-        device_rx: broadcast::Sender<Bytes>,
-    ) -> Self {
-        Self {
-            read_handle,
-            send_handle,
-            device_rx,
-        }
+    pub fn new(device_rx: broadcast::Sender<Bytes>) -> Self {
+        Self { device_rx }
     }
 }
 

@@ -6,7 +6,7 @@ use clap::Clap;
 use discovery::{DiscoveryEvent, Registry};
 use lazy_static::lazy_static;
 use minidsp::utils::OwnedJoinHandle;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, str::FromStr, sync::Arc};
 use tokio::sync::RwLock;
 
 mod device_manager;
@@ -27,9 +27,25 @@ pub struct Opts {
     #[clap(short, long, parse(from_occurrences))]
     verbose: i32,
 
-    #[clap(long, env = "MINIDSP_LOG")]
     /// Log commands and responses to a file
+    #[clap(long, env = "MINIDSP_LOG")]
     log: Option<PathBuf>,
+
+    /// Bind address for the TCP server component
+    #[clap(default_value = "0.0.0.0:5333")]
+    bind_address: String,
+
+    /// Bind address for the HTTP server
+    #[clap(long)]
+    http: Option<String>,
+
+    /// If set, advertises the TCP component so it's discoverable from minidsp apps, using the given device name
+    #[clap(long)]
+    advertise: Option<String>,
+
+    /// IP to use when advertising, required if --advertise is set
+    #[clap(long)]
+    ip: Option<String>,
 }
 
 pub struct App {
@@ -42,13 +58,21 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
+        let opts: Opts = Opts::parse();
         let registry = Registry::new();
-        let device_mgr = device_manager::DeviceManager::new(registry);
+
+        // If we're advertising a device, make sure to avoid discovering ourselves
+        let this_ip = opts
+            .ip
+            .as_ref()
+            .and_then(|ip| std::net::IpAddr::from_str(ip.as_str()).ok());
+
+        let device_mgr = device_manager::DeviceManager::new(registry, this_ip);
         let mut handles = vec![];
 
         handles.push(
             tokio::spawn(async move {
-                http::main().await;
+                http::main().await?;
                 Ok(())
             })
             .into(),
@@ -62,7 +86,6 @@ impl App {
             .into(),
         );
 
-        let opts: Opts = Opts::parse();
         App {
             device_manager: device_mgr,
             handles,

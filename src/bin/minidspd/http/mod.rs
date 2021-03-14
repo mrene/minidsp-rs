@@ -1,7 +1,13 @@
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    str::FromStr,
+};
+
 use crate::{device_manager, App};
 use minidsp::{
     model::{Config, StatusSummary},
     transport::MiniDSPError,
+    utils::ErrInto,
     MasterStatus, MiniDSP,
 };
 use rocket::{get, post, routes};
@@ -158,17 +164,34 @@ async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<Format
     Ok(())
 }
 
-pub async fn main() {
-    let ship = rocket::ignite().mount(
+pub async fn main() -> Result<(), anyhow::Error> {
+    let app = super::APP.clone();
+    let app = app.read().await;
+
+    let mut config = rocket::config::Config {
+        address: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+        port: 5380,
+        ..Default::default()
+    };
+
+    if let Some(ref http) = app.opts.http {
+        let addr = SocketAddr::from_str(http)?;
+        config.address = addr.ip();
+        config.port = addr.port();
+    }
+
+    let ship = rocket::custom(config).mount(
         "/devices",
         routes![devices, master_status, post_master_status, post_config],
     );
     let result = ship.launch().await;
-    match result {
+    match &result {
         Ok(_) => {
             println!("HTTP server terminated");
             std::process::exit(0);
         }
         Err(e) => eprintln!("HTTP server error: {}", &e),
     }
+
+    result.err_into()
 }

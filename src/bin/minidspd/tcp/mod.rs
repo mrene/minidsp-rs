@@ -1,10 +1,15 @@
 //! TCP server compatible with the official mobile and desktop application
+use std::net::Ipv4Addr;
+
+use crate::Opts;
 use anyhow::{Context, Result};
 use futures::{pin_mut, SinkExt, StreamExt};
 use minidsp::{
     transport::{net::Codec, Transport},
     MiniDSPError,
 };
+use std::str::FromStr;
+use std::time::Duration;
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::TcpListener,
@@ -61,14 +66,36 @@ where
     }
 }
 
+pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
+    if let Some(ref hostname) = opts.advertise {
+        let mut packet = minidsp::discovery::DiscoveryPacket {
+            mac_address: [10, 20, 30, 40, 50, 60],
+            ip_address: Ipv4Addr::UNSPECIFIED,
+            hwid: 10,
+            typ: 0,
+            sn: 65535,
+            hostname: hostname.to_string(),
+        };
+        if let Some(ref ip) = opts.ip {
+            packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
+        }
+        let interval = Duration::from_secs(1);
+        tokio::spawn(minidsp::discovery::server::advertise_packet(
+            packet, interval,
+        ));
+    }
+    Ok(())
+}
+
 pub async fn main() -> Result<(), MiniDSPError> {
     let app = super::APP.clone();
     let app = app.read().await;
 
-    // TODO: Move udp broadcast advertisement here
+    if let Err(adv_err) = start_advertise(&app.opts) {
+        log::error!("error launching advertisement task: {:?}", adv_err);
+    }
 
-    // TODO: Let the bind address be customized in the config
-    let bind_address = "0.0.0.0:5333";
+    let bind_address = app.opts.bind_address.as_str();
     let listener = TcpListener::bind(bind_address).await?;
     log::info!("Listening on {}", bind_address);
     loop {

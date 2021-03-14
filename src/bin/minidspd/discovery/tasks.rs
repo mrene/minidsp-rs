@@ -2,7 +2,7 @@ use anyhow::Result;
 use futures::{pin_mut, StreamExt};
 use log::warn;
 use minidsp::transport;
-use std::time;
+use std::{net::IpAddr, time};
 
 pub async fn hid_discovery_task(register: impl Fn(&str)) -> Result<()> {
     let api = transport::hid::initialize_api()?;
@@ -22,11 +22,19 @@ pub async fn hid_discovery_task(register: impl Fn(&str)) -> Result<()> {
     }
 }
 
-pub async fn net_discovery_task(register: impl Fn(&str)) -> Result<()> {
+pub async fn net_discovery_task(register: impl Fn(&str), this_ip: Option<IpAddr>) -> Result<()> {
     let stream = transport::net::discover().await?;
     pin_mut!(stream);
+
     while let Some(device) = stream.next().await {
-        register(device.to_url().as_str());
+        if let Some(this_ip) = this_ip {
+            if device.ip.ip() == this_ip {
+                // Don't register ourselves if we're advertising
+                continue;
+            }
+        }
+        let url = device.to_url();
+        register(url.as_str());
     }
     Ok(())
 }

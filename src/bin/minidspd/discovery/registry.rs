@@ -23,6 +23,11 @@ impl Registry {
         inner.register(dev)
     }
 
+    pub fn remove(&self, dev: &str) {
+        let mut inner = self.inner.write().unwrap();
+        inner.remove(dev)
+    }
+
     pub fn subscribe(&self) -> mpsc::UnboundedReceiver<DiscoveryEvent> {
         let mut inner = self.inner.write().unwrap();
         inner.subscribe()
@@ -74,6 +79,10 @@ impl Inner {
         }
 
         self.cleanup();
+    }
+
+    pub fn remove(&mut self, dev: &str) {
+        self.devices.retain(|k, _| k != dev);
     }
 
     /// Removes devices that haven't been seen since 5 minutes

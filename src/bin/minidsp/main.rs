@@ -7,7 +7,9 @@ use debug::DebugCommands;
 use futures::{pin_mut, StreamExt};
 use handlers::run_server;
 use minidsp::{
-    device, discovery, server,
+    client::Client,
+    device::probe,
+    discovery, server,
     transport::{
         multiplexer::Multiplexer,
         net::{self, StreamTransport},
@@ -484,13 +486,16 @@ async fn main() -> Result<()> {
     let transport = transport_logging(transport, &opts);
 
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
         run_server(opts.subcmd.unwrap(), transport).await?;
         return Ok(());
     }
 
     let service: SharedService = get_service(transport).await?;
-
-    let device = MiniDSP::new(service, &device::DEVICE_2X4HD);
+    let client = Client::new(service);
+    let device_info = client.get_device_info().await?;
+    let spec = probe(&device_info).expect("this device is not supported");
+    let device = MiniDSP::from_client(client, spec, Some(device_info));
 
     if let Some(filename) = &opts.file {
         let file: Box<dyn Read> = {

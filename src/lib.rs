@@ -89,6 +89,18 @@ impl<'a> MiniDSP<'a> {
             device_info: Mutex::new(None),
         }
     }
+
+    pub fn from_client(
+        client: Client,
+        device: &'a device::Device,
+        device_info: Option<DeviceInfo>,
+    ) -> Self {
+        MiniDSP {
+            client,
+            device,
+            device_info: device_info.into(),
+        }
+    }
 }
 
 impl MiniDSP<'_> {
