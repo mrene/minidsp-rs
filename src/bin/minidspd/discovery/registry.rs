@@ -39,28 +39,29 @@ impl Default for Registry {
         Registry::new()
     }
 }
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Inner {
     pub devices: HashMap<String, Device>,
-    pub sender: Option<mpsc::UnboundedSender<DiscoveryEvent>>,
+    pub sender: mpsc::UnboundedSender<DiscoveryEvent>,
+    pub subscriber: Option<mpsc::UnboundedReceiver<DiscoveryEvent>>,
 }
 
 impl Inner {
     pub fn new() -> Self {
+        let (sender, subscriber) = mpsc::unbounded();
         Self {
             devices: HashMap::new(),
-            sender: None,
+            sender,
+            subscriber: Some(subscriber),
         }
     }
 
     pub fn subscribe(&mut self) -> mpsc::UnboundedReceiver<DiscoveryEvent> {
-        if self.sender.is_some() {
+        if self.subscriber.is_none() {
             panic!("a subscriber is already present");
         }
 
-        let (tx, rx) = mpsc::unbounded();
-        self.sender = Some(tx);
-        rx
+        self.subscriber.take().unwrap()
     }
 
     /// Adds a device to the list of reachable devices if it doesn't exist.
@@ -70,9 +71,9 @@ impl Inner {
 
         match device {
             None => {
-                if let Some(ref sender) = self.sender {
-                    let _ = sender.unbounded_send(DiscoveryEvent::Added(id.clone()));
-                }
+                let _ = self
+                    .sender
+                    .unbounded_send(DiscoveryEvent::Added(id.clone()));
                 self.devices.insert(id, Device::new());
             }
             Some(device) => device.mark_seen(),
@@ -93,12 +94,10 @@ impl Inner {
         hid_devices.retain(|id, dev| {
             let keep = time::Instant::now().duration_since(dev.last_seen).as_secs() < 5 * 60;
             if !keep {
-                if let Some(sender) = sender {
-                    let _ = sender.unbounded_send(DiscoveryEvent::Timeout {
-                        id: id.to_string(),
-                        last_seen: dev.last_seen,
-                    });
-                }
+                let _ = sender.unbounded_send(DiscoveryEvent::Timeout {
+                    id: id.to_string(),
+                    last_seen: dev.last_seen,
+                });
             }
             keep
         });
