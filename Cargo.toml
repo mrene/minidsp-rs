@@ -20,7 +20,6 @@ required-features = [ "codegen" ]
 [dependencies]
 Inflector = { version = "0.11.4", optional = true } # Codegen
 anyhow = "1.0.38"
-async-compat = "0.2.0"
 async-trait = "0.1.43"
 atomic_refcell = "0.1.6"
 bimap = "0.6.0"
@@ -30,22 +29,19 @@ env_logger = "0.8.3"
 futures = "0.3.13"
 futures-sink = "0.3.13"
 futures-util = "0.3.12"
-gotham = { git = "https://github.com/gotham-rs/gotham" }
 hex = "0.4.3"
 hexplay = "0.2.1"
+hyper = "0.14.4"
 lazy_static = "1.4.0"
 log = "0.4.14"
 mime = "0.3.16"
 pin-project = "1.0.5"
 proc-macro2 = { version = "1.0.24", optional = true } # Codegen
 quote = { version = "1.0.9", optional = true } # Codegen
-rocket = { git = "https://github.com/SergioBenitez/Rocket", branch="master" }
-rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", branch="master" }
+routerify = "2.0.0"
 schemars = "0.8.0"
 serde = { version = "1.0.123", features = [ "derive" ] }
-serde_cbor = "0.11.1"
 serde_json = "1.0.64"
-serde-transcode = "1.1.0"
 shellwords = "1.1.0"
 strong-xml = "0.6.0"
 strum = { version = "0.20", features = [ "derive" ] }
@@ -57,6 +53,7 @@ tower = { version = "0.4.6", features = [ "util" ] }
 url2 = "0.0.6"
 urlencoding = "1.1.1"
 wav = "0.5.0"
+
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"

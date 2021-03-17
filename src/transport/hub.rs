@@ -168,19 +168,3 @@ impl Inner {
         Self { device_rx }
     }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//     use crate::utils::Combine;
-
-//     #[tokio::test]
-//     async fn test() {
-//         let (sink_tx, sink_rx) = mpsc::unbounded();
-//         let (stream_tx, stream_rx) = mpsc::unbounded();
-//         let transport = Combine::new(stream_rx, sink_tx);
-
-//         let hub = Hub::new(Box::pin(transport));
-
-//     }
-// }

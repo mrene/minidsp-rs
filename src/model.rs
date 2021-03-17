@@ -8,7 +8,6 @@ use std::{fmt, time::Duration};
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct StatusSummary {
-    #[serde(flatten)]
     pub master: MasterStatus,
     pub available_sources: Vec<String>,
     pub input_levels: Vec<f32>,

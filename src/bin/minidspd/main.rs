@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 
 mod device_manager;
 mod discovery;
-mod http;
+mod http_hyper;
 mod logging;
 mod tcp;
 
@@ -72,7 +72,7 @@ impl App {
 
         handles.push(
             tokio::spawn(async move {
-                http::main().await?;
+                http_hyper::main().await?;
                 Ok(())
             })
             .into(),
