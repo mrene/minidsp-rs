@@ -45,7 +45,6 @@ impl From<MiniDSPError> for Error {
     }
 }
 
-
 #[derive(Clone, Debug, serde::Serialize)]
 pub struct FormattedError {
     message: String,

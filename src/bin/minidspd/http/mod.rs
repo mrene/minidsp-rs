@@ -1,22 +1,24 @@
 use crate::{device_manager, App};
-use anyhow::{anyhow, Context};
-use bytes::Bytes;
-use futures::{future::join_all, StreamExt};
+use anyhow::Context;
+use futures::future::join_all;
 use hyper::{Body, Request, Response, Server, StatusCode};
 use minidsp::{
     model::{Config, StatusSummary},
     utils::{ErrInto, OwnedJoinHandle},
-    MasterStatus, MiniDSP, MiniDSPError,
+    MasterStatus, MiniDSP,
 };
 use routerify::{Router, RouterService};
 use serde::Serialize;
-use std::{convert::Infallible, fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
+use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
+use websocket::websocket_transport_bridge;
 
 mod error;
 pub use error::{Error, FormattedError};
 
 mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
+
+mod websocket;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Device {
@@ -79,9 +81,8 @@ async fn get_devices(req: Request<Body>) -> Result<Response<Body>, anyhow::Error
     Ok(serialize_response(&req, devices).map_err(|e| Error::InternalError(e.to_string()))?)
 }
 
+/// Creates a websocket bridge which forwards raw frames to a device
 async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
-    use tungstenite::Message;
-
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let app = super::APP.clone();
     let app = app.read().await;
@@ -92,31 +93,7 @@ async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, anyhow::Err
         let (response, websocket) =
             hyper_tungstenite::upgrade(req, None).context("upgrade failed")?;
 
-        tokio::spawn(async move {
-            let websocket = websocket.await.context("ws await failed")?;
-            let (hub_tx, hub_rx) = hub.split();
-            let (ws_tx, ws_rx) = websocket.split();
-
-            let hub_fwd = hub_rx
-                .map(|msg| match msg {
-                    Ok(data) => Ok(Message::Binary(data.to_vec())),
-                    Err(_) => Err(tungstenite::Error::AlreadyClosed),
-                })
-                .forward(ws_tx);
-
-            let ws_fwd = ws_rx
-                .map(|msg| match msg {
-                    Ok(Message::Binary(msg)) => Ok(Bytes::from(msg)),
-                    Ok(_) | Err(_) => Err(MiniDSPError::TransportClosed),
-                })
-                .forward(hub_tx);
-
-            let _ = tokio::join!(hub_fwd, ws_fwd);
-
-            Ok::<_, anyhow::Error>(())
-        });
-
-        println!("RESP: {:?}", &response);
+        tokio::spawn(websocket_transport_bridge(websocket, hub));
 
         Ok(response)
     } else {
