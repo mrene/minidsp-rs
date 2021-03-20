@@ -1,12 +1,16 @@
 use crate::{device_manager, App};
+use anyhow::{anyhow, Context};
+use bytes::Bytes;
+use futures::{future::join_all, StreamExt};
 use hyper::{Body, Request, Response, Server, StatusCode};
 use minidsp::{
     model::{Config, StatusSummary},
-    MasterStatus, MiniDSP,
+    utils::{ErrInto, OwnedJoinHandle},
+    MasterStatus, MiniDSP, MiniDSPError,
 };
 use routerify::{Router, RouterService};
 use serde::Serialize;
-use std::{fmt::Debug, net::SocketAddr, str::FromStr};
+use std::{convert::Infallible, fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
 
 mod error;
 pub use error::{Error, FormattedError};
@@ -35,7 +39,7 @@ impl From<&device_manager::Device> for Device {
     }
 }
 
-fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedError> {
+fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, FormattedError> {
     let devices = app.device_manager.devices();
 
     // Try to find a device whose serial matches the index passed as an argument
@@ -45,7 +49,7 @@ fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedE
     });
 
     if let Some(device) = serial_match {
-        return Ok(device.to_minidsp().ok_or(Error::DeviceNotReady)?);
+        return Ok(device.clone());
     }
 
     if index >= devices.len() {
@@ -55,11 +59,17 @@ fn get_device<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedE
         }));
     }
 
-    Ok(devices[index].to_minidsp().ok_or(Error::DeviceNotReady)?)
+    Ok(devices[index].clone())
+}
+
+fn get_device_instance<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedError> {
+    Ok(get_device(app, index)?
+        .to_minidsp()
+        .ok_or(Error::DeviceNotReady)?)
 }
 
 /// Gets a list of available devices
-async fn get_devices(req: Request<Body>) -> Result<Response<Body>, FormattedError> {
+async fn get_devices(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
     let app = super::APP.clone();
     let app = app.read().await;
 
@@ -69,13 +79,61 @@ async fn get_devices(req: Request<Body>) -> Result<Response<Body>, FormattedErro
     Ok(serialize_response(&req, devices).map_err(|e| Error::InternalError(e.to_string()))?)
 }
 
+async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+    use tungstenite::Message;
+
+    let device_index: usize = parse_param(&req, "deviceIndex")?;
+    let app = super::APP.clone();
+    let app = app.read().await;
+    let device = get_device(&app, device_index)?;
+    let hub = device.to_hub().ok_or(Error::DeviceNotReady)?;
+
+    if hyper_tungstenite::is_upgrade_request(&req) {
+        let (response, websocket) =
+            hyper_tungstenite::upgrade(req, None).context("upgrade failed")?;
+
+        tokio::spawn(async move {
+            let websocket = websocket.await.context("ws await failed")?;
+            let (hub_tx, hub_rx) = hub.split();
+            let (ws_tx, ws_rx) = websocket.split();
+
+            let hub_fwd = hub_rx
+                .map(|msg| match msg {
+                    Ok(data) => Ok(Message::Binary(data.to_vec())),
+                    Err(_) => Err(tungstenite::Error::AlreadyClosed),
+                })
+                .forward(ws_tx);
+
+            let ws_fwd = ws_rx
+                .map(|msg| match msg {
+                    Ok(Message::Binary(msg)) => Ok(Bytes::from(msg)),
+                    Ok(_) | Err(_) => Err(MiniDSPError::TransportClosed),
+                })
+                .forward(hub_tx);
+
+            let _ = tokio::join!(hub_fwd, ws_fwd);
+
+            Ok::<_, anyhow::Error>(())
+        });
+
+        println!("RESP: {:?}", &response);
+
+        Ok(response)
+    } else {
+        Response::builder()
+            .status(405)
+            .body(Body::empty())
+            .err_into()
+    }
+}
+
 /// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index
-async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, FormattedError> {
+async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
     let app = super::APP.clone();
     let app = app.read().await;
-    let device = get_device(&app, device_index)?;
+    let device = get_device_instance(&app, device_index)?;
     let status = StatusSummary::fetch(&device)
         .await
         .map_err(FormattedError::from)?;
@@ -84,12 +142,12 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Formatt
 }
 
 /// Updates the device's master status directly
-async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, FormattedError> {
+async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
     let app = super::APP.clone();
     let app = app.read().await;
-    let device = get_device(&app, device_index)?;
+    let device = get_device_instance(&app, device_index)?;
 
     // Apply the requested, changes, then fetch the master status again to return it
     let status: MasterStatus = parse_body(&mut req).await?;
@@ -108,11 +166,11 @@ async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Fo
 /// safe to change config and apply other changes to the target config using a single call.
 // #[post("/<index>/config", data = "<data>")]
 // async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {
-async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, FormattedError> {
+async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let app = super::APP.clone();
     let app = app.read().await;
-    let device = get_device(&app, device_index)?;
+    let device = get_device_instance(&app, device_index)?;
 
     let config: Config = parse_body(&mut req).await?;
     config.apply(&device).await.map_err(FormattedError::from)?;
@@ -135,7 +193,7 @@ async fn error_handler(err: routerify::RouteError) -> Response<Body> {
         .unwrap()
 }
 
-fn router() -> Router<Body, FormattedError> {
+fn router() -> Router<Body, anyhow::Error> {
     // Create a router and specify the logger middleware and the handlers.
     // Here, "Middleware::pre" means we're adding a pre middleware which will be executed
     // before any route handlers.
@@ -143,6 +201,7 @@ fn router() -> Router<Body, FormattedError> {
         // .middleware(Middleware::pre(logger))
         .get("/devices", get_devices)
         .get("/devices/:deviceIndex", get_master_status)
+        .any_method("/devices/:deviceIndex/ws", device_bridge)
         .post("/devices/:deviceIndex", post_master_status)
         .post("/devices/:deviceIndex/config", post_config)
         .err_handler(error_handler)
@@ -150,19 +209,76 @@ fn router() -> Router<Body, FormattedError> {
         .expect("could not build http router")
 }
 
-pub async fn main() -> Result<(), anyhow::Error> {
+pub async fn tcp_main() -> Result<(), anyhow::Error> {
     let service = RouterService::new(router()).expect("while building router service");
 
     // The address on which the server will be listening.
     let addr = SocketAddr::from_str("0.0.0.0:8989")?;
 
     // Create a server by passing the created service to `.serve` method.
-    let server = Server::bind(&addr).serve(service);
+    let server = Server::try_bind(&addr)?.serve(service);
 
     println!("App is running on: {}", addr);
     if let Err(err) = server.await {
-        eprintln!("Server error: {}", err);
+        eprintln!("TCP Server error: {:?}", err);
+        return Err(err.into());
     }
+
+    Ok(())
+}
+
+#[cfg(target_family = "unix")]
+pub async fn unix_main() -> Result<(), anyhow::Error> {
+    use hyperlocal::UnixServerExt;
+    use routerify_unixsocket::UnixRouterService;
+    use std::path::Path;
+
+    let service = UnixRouterService::new(router()).expect("while building router service");
+
+    let path = Path::new("/tmp/minidsp.sock");
+    if path.exists() {
+        std::fs::remove_file(path).context("deleting existing unix socket file")?;
+    }
+
+    // Create a server by passing the created service to `.serve` method.
+    let server = Server::bind_unix(path)
+        .context("couldn't bind unix socket")?
+        .serve(service);
+
+    println!("App is listening on: {}", path.to_string_lossy());
+    if let Err(err) = server.await {
+        eprintln!("Unix Server error: {:?}", err);
+    }
+
+    Ok(())
+}
+
+pub async fn main() -> Result<(), anyhow::Error> {
+    let mut futs: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>> = Vec::with_capacity(2);
+    futs.push(
+        tokio::spawn(async {
+            if let Err(e) = tcp_main().await {
+                eprintln!("TCP listener error: {}", &e);
+                return Err(e);
+            }
+            Ok(())
+        })
+        .into(),
+    );
+
+    #[cfg(target_family = "unix")]
+    futs.push(
+        tokio::spawn(async {
+            if let Err(e) = unix_main().await {
+                eprintln!("Unix listener error: {}", &e);
+                return Err(e);
+            }
+            Ok(())
+        })
+        .into(),
+    );
+
+    join_all(futs.into_iter()).await;
 
     Ok(())
 }
