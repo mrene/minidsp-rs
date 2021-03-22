@@ -612,9 +612,9 @@ dependencies = [
 
 [[package]]
 name = "strong-xml"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee06e7e5baf4508dea83506a83fcc5b80a404d4c0e9c473c9a4b38b802af3a07"
+checksum = "da0e355b33893aa1b6d2f29110e729609c87a4241817a3e53ffba4c31421b1b1"
 dependencies = [
  "jetscii",
  "lazy_static",
@@ -625,9 +625,9 @@ dependencies = [
 
 [[package]]
 name = "strong-xml-derive"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2e4e25fb64e61f55d495134d9e5ac68b1fa4bb2855b5a5b53857b9460e2bfde"
+checksum = "e9053670189294a3fa7d7379a58b07ab0d0608debe80f5a16d31e2faa6e13b69"
 dependencies = [
  "proc-macro2",
  "quote",
