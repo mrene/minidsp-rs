@@ -1,12 +1,8 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{
-    transport::net::Codec,
-    utils::{ErrInto, OwnedJoinHandle},
-    MiniDSPError,
-};
+use crate::{transport::net::Codec, utils::OwnedJoinHandle, MiniDSPError};
 use anyhow::{Context, Result};
 use bytes::Bytes;
-use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
+use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt, TryStreamExt};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::{TcpListener, ToSocketAddrs},
@@ -59,8 +55,8 @@ where
     let (stream_tx, mut stream_rx) = broadcast::channel::<Bytes>(10);
 
     // Truncate each HID frame after its ending
-    let stream = stream.map(|frame| {
-        let frame = frame.err_into()?;
+    let stream = stream.err_into().map(|frame| {
+        let frame = frame?;
         if frame.is_empty() {
             return Err(MiniDSPError::MalformedResponse(
                 "Received an empty frame".to_string(),

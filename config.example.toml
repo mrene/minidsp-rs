@@ -1,0 +1,29 @@
+#
+# A configuration file can define many components that share the same underlying devices
+#
+# A default HTTP server is exposed via a unix socket at /var/run/minidsp.sock
+
+# If desired, an api can be exposed over the local network
+[http_server]
+bind_address = "0.0.0.0:5380"
+# TODO: CORS example, security token
+
+# TCP servers can be setup to support using the native "plugin" apps to manage the device
+[[tcp_server]]
+bind_address = "0.0.0.0:5333"
+# Optionally match on a serial number
+#device_serial = "965535"
+advertise = { ip = "192.168.1.242", name="Living Room Pi" }
+
+# More servers can be declared with different bind addresses and device bindings
+# Since the official apps don't support setting the port number, different addresses must be used
+# for different devices.
+#[[tcp_server]]
+#bind_address = "192.168.1.128:5333"
+
+# Devices can be added statically instead of being automatically discovered 
+# [[static_device]]
+# type = "usb"
+# vid = 1234
+# pid = 5678
+# path = ""

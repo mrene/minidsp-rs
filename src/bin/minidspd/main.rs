@@ -3,12 +3,14 @@
 ///
 use anyhow::Result;
 use clap::Clap;
+use config::Config;
 use discovery::{DiscoveryEvent, Registry};
 use lazy_static::lazy_static;
 use minidsp::utils::OwnedJoinHandle;
 use std::{path::PathBuf, str::FromStr, sync::Arc};
 use tokio::sync::RwLock;
 
+mod config;
 mod device_manager;
 mod discovery;
 mod http;
@@ -23,6 +25,10 @@ lazy_static! {
 #[derive(Clone, Clap, Debug, Default)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 pub struct Opts {
+    /// Read config file from path
+    #[clap(short, long)]
+    config: Option<String>,
+
     /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
     #[clap(short, long, parse(from_occurrences))]
     verbose: i32,
@@ -61,6 +67,10 @@ impl App {
         let opts: Opts = Opts::parse();
         let registry = Registry::new();
 
+        use confy::load_path;
+        let config: Config = load_path(opts.config.as_ref().unwrap()).unwrap();
+        println!("CFG: {:?}", &config);
+
         // If we're advertising a device, make sure to avoid discovering ourselves
         let this_ip = opts
             .ip
@@ -70,21 +80,25 @@ impl App {
         let device_mgr = device_manager::DeviceManager::new(registry, this_ip);
         let mut handles = vec![];
 
+        let http_server = config.http_server.clone();
         handles.push(
             tokio::spawn(async move {
-                http::main().await?;
+                http::main(http_server).await?;
                 Ok(())
             })
             .into(),
         );
 
-        handles.push(
-            tokio::spawn(async move {
-                tcp::main().await?;
-                Ok(())
-            })
-            .into(),
-        );
+        for server in &config.tcp_servers {
+            let server = server.clone();
+            handles.push(
+                tokio::spawn(async move {
+                    tcp::main(server).await?;
+                    Ok(())
+                })
+                .into(),
+            );
+        }
 
         App {
             device_manager: device_mgr,

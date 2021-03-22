@@ -5,6 +5,8 @@ use hyper_tungstenite::HyperWebsocket;
 use minidsp::{transport::Hub, MiniDSPError};
 use tungstenite::Message;
 
+/// Bridges frames between a websocket connection and a transport hub
+/// The connection is closed as soon as a transport error occurs
 pub async fn websocket_transport_bridge(ws: HyperWebsocket, hub: Hub) -> Result<(), anyhow::Error> {
     let websocket = ws.await.context("ws await failed")?;
     let (hub_tx, hub_rx) = hub.split();
@@ -28,5 +30,5 @@ pub async fn websocket_transport_bridge(ws: HyperWebsocket, hub: Hub) -> Result<
     hub_fwd?;
     ws_fwd?;
 
-    Ok::<_, anyhow::Error>(())
+    Ok(())
 }

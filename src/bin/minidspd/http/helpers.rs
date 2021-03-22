@@ -1,10 +1,10 @@
-use super::error::{Error, FormattedError};
+use super::error::Error;
 use hyper::{body, Body, Request, Response};
 use routerify::prelude::*;
 use serde::de::DeserializeOwned;
 use std::str::FromStr;
 
-pub fn parse_param<T>(req: &Request<Body>, name: &str) -> Result<T, FormattedError>
+pub fn parse_param<T>(req: &Request<Body>, name: &str) -> Result<T, Error>
 where
     T: FromStr,
     T::Err: ToString,
@@ -15,9 +15,7 @@ where
     Ok(T::from_str(data).map_err(|e| Error::parameter_error(name, e))?)
 }
 
-pub async fn parse_body<'de, T: DeserializeOwned>(
-    req: &mut Request<Body>,
-) -> Result<T, FormattedError> {
+pub async fn parse_body<'de, T: DeserializeOwned>(req: &mut Request<Body>) -> Result<T, Error> {
     let data = body::to_bytes(req.body_mut())
         .await
         .map_err(|e| Error::ParseError(e.to_string()))?;

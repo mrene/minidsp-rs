@@ -2,12 +2,12 @@
 use super::{DiscoveryEvent, Registry};
 use crate::logging;
 use anyhow::{anyhow, Result};
-use futures::StreamExt;
+use futures::{StreamExt, TryFutureExt};
 use minidsp::{
     client::Client,
     device,
     transport::{self, SharedService},
-    utils::{ErrInto, OwnedJoinHandle},
+    utils::OwnedJoinHandle,
     DeviceInfo, MiniDSP,
 };
 use std::{
@@ -38,30 +38,26 @@ impl DeviceManager {
             // Start tasks for discovery processes
             let discovery_hid = {
                 let inner = inner.clone();
-                tokio::spawn(async move {
-                    super::discovery::tasks::hid_discovery_task(|dev| {
+                tokio::spawn(
+                    super::discovery::tasks::hid_discovery_task(move |dev| {
                         let inner = inner.read().unwrap();
                         inner.registry.register(dev);
                     })
-                    .await
-                    .err_into()
-                })
+                    .err_into(),
+                )
                 .into()
             };
             handles.push(discovery_hid);
 
             let discovery_net = {
                 let inner = inner.clone();
-                tokio::spawn(async move {
-                    super::discovery::tasks::net_discovery_task(
-                        |dev| {
-                            let inner = inner.read().unwrap();
-                            inner.registry.register(dev);
-                        },
-                        ignore_net_ip,
-                    )
-                    .await
-                })
+                tokio::spawn(super::discovery::tasks::net_discovery_task(
+                    move |dev| {
+                        let inner = inner.read().unwrap();
+                        inner.registry.register(dev);
+                    },
+                    ignore_net_ip,
+                ))
                 .into()
             };
             handles.push(discovery_net);

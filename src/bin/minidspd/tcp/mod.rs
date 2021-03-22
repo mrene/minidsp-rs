@@ -1,7 +1,7 @@
 //! TCP server compatible with the official mobile and desktop application
 use std::net::Ipv4Addr;
 
-use crate::Opts;
+use crate::{config, Opts};
 use anyhow::{Context, Result};
 use futures::{pin_mut, SinkExt, StreamExt};
 use minidsp::{
@@ -87,7 +87,7 @@ pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub async fn main() -> Result<(), MiniDSPError> {
+pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
     let app = super::APP.clone();
     let app = app.read().await;
 
@@ -95,9 +95,11 @@ pub async fn main() -> Result<(), MiniDSPError> {
         log::error!("error launching advertisement task: {:?}", adv_err);
     }
 
-    let bind_address = app.opts.bind_address.as_str();
-    let listener = TcpListener::bind(bind_address).await?;
-    log::info!("Listening on {}", bind_address);
+    let bind_address = cfg
+        .bind_address
+        .unwrap_or_else(|| "0.0.0.0:5333".to_string());
+    let listener = TcpListener::bind(&bind_address).await?;
+    log::info!("Listening on {}", &bind_address);
     loop {
         select! {
            result = listener.accept() => {

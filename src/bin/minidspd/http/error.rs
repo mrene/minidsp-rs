@@ -1,4 +1,5 @@
 use minidsp::MiniDSPError;
+use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Clone, Debug, serde::Serialize, Error)]
@@ -18,8 +19,17 @@ pub enum Error {
     #[error("the specified device is not ready to accept requests")]
     DeviceNotReady,
 
-    #[error("an internal error occurred: {0}")]
-    InternalError(String),
+    #[error(transparent)]
+    #[serde(serialize_with = "ser_to_string")]
+    InternalError(#[from] Arc<anyhow::Error>),
+}
+
+fn ser_to_string<S, T>(t: &T, s: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    T: ToString,
+{
+    s.serialize_str(t.to_string().as_str())
 }
 
 impl Error {
@@ -38,10 +48,16 @@ impl Error {
     }
 }
 
+impl From<anyhow::Error> for Error {
+    fn from(e: anyhow::Error) -> Self {
+        Self::from(Arc::new(e))
+    }
+}
+
 impl From<MiniDSPError> for Error {
     fn from(e: MiniDSPError) -> Self {
         // TODO: Once errors are cleaner, map this correctly
-        Self::InternalError(e.to_string())
+        Self::InternalError(Arc::new(e.into()))
     }
 }
 
@@ -58,12 +74,6 @@ impl std::fmt::Display for FormattedError {
 }
 
 impl std::error::Error for FormattedError {}
-
-impl From<MiniDSPError> for FormattedError {
-    fn from(e: MiniDSPError) -> Self {
-        e.into()
-    }
-}
 
 impl From<Error> for FormattedError {
     fn from(error: Error) -> Self {

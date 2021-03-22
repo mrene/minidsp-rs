@@ -1,4 +1,4 @@
-use crate::{device_manager, App};
+use crate::{config::HttpServer, device_manager, App};
 use anyhow::Context;
 use futures::future::join_all;
 use hyper::{Body, Request, Response, Server, StatusCode};
@@ -41,7 +41,7 @@ impl From<&device_manager::Device> for Device {
     }
 }
 
-fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, FormattedError> {
+fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, Error> {
     let devices = app.device_manager.devices();
 
     // Try to find a device whose serial matches the index passed as an argument
@@ -55,34 +55,34 @@ fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, Fo
     }
 
     if index >= devices.len() {
-        return Err(FormattedError::from(Error::DeviceIndexOutOfRange {
+        return Err(Error::DeviceIndexOutOfRange {
             actual: devices.len(),
             provided: index,
-        }));
+        });
     }
 
     Ok(devices[index].clone())
 }
 
-fn get_device_instance<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, FormattedError> {
+fn get_device_instance<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, Error> {
     Ok(get_device(app, index)?
         .to_minidsp()
         .ok_or(Error::DeviceNotReady)?)
 }
 
 /// Gets a list of available devices
-async fn get_devices(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+async fn get_devices(req: Request<Body>) -> Result<Response<Body>, Error> {
     let app = super::APP.clone();
     let app = app.read().await;
 
     let devices = app.device_manager.devices();
     let devices: Vec<Device> = devices.iter().map(|d| d.as_ref().into()).collect();
 
-    Ok(serialize_response(&req, devices).map_err(|e| Error::InternalError(e.to_string()))?)
+    Ok(serialize_response(&req, devices)?)
 }
 
 /// Creates a websocket bridge which forwards raw frames to a device
-async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let app = super::APP.clone();
     let app = app.read().await;
@@ -97,29 +97,27 @@ async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, anyhow::Err
 
         Ok(response)
     } else {
-        Response::builder()
+        Ok(Response::builder()
             .status(405)
             .body(Body::empty())
-            .err_into()
+            .err_into::<anyhow::Error>()?)
     }
 }
 
 /// Retrieves the current master status (current preset, master volume and mute, current input source) for a given device (0-based) index
-async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
     let app = super::APP.clone();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
-    let status = StatusSummary::fetch(&device)
-        .await
-        .map_err(FormattedError::from)?;
+    let status = StatusSummary::fetch(&device).await?;
 
-    Ok(serialize_response(&req, status).map_err(|e| Error::InternalError(e.to_string()))?)
+    Ok(serialize_response(&req, status)?)
 }
 
 /// Updates the device's master status directly
-async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
     let app = super::APP.clone();
@@ -128,14 +126,11 @@ async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, an
 
     // Apply the requested, changes, then fetch the master status again to return it
     let status: MasterStatus = parse_body(&mut req).await?;
-    status.apply(&device).await.map_err(FormattedError::from)?;
+    status.apply(&device).await?;
 
-    let status = device
-        .get_master_status()
-        .await
-        .map_err(FormattedError::from)?;
+    let status = device.get_master_status().await?;
 
-    Ok(serialize_response(&req, status).map_err(|e| Error::InternalError(e.to_string()))?)
+    Ok(serialize_response(&req, status)?)
 }
 
 /// Updates the device's configuration based on the defined elements. Anything set will be changed and anything else will be ignored.
@@ -143,22 +138,23 @@ async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, an
 /// safe to change config and apply other changes to the target config using a single call.
 // #[post("/<index>/config", data = "<data>")]
 // async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {
-async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, anyhow::Error> {
+async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let app = super::APP.clone();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
 
     let config: Config = parse_body(&mut req).await?;
-    config.apply(&device).await.map_err(FormattedError::from)?;
+    config.apply(&device).await?;
     Ok(Response::new(Body::default()))
 }
 
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError) -> Response<Body> {
-    let error = if let Some(err) = err.downcast_ref::<FormattedError>() {
-        serde_json::to_string_pretty(err)
+    let error = if let Some(err) = err.downcast_ref::<Error>() {
+        let err: FormattedError = err.clone().into();
+        serde_json::to_string_pretty(&err)
             .unwrap_or_else(|_| "unable to serialize error message".to_string())
     } else {
         format!("Something went wrong: {}", err)
@@ -170,7 +166,7 @@ async fn error_handler(err: routerify::RouteError) -> Response<Body> {
         .unwrap()
 }
 
-fn router() -> Router<Body, anyhow::Error> {
+fn router() -> Router<Body, Error> {
     // Create a router and specify the logger middleware and the handlers.
     // Here, "Middleware::pre" means we're adding a pre middleware which will be executed
     // before any route handlers.
@@ -178,19 +174,19 @@ fn router() -> Router<Body, anyhow::Error> {
         // .middleware(Middleware::pre(logger))
         .get("/devices", get_devices)
         .get("/devices/:deviceIndex", get_master_status)
-        .any_method("/devices/:deviceIndex/ws", device_bridge)
         .post("/devices/:deviceIndex", post_master_status)
         .post("/devices/:deviceIndex/config", post_config)
+        .any_method("/devices/:deviceIndex/ws", device_bridge)
         .err_handler(error_handler)
         .build()
         .expect("could not build http router")
 }
 
-pub async fn tcp_main() -> Result<(), anyhow::Error> {
+pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
     let service = RouterService::new(router()).expect("while building router service");
 
     // The address on which the server will be listening.
-    let addr = SocketAddr::from_str("0.0.0.0:8989")?;
+    let addr = SocketAddr::from_str(&bind_address)?;
 
     // Create a server by passing the created service to `.serve` method.
     let server = Server::try_bind(&addr)?.serve(service);
@@ -230,24 +226,34 @@ pub async fn unix_main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub async fn main() -> Result<(), anyhow::Error> {
+pub async fn main(cfg: Option<HttpServer>) -> Result<(), anyhow::Error> {
     let mut futs: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>> = Vec::with_capacity(2);
-    futs.push(
-        tokio::spawn(async {
-            if let Err(e) = tcp_main().await {
-                eprintln!("TCP listener error: {}", &e);
-                return Err(e);
-            }
-            Ok(())
-        })
-        .into(),
-    );
+
+    if let Some(server) = cfg {
+        let bind_address = server
+            .bind_address
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or_else(|| "0.0.0.0:5380")
+            .to_owned();
+
+        futs.push(
+            tokio::spawn(async {
+                if let Err(e) = tcp_main(bind_address).await {
+                    eprintln!("HTTP/TCP listener error: {}", &e);
+                    return Err(e);
+                }
+                Ok(())
+            })
+            .into(),
+        );
+    }
 
     #[cfg(target_family = "unix")]
     futs.push(
         tokio::spawn(async {
             if let Err(e) = unix_main().await {
-                eprintln!("Unix listener error: {}", &e);
+                eprintln!("HTTP/Unix listener error: {}", &e);
                 return Err(e);
             }
             Ok(())

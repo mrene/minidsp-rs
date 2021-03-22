@@ -1,14 +1,16 @@
 use std::result::Result;
 
-pub trait ErrInto<T, ESource, EDest> {
-    fn err_into(self) -> Result<T, EDest>;
+pub trait ErrInto<T, ESource> {
+    fn err_into<EDest>(self) -> Result<T, EDest>
+    where
+        ESource: Into<EDest>;
 }
 
-impl<T, ESource, EDest> ErrInto<T, ESource, EDest> for Result<T, ESource>
-where
-    ESource: Into<EDest>,
-{
-    fn err_into(self) -> Result<T, EDest> {
+impl<T, ESource> ErrInto<T, ESource> for Result<T, ESource> {
+    fn err_into<EDest>(self) -> Result<T, EDest>
+    where
+        ESource: Into<EDest>,
+    {
         self.map_err(|e| e.into())
     }
 }
