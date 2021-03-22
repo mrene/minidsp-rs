@@ -18,7 +18,7 @@ name="codegen"
 required-features=["codegen"]
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.39"
 async-trait = "0.1.42"
 atomic_refcell = "0.1.6"
 bimap = "0.6.0"
