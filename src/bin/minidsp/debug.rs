@@ -14,7 +14,7 @@ use minidsp::{
 };
 use std::ops::Deref;
 
-pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Result<()> {
+pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Result<()> {
     match debug {
         DebugCommands::Send { value } => {
             let response = device
@@ -27,7 +27,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
 
             println!("response: {:02x?}", response);
         }
-        DebugCommands::Dump { addr, end_addr } => {
+        &DebugCommands::Dump { addr, end_addr } => {
             let mut view = MemoryView {
                 base: addr,
                 data: Default::default(),
@@ -39,7 +39,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: DebugCommands) -> Res
             println!("\n");
             dump_memory(&view);
         }
-        DebugCommands::DumpFloat { addr, end_addr } => {
+        &DebugCommands::DumpFloat { addr, end_addr } => {
             let len = 14;
             let end_addr = end_addr.unwrap_or(14);
             for i in (addr..end_addr).step_by(14) {

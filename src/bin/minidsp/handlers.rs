@@ -89,30 +89,32 @@ impl fmt::Display for StatusSummary {
 
 pub(crate) async fn run_command(
     device: &MiniDSP<'_>,
-    cmd: Option<SubCommand>,
+    cmd: Option<&SubCommand>,
     opts: &crate::Opts,
 ) -> Result<()> {
     match cmd {
         // Master
-        Some(SubCommand::Gain { value }) => device.set_master_volume(value).await?,
-        Some(SubCommand::Mute { value }) => device.set_master_mute(value).await?,
-        Some(SubCommand::Source { value }) => device.set_source(value).await?,
-        Some(SubCommand::Config { value }) => device.set_config(value).await?,
-        Some(SubCommand::Input { input_index, cmd }) => {
-            run_input(&device, cmd, input_index).await?
-        }
-        Some(SubCommand::Output { output_index, cmd }) => {
-            run_output(&device, output_index, cmd).await?
-        }
+        Some(&SubCommand::Gain { value }) => device.set_master_volume(value).await?,
+        Some(&SubCommand::Mute { value }) => device.set_master_mute(value).await?,
+        Some(&SubCommand::Source { value }) => device.set_source(value).await?,
+        Some(&SubCommand::Config { value }) => device.set_config(value).await?,
+        Some(&SubCommand::Input {
+            input_index,
+            ref cmd,
+        }) => run_input(&device, cmd, input_index).await?,
+        Some(&SubCommand::Output {
+            output_index,
+            ref cmd,
+        }) => run_output(&device, output_index, cmd).await?,
 
         // Other tools
-        Some(SubCommand::Debug { cmd }) => run_debug(&device, cmd).await?,
+        Some(&SubCommand::Debug { ref cmd }) => run_debug(&device, cmd).await?,
 
         // Handled earlier
-        Some(SubCommand::Server { .. }) => {}
-        Some(SubCommand::Probe) => return Ok(()),
+        Some(&SubCommand::Server { .. }) => {}
+        Some(&SubCommand::Probe) => return Ok(()),
 
-        Some(SubCommand::Status) | None => {
+        Some(&SubCommand::Status) | None => {
             // Always output the current master status and input/output levels
             let summary = StatusSummary::fetch(device).await?;
             println!("{}", opts.output_format.format(&summary));
@@ -124,21 +126,24 @@ pub(crate) async fn run_command(
 
 pub(crate) async fn run_input(
     dsp: &MiniDSP<'_>,
-    cmd: InputCommand,
+    cmd: &InputCommand,
     input_index: usize,
 ) -> Result<()> {
     use InputCommand::*;
     use RoutingCommand::*;
 
     let input = dsp.input(input_index)?;
-    match cmd {
+    match *cmd {
         InputCommand::Gain { value } => input.set_gain(value).await?,
         Mute { value } => input.set_mute(value).await?,
-        Routing { output_index, cmd } => match cmd {
+        Routing {
+            output_index,
+            ref cmd,
+        } => match *cmd {
             Enable { value } => input.set_output_enable(output_index, value).await?,
             RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
         },
-        PEQ { index, cmd } => match index {
+        PEQ { index, ref cmd } => match index {
             PEQTarget::One(index) => run_peq(&[input.peq(index)], cmd).await?,
             PEQTarget::All => {
                 let eqs = input.peqs_all();
@@ -152,31 +157,33 @@ pub(crate) async fn run_input(
 pub(crate) async fn run_output(
     dsp: &MiniDSP<'_>,
     output_index: usize,
-    cmd: OutputCommand,
+    cmd: &OutputCommand,
 ) -> Result<()> {
     use OutputCommand::*;
     let output = dsp.output(output_index)?;
 
     match cmd {
-        OutputCommand::Gain { value } => output.set_gain(value).await?,
-        Mute { value } => output.set_mute(value).await?,
-        Delay { delay } => {
+        &OutputCommand::Gain { value } => output.set_gain(value).await?,
+        &Mute { value } => output.set_mute(value).await?,
+        &Delay { delay } => {
             let delay = Duration::from_secs_f32(delay / 1000.);
             output.set_delay(delay).await?
         }
-        Invert { value } => output.set_invert(value).await?,
-        OutputCommand::PEQ { index, cmd } => match index {
+        &Invert { value } => output.set_invert(value).await?,
+        &PEQ { index, ref cmd } => match index {
             PEQTarget::One(index) => run_peq(&[output.peq(index)], cmd).await?,
             PEQTarget::All => {
                 let eqs = output.peqs_all();
                 run_peq(eqs.as_ref(), cmd).await?
             }
         },
-        OutputCommand::FIR { cmd } => run_fir(dsp, &output.fir(), cmd).await?,
-        OutputCommand::Crossover { group, index, cmd } => {
-            run_xover(&output.crossover(), cmd, group, index).await?
-        }
-        OutputCommand::Compressor {
+        FIR { cmd } => run_fir(dsp, &output.fir(), cmd).await?,
+        &Crossover {
+            group,
+            index,
+            ref cmd,
+        } => run_xover(&output.crossover(), cmd, group, index).await?,
+        &Compressor {
             bypass,
             threshold,
             ratio,
@@ -204,7 +211,7 @@ pub(crate) async fn run_output(
     Ok(())
 }
 
-pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: FilterCommand) -> Result<()> {
+pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> Result<()> {
     use FilterCommand::*;
 
     match cmd {
@@ -216,7 +223,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: FilterCommand) -> Re
                 peq.set_coefficients(&coeff).await?;
             }
         }
-        Bypass { value } => {
+        &Bypass { value } => {
             for peq in peqs {
                 peq.set_bypass(value).await?;
             }
@@ -251,7 +258,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: FilterCommand) -> Re
 
 pub(crate) async fn run_xover(
     xover: &Crossover<'_>,
-    cmd: FilterCommand,
+    cmd: &FilterCommand,
     group: usize,
     index: PEQTarget,
 ) -> Result<()> {
@@ -266,10 +273,10 @@ pub(crate) async fn run_xover(
                 xover.set_coefficients(group, index, coeff.as_ref()).await?;
             }
         },
-        FilterCommand::Bypass { value } => {
+        &FilterCommand::Bypass { value } => {
             xover.set_bypass(group, value).await?;
         }
-        FilterCommand::Clear => {
+        &FilterCommand::Clear => {
             xover.clear(group).await?;
         }
         FilterCommand::Import { filename, .. } => {
@@ -307,15 +314,15 @@ pub(crate) async fn run_xover(
     Ok(())
 }
 
-pub(crate) async fn run_fir(dsp: &MiniDSP<'_>, fir: &Fir<'_>, cmd: FilterCommand) -> Result<()> {
+pub(crate) async fn run_fir(dsp: &MiniDSP<'_>, fir: &Fir<'_>, cmd: &FilterCommand) -> Result<()> {
     match cmd {
         FilterCommand::Set { coeff } => {
             fir.set_coefficients(coeff.as_ref()).await?;
         }
-        FilterCommand::Bypass { value } => {
+        &FilterCommand::Bypass { value } => {
             fir.set_bypass(value).await?;
         }
-        FilterCommand::Clear => {
+        &FilterCommand::Clear => {
             fir.clear().await?;
         }
         FilterCommand::Import { filename, .. } => {
