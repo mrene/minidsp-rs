@@ -518,44 +518,54 @@ async fn main() -> Result<()> {
         }
     };
 
-    if let Some(filename) = &opts.file {
-        let file: Box<dyn Read> = {
-            if filename.to_string_lossy() == "-" {
-                Box::new(std::io::stdin())
-            } else {
-                Box::new(File::open(filename)?)
-            }
-        };
-        let reader = BufReader::new(file);
-        let cmds = reader.lines().filter_map(|s| {
-            let trimmed = s.ok()?.trim().to_string();
-            if !trimmed.is_empty() && !trimmed.starts_with('#') {
-                Some(trimmed)
-            } else {
-                None
-            }
-        });
-
-        for cmd in cmds {
-            let words = shellwords::split(&cmd)?;
-            let prefix = &["minidsp".to_string()];
-            let words = prefix.iter().chain(words.iter());
-            let this_opts = Opts::try_parse_from(words);
-            let this_opts = match this_opts {
-                Ok(x) => x,
-                Err(e) => {
-                    eprintln!("While executing: {}\n{}", cmd, e);
-                    return Err(anyhow!("Command failure"));
+    match &opts.file {
+        Some(filename) => {
+            let file: Box<dyn Read> = {
+                if filename.to_string_lossy() == "-" {
+                    Box::new(std::io::stdin())
+                } else {
+                    Box::new(File::open(filename)?)
                 }
             };
+            let reader = BufReader::new(file);
+            let cmds = reader.lines().filter_map(|s| {
+                let trimmed = s.ok()?.trim().to_string();
+                if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                    Some(trimmed)
+                } else {
+                    None
+                }
+            });
 
-            for device in &devices {
-                handlers::run_command(device, this_opts.subcmd.as_ref(), &opts).await?;
+            for cmd in cmds {
+                let words = shellwords::split(&cmd)?;
+                let prefix = &["minidsp".to_string()];
+                let words = prefix.iter().chain(words.iter());
+                let this_opts = Opts::try_parse_from(words);
+                let this_opts = match this_opts {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("While executing: {}\n{}", cmd, e);
+                        return Err(anyhow!("Command failure"));
+                    }
+                };
+
+                // Run this command on all devices in parallel
+                devices
+                    .iter()
+                    .map(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
+                    .collect::<FuturesUnordered<_>>()
+                    .collect::<Vec<_>>()
+                    .await;
             }
         }
-    } else {
-        for device in &devices {
-            handlers::run_command(device, opts.subcmd.as_ref(), &opts).await?;
+        None => {
+            devices
+                .iter()
+                .map(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
+                .collect::<FuturesUnordered<_>>()
+                .collect::<Vec<_>>()
+                .await;
         }
     }
 
