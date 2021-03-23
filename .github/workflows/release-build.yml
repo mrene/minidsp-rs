@@ -2,6 +2,8 @@ name: Release build
 
 on:
   push:
+    branches:
+      - 'all-local-devices'
     tags:
       - 'v0.*'
       - 'v1.*'
