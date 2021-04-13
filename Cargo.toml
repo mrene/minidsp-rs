@@ -65,7 +65,7 @@ version = "1.4.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
-version = "0.6.5"
+version = "0.6.6"
 
 [features]
 default = ["hid"]
