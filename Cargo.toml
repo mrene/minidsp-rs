@@ -19,7 +19,7 @@ required-features=["codegen"]
 
 [dependencies]
 anyhow = "1.0.40"
-async-trait = "0.1.48"
+async-trait = "0.1.49"
 atomic_refcell = "0.1.7"
 bimap = "0.6.1"
 bytes = "1.0.1"
