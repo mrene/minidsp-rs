@@ -18,22 +18,22 @@ name="codegen"
 required-features=["codegen"]
 
 [dependencies]
-anyhow = "1.0.39"
-async-trait = "0.1.42"
+anyhow = "1.0.40"
+async-trait = "0.1.48"
 atomic_refcell = "0.1.7"
-bimap = "0.6.0"
+bimap = "0.6.1"
 bytes = "1.0.1"
 clap = "3.0.0-beta.2"
 env_logger = "0.8.3"
-futures = "0.3.13"
-futures-sink = "0.3.13"
-futures-util = "0.3.12"
+futures = "0.3.14"
+futures-sink = "0.3.14"
+futures-util = "0.3.14"
 hex = "0.4.3"
 hexplay = "0.2.1"
 lazy_static = "1.4.0"
 log = "0.4.14"
-pin-project = "1.0.5"
-serde = { version = "1.0.124", features=["derive"] }
+pin-project = "1.0.6"
+serde = { version = "1.0.125", features=["derive"] }
 serde_json = "1.0.64"
 shellwords = "1.1.0"
 strong-xml = "0.6.1"
@@ -46,7 +46,7 @@ wav = "0.5.0"
 
 # Codegen only
 quote = { version = "1.0.9", optional = true }
-proc-macro2 = { version = "1.0.24", optional = true }
+proc-macro2 = { version = "1.0.26", optional = true }
 Inflector = { version = "0.11.4", optional = true }
 
 [dev-dependencies]
@@ -65,7 +65,7 @@ version = "1.4.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
-version = "0.6.5"
+version = "0.6.6"
 
 [features]
 default = ["hid"]
