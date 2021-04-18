@@ -57,27 +57,37 @@ pub struct Opts {
 
 pub struct App {
     opts: Opts,
+    config: Config,
     #[allow(dead_code)]
-    device_manager: device_manager::DeviceManager,
+    device_manager: Option<device_manager::DeviceManager>,
     #[allow(dead_code)]
     handles: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>>,
 }
 
 impl App {
-    pub fn start(opts: Opts, config: Config) -> Self {
+    pub fn new(opts: Opts, config: Config) -> RwLock<Self> {
+        RwLock::new(Self {
+            device_manager: None,
+            handles: Vec::new(),
+            opts,
+            config,
+        })
+    }
+
+    pub fn start(&mut self) {
         let registry = Registry::new();
 
         // If we're advertising a device, make sure to avoid discovering ourselves
-        let this_ip = opts
+        let this_ip = self
+            .opts
             .ip
             .as_ref()
             .and_then(|ip| std::net::IpAddr::from_str(ip.as_str()).ok());
 
         let device_mgr = device_manager::DeviceManager::new(registry, this_ip);
-        let mut handles = vec![];
 
-        let http_server = config.http_server.clone();
-        handles.push(
+        let http_server = self.config.http_server.clone();
+        self.handles.push(
             tokio::spawn(async move {
                 http::main(http_server).await?;
                 Ok(())
@@ -85,9 +95,9 @@ impl App {
             .into(),
         );
 
-        for server in &config.tcp_servers {
+        for server in &self.config.tcp_servers {
             let server = server.clone();
-            handles.push(
+            self.handles.push(
                 tokio::spawn(async move {
                     tcp::main(server).await?;
                     Ok(())
@@ -96,11 +106,7 @@ impl App {
             );
         }
 
-        App {
-            device_manager: device_mgr,
-            handles,
-            opts,
-        }
+        self.device_manager.replace(device_mgr);
     }
 
     fn load_config(path: Option<impl AsRef<Path>>) -> Result<Config, confy::ConfyError> {
@@ -118,8 +124,13 @@ pub async fn main() -> anyhow::Result<()> {
     let config: Config =
         App::load_config(opts.config.as_ref()).context("cannot load configuration file")?;
 
-    let app = App::start(opts, config);
+    let app = App::new(opts, config);
     APP.set(app.into()).ok().unwrap();
+
+    {
+        let mut app_mut = APP.get().unwrap().try_write().unwrap();
+        app_mut.start();
+    }
 
     loop {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;

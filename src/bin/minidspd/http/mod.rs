@@ -42,7 +42,11 @@ impl From<&device_manager::Device> for Device {
 }
 
 fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, Error> {
-    let devices = app.device_manager.devices();
+    let devices = app
+        .device_manager
+        .as_ref()
+        .ok_or(Error::ApplicationStillInitializing)?
+        .devices();
 
     // Try to find a device whose serial matches the index passed as an argument
     let serial_match = devices.iter().find(|d| match d.device_info() {
@@ -75,7 +79,12 @@ async fn get_devices(req: Request<Body>) -> Result<Response<Body>, Error> {
     let app = super::APP.get().unwrap();
     let app = app.read().await;
 
-    let devices = app.device_manager.devices();
+    let devices = app
+        .device_manager
+        .as_ref()
+        .ok_or(Error::ApplicationStillInitializing)?
+        .devices();
+
     let devices: Vec<Device> = devices.iter().map(|d| d.as_ref().into()).collect();
 
     Ok(serialize_response(&req, devices)?)

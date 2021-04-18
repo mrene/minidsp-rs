@@ -109,7 +109,11 @@ pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
                 // TODO: There could be an unavailable local device before a legitimate one, this should
                 // get the first device that returns a valid transport::Hub
                 let device = {
-                    let mut devices = app.device_manager.devices();
+                    let mut devices = app
+                        .device_manager
+                        .as_ref()
+                        .ok_or(MiniDSPError::TransportClosed)?
+                        .devices();
                     devices.sort_by_key(|dev| !dev.is_local());
                     devices.first().cloned()
                 };

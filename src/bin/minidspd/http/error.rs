@@ -5,6 +5,9 @@ use thiserror::Error;
 #[derive(Clone, Debug, serde::Serialize, Error)]
 #[serde(tag = "type")]
 pub enum Error {
+    #[error("the application is still being initialized")]
+    ApplicationStillInitializing,
+
     #[error(
         "device index was out of range. provided value {provided} was not in range [0, {actual})"
     )]
