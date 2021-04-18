@@ -19,7 +19,7 @@
 //!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE_2X4HD);
 //!     
 //!     let status = dsp.get_master_status().await?;
-//!     println!("Master volume: {:.1}", status.volume.0);
+//!     println!("Master volume: {:.1}", status.volume.unwrap().0);
 //!
 //!     // Activate a different configuration
 //!     dsp.set_config(2).await?;
@@ -38,11 +38,15 @@
 //!
 //! ```   
 
-pub use crate::commands::Gain;
+// Silence clippy warning inside JsonSchema derived code
+#![allow(clippy::field_reassign_with_default)]
+// Silence naming until we move to 0.1.0
+#![allow(clippy::upper_case_acronyms)]
+
+pub use crate::{commands::Gain, model::MasterStatus};
 use crate::{
-    commands::{Commands, FromMemory, MasterStatus},
+    commands::{Commands, FromMemory},
     device::Gate,
-    transport::MiniDSPError,
 };
 use anyhow::anyhow;
 use async_trait::async_trait;
@@ -50,6 +54,7 @@ use client::Client;
 pub use source::Source;
 use std::convert::TryInto;
 use tokio::{sync::Mutex, time::Duration};
+pub use transport::MiniDSPError;
 use transport::SharedService;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
@@ -67,6 +72,7 @@ pub mod utils;
 pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
+pub mod model;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -84,9 +90,29 @@ impl<'a> MiniDSP<'a> {
             device_info: Mutex::new(None),
         }
     }
+
+    pub fn from_client(
+        client: Client,
+        device: &'a device::Device,
+        device_info: Option<DeviceInfo>,
+    ) -> Self {
+        MiniDSP {
+            client,
+            device,
+            device_info: device_info.into(),
+        }
+    }
 }
 
 impl MiniDSP<'_> {
+    pub fn set_device_info(&mut self, dev: DeviceInfo) {
+        // Since we have a &mut self, the lock is guaranteed to not be locked and try_lock will always succeed
+        self.device_info
+            .try_lock()
+            .expect("unable to lock device_info mutex")
+            .replace(dev);
+    }
+
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.get_device_info().await?;
@@ -182,27 +208,18 @@ impl MiniDSP<'_> {
             return Ok(info);
         }
 
-        let hw_id = self
-            .client
-            .roundtrip(Commands::ReadHardwareId)
-            .await?
-            .into_hardware_id()?;
-
-        let view = self.client.read_memory(0xffa1, 1).await?;
-        let info = DeviceInfo {
-            hw_id,
-            dsp_version: view.read_u8(0xffa1),
-        };
+        let info = self.client.get_device_info().await?;
         *self_device_info = Some(info);
         Ok(info)
     }
 }
 
 /// Hardware id and dsp version
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, schemars::JsonSchema)]
 pub struct DeviceInfo {
     pub hw_id: u8,
     pub dsp_version: u8,
+    pub serial: u32,
 }
 
 #[async_trait]
@@ -227,9 +244,13 @@ pub trait Channel {
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
-    fn peq(&self, index: usize) -> BiquadFilter<'_> {
+    fn peq(&self, index: usize) -> Result<BiquadFilter<'_>> {
         let (dsp, _, peq) = self._channel();
-        BiquadFilter::new(dsp, peq[index])
+        if index >= peq.len() {
+            Err(MiniDSPError::OutOfRange)
+        } else {
+            Ok(BiquadFilter::new(dsp, peq[index]))
+        }
     }
 
     fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
@@ -401,6 +422,10 @@ impl<'a> Crossover<'a> {
         index: usize,
         coefficients: &[f32],
     ) -> Result<()> {
+        if group >= self.num_groups() || index >= self.num_filter_per_group() {
+            return Err(MiniDSPError::OutOfRange);
+        }
+
         let addr = self.spec.peqs[group] + (index as u16) * 5;
         let filter = BiquadFilter::new(self.dsp, addr);
         filter.set_coefficients(coefficients).await
@@ -409,6 +434,10 @@ impl<'a> Crossover<'a> {
     /// Sets the bypass for a given crossover biquad group.
     /// There are usually two groups (0 and 1), each grouping 4 biquads
     pub async fn set_bypass(&self, group: usize, bypass: bool) -> Result<()> {
+        if group >= self.num_groups() {
+            return Err(MiniDSPError::OutOfRange);
+        }
+
         let addr = self.spec.peqs[group];
         self.dsp
             .client
@@ -549,7 +578,9 @@ impl<'a> Fir<'a> {
             .into_ack()?;
 
         // Set the master mute status back
-        self.dsp.set_master_mute(master_status.mute).await?;
+        self.dsp
+            .set_master_mute(master_status.mute.unwrap())
+            .await?;
 
         Ok(())
     }

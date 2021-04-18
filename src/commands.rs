@@ -7,14 +7,11 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::Source;
-use crate::{transport::MiniDSPError, DeviceInfo};
+use crate::{model::MasterStatus, transport::MiniDSPError, DeviceInfo, Source};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
-use std::{convert::TryInto, fmt};
-use std::{fmt::Debug, str::FromStr};
+use std::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
 use thiserror::Error;
 
 /// Maximum number of floats that can be read in a single command
@@ -100,16 +97,11 @@ impl fmt::Debug for Value {
                     float
                 )
             }
-            Value::Float(val) => {
-                write!(
-                    f,
-                    "Value {{ Float: {:?} (Bytes: {:x?}) }}",
-                    *val,
-                    b.as_ref()
-                )
+            &Value::Float(val) => {
+                write!(f, "Value {{ Float: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
-            Value::Int(val) => {
-                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", *val, b.as_ref())
+            &Value::Int(val) => {
+                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
         }
     }
@@ -307,69 +299,69 @@ impl Commands {
             Commands::ReadHardwareId => {
                 f.put_u8(0x31);
             }
-            Commands::ReadFloats { addr, len } => {
+            &Commands::ReadFloats { addr, len } => {
                 f.put_u8(0x14);
-                f.put_u16(*addr);
-                f.put_u8(*len);
+                f.put_u16(addr);
+                f.put_u8(len);
             }
-            Commands::ReadMemory { addr, size } => {
+            &Commands::ReadMemory { addr, size } => {
                 f.put_u8(0x05);
-                f.put_u16(*addr);
-                f.put_u8(*size);
+                f.put_u16(addr);
+                f.put_u8(size);
             }
-            Commands::WriteMemory { addr, data } => {
+            &Commands::WriteMemory { addr, ref data } => {
                 f.put_u8(0x04);
-                f.put_u16(*addr);
+                f.put_u16(addr);
                 f.put(data.0.clone());
             }
-            Commands::SetConfig { config, reset } => {
+            &Commands::SetConfig { config, reset } => {
                 f.put_u8(0x25);
-                f.put_u8(*config);
-                f.put_u8(*reset as u8);
+                f.put_u8(config);
+                f.put_u8(reset as u8);
             }
-            Commands::SetSource { source } => {
+            &Commands::SetSource { source } => {
                 f.put_u8(0x34);
-                f.put_u8(*source);
+                f.put_u8(source);
             }
-            Commands::SetMute { value } => {
+            &Commands::SetMute { value } => {
                 f.put_u8(0x17);
-                f.put_u8(*value as u8);
+                f.put_u8(value as u8);
             }
-            Commands::SetVolume { value } => {
+            &Commands::SetVolume { value } => {
                 f.put_u8(0x42);
-                f.put_u8((*value).into());
+                f.put_u8((value).into());
             }
-            Commands::WriteBiquad { addr, data } => {
+            &Commands::WriteBiquad { addr, data } => {
                 f.put_u16(0x3080);
-                f.put_u16(*addr);
+                f.put_u16(addr);
                 f.put_u16(0x0000);
-                for coeff in data.iter() {
-                    f.put_f32_le(*coeff);
+                for &coeff in data.iter() {
+                    f.put_f32_le(coeff);
                 }
             }
-            Commands::WriteBiquadBypass { addr, value } => {
+            &Commands::WriteBiquadBypass { addr, value } => {
                 f.put_u8(0x19);
-                f.put_u8(if *value { 0x80 } else { 0x00 });
-                f.put_u16(*addr);
+                f.put_u8(if value { 0x80 } else { 0x00 });
+                f.put_u16(addr);
             }
-            Commands::Write { addr, value } => {
+            &Commands::Write { addr, ref value } => {
                 f.put_u16(0x1380);
-                f.put_u16(*addr);
+                f.put_u16(addr);
                 f.put(value.clone().into_bytes());
             }
 
-            Commands::FirLoadStart { index } => {
+            &Commands::FirLoadStart { index } => {
                 f.put_u8(0x39);
-                f.put_u8(*index);
+                f.put_u8(index);
             }
-            Commands::FirLoadData { index, data } => {
+            &Commands::FirLoadData { index, ref data } => {
                 f.put_u8(0x3a);
-                f.put_u8(*index);
-                for coeff in data {
-                    f.put_f32_le(*coeff);
+                f.put_u8(index);
+                for &coeff in data {
+                    f.put_f32_le(coeff);
                 }
             }
-            Commands::FirLoadEnd => {
+            &Commands::FirLoadEnd => {
                 f.put_u8(0x3b);
             }
             Commands::BulkLoad { payload } => {
@@ -380,8 +372,11 @@ impl Commands {
                 f.put_u8(0x06);
                 f.put(payload.0.clone());
             }
-            Commands::Unknown { cmd_id, payload } => {
-                f.put_u8(*cmd_id);
+            &Commands::Unknown {
+                cmd_id,
+                ref payload,
+            } => {
+                f.put_u8(cmd_id);
                 f.put(payload.0.clone());
             }
         }
@@ -390,16 +385,16 @@ impl Commands {
 
     pub fn matches_response(&self, response: &Responses) -> bool {
         match self {
-            Commands::ReadMemory { addr, size } => {
+            &Commands::ReadMemory { addr, size } => {
                 if let Responses::MemoryData(data) = response {
-                    data.base == *addr && data.data.len() == *size as usize
+                    data.base == addr && data.data.len() == size as usize
                 } else {
                     false
                 }
             }
-            Commands::ReadFloats { addr, len } => {
+            &Commands::ReadFloats { addr, len } => {
                 if let Responses::FloatData(data) = response {
-                    data.base == *addr && data.data.len() == *len as usize
+                    data.base == addr && data.data.len() == len as usize
                 } else {
                     false
                 }
@@ -499,21 +494,24 @@ impl Responses {
                 f.put_u8(0x05);
                 f.put_u16(data.base);
 
-                for item in &data.data {
-                    f.put_f32_le(*item);
+                for &item in &data.data {
+                    f.put_f32_le(item);
                 }
             }
-            Responses::Unknown { cmd_id, payload } => {
-                f.put_u8(*cmd_id);
+            &Responses::Unknown {
+                cmd_id,
+                ref payload,
+            } => {
+                f.put_u8(cmd_id);
                 f.put(payload.0.clone());
             }
             Responses::HardwareId { payload } => {
                 f.put_u8(0x31);
                 f.put(payload.0.clone());
             }
-            Responses::FirLoadSize { size } => {
+            &Responses::FirLoadSize { size } => {
                 f.put_u8(0x39);
-                f.put_u16(*size);
+                f.put_u16(size);
             }
             Responses::ConfigChanged => {}
         }
@@ -618,37 +616,21 @@ where
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-/// The current settings applying to all outputs
-pub struct MasterStatus {
-    /// Active configuration preset
-    pub preset: u8,
-
-    /// Active source
-    pub source: Source,
-
-    /// Volume in dB [-127, 0]
-    pub volume: Gain,
-
-    /// Mute status
-    pub mute: bool,
-}
-
 impl FromMemory<MasterStatus> for MasterStatus
 where
     Self: Sized,
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
         Ok(Self {
-            preset: view.read_u8(0xffd8),
-            source: Source::from_id(view.read_u8(0xffd9), device_info),
-            volume: view.read_u8(0xffda).into(),
-            mute: view.read_u8(0xffdb) == 1,
+            preset: Some(view.read_u8(0xffd8)),
+            source: Some(Source::from_id(view.read_u8(0xffd9), device_info)),
+            volume: Some(view.read_u8(0xffda).into()),
+            mute: Some(view.read_u8(0xffdb) == 1),
         })
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 /// A gain between the minimum and maximum allowed values
 pub struct Gain(pub f32);
 
@@ -657,9 +639,9 @@ impl Gain {
     pub const MAX: f32 = 0.;
 }
 
-impl Into<u8> for Gain {
-    fn into(self) -> u8 {
-        (self.0.abs() * 2.) as u8
+impl From<Gain> for u8 {
+    fn from(val: Gain) -> Self {
+        (val.0.abs() * 2.) as u8
     }
 }
 
@@ -729,6 +711,16 @@ impl UnaryResponse for FloatView {
 }
 
 /// A contiguous bytes view read from the device
+// ## EEPROM Addresses
+// 0xFFA1 (1) Firmware version
+// 0xFFC8 (4) Timestamp
+// 0xFFD8 (1) Preset
+// 0xFFD9 (1) Source ("Digital IO")
+// 0xFFDA (1) Master Volume "Codec mute?"
+// 0xFFDB (1) Mute
+// 0xFFE0 (1) Master FIR bypass
+// 0xFFE5 (1) "Channel mode"
+// 0xFFFC (2) Serial (+ 900000) ("board id")
 #[derive(Clone, Default)]
 pub struct MemoryView {
     pub base: u16,
@@ -852,15 +844,16 @@ mod test {
         let device_info = DeviceInfo {
             hw_id: 10,
             dsp_version: 100,
+            serial: 0,
         };
         let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
         assert_eq!(
             status,
             MasterStatus {
-                preset: 0,
-                source: Source::Toslink,
-                volume: Gain(-39.5),
-                mute: false,
+                preset: Some(0),
+                source: Some(Source::Toslink),
+                volume: Some(Gain(-39.5)),
+                mute: Some(false),
             }
         );
     }

@@ -23,6 +23,10 @@ impl Default for Spec {
 }
 
 impl DeviceSpec for Spec {
+    fn product_name(&self) -> String {
+        "2x4HD".to_owned()
+    }
+
     fn symbol_map(&mut self) -> &mut SymbolMap {
         &mut self.sym_map
     }

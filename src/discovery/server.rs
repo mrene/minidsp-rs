@@ -2,8 +2,10 @@ use super::{DiscoveryPacket, DISCOVERY_PORT};
 use anyhow::Result;
 use log::{error, trace};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use tokio::net::UdpSocket;
-use tokio::time::{sleep, Duration};
+use tokio::{
+    net::UdpSocket,
+    time::{sleep, Duration},
+};
 
 /// Advertises the given discovery packet at a specified interval
 pub async fn advertise_packet(packet: DiscoveryPacket, interval: Duration) -> Result<()> {

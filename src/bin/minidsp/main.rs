@@ -1,5 +1,7 @@
 //! MiniDSP Control Program
 
+#![allow(clippy::upper_case_acronyms)]
+
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
@@ -7,13 +9,16 @@ use debug::DebugCommands;
 use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
 use handlers::run_server;
 use minidsp::{
-    device, discovery, server,
-    transport::{net::StreamTransport, SharedService},
-    Gain, MiniDSP, Source,
-};
-use minidsp::{
-    transport::{multiplexer::Multiplexer, net, IntoTransport, Transport},
+    client::Client,
+    device::probe,
+    discovery, server,
+    transport::{
+        multiplexer::Multiplexer,
+        net::{self, StreamTransport},
+        IntoTransport, SharedService, Transport,
+    },
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
+    Gain, MiniDSP, Source,
 };
 use std::{
     fmt,
@@ -32,9 +37,7 @@ mod handlers;
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
-use std::io::Read;
-use std::ops::Deref;
-use std::time::Duration;
+use std::{io::Read, ops::Deref, time::Duration};
 
 #[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
@@ -473,7 +476,7 @@ async fn run_probe() -> Result<()> {
     }
 
     println!("Probing for network devices...");
-    let devices = net::discover(Duration::from_secs(2)).await?;
+    let devices = net::discover_timeout(Duration::from_secs(2)).await?;
     if devices.is_empty() {
         println!("No network devices detected")
     } else {
@@ -496,6 +499,7 @@ async fn main() -> Result<()> {
     }
 
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
         let transport = get_raw_transport(&opts).await?;
         let transport = transport_logging(transport, &opts);
         run_server(opts.subcmd.unwrap(), transport).await?;
@@ -505,16 +509,26 @@ async fn main() -> Result<()> {
     let devices: Vec<_> = {
         if opts.all_local_devices {
             let transports = get_local_raw_transports().await?;
-            transports
-                .into_iter()
-                .map(get_service)
-                .map(|service| MiniDSP::new(service, &device::DEVICE_2X4HD))
+            futures::stream::iter(transports.into_iter().map(get_service))
+                .filter_map(|service| async move {
+                    let client = Client::new(service);
+                    let device_info = client.get_device_info().await.ok()?;
+                    let spec = probe(&device_info)?; //("this device is not supported");
+                    Some(MiniDSP::from_client(client, spec, Some(device_info)))
+                })
                 .collect()
+                .await
         } else {
             let transport = get_raw_transport(&opts).await?;
             let transport = transport_logging(transport, &opts);
+
             let service: SharedService = get_service(transport);
-            vec![MiniDSP::new(service, &device::DEVICE_2X4HD)]
+            let client = Client::new(service);
+            let device_info = client.get_device_info().await?;
+            let spec =
+                probe(&device_info).ok_or_else(|| anyhow!("this device is not recognized"))?;
+
+            vec![MiniDSP::from_client(client, spec, Some(device_info))]
         }
     };
 

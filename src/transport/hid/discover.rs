@@ -1,19 +1,21 @@
 //! Discovery of local devices
 use super::{initialize_api, HidTransport, VID_MINIDSP};
 use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use hidapi::{HidApi, HidError};
-use std::fmt;
-use std::fmt::Formatter;
-use std::ops::Deref;
-use std::str::FromStr;
+use std::{fmt, fmt::Formatter, ops::Deref, str::FromStr};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {
     pub id: Option<(u16, u16)>,
     pub path: Option<String>,
+}
+
+impl Device {
+    pub fn to_url(&self) -> String {
+        ToString::to_string(&self)
+    }
 }
 
 impl FromStr for Device {
@@ -44,17 +46,17 @@ impl FromStr for Device {
 }
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let id = match self.id {
-            Some((vid, pid)) => format!("{:04x}:{:04x}", vid, pid),
-            None => "unknown".to_owned(),
-        };
-
-        let path = match &self.path {
-            Some(path) => format!("path={}", path),
+        let query = match self.id {
+            Some((vid, pid)) => format!("?vid={:04x}&pid={:04x}", vid, pid),
             None => "".to_owned(),
         };
 
-        write!(f, "[{}] {}", id, path,)
+        let path = match &self.path {
+            Some(path) => urlencoding::encode(path.as_str()),
+            None => "".to_owned(),
+        };
+
+        write!(f, "usb:{}{}", path, query)
     }
 }
 
@@ -76,6 +78,10 @@ impl Openable for Device {
                 "invalid device, no path or id"
             )))
         }
+    }
+
+    fn to_string(&self) -> String {
+        ToString::to_string(self)
     }
 }
 

@@ -4,8 +4,9 @@ use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
 use futures::{SinkExt, TryStreamExt};
 use hidapi::{HidApi, HidDevice, HidError, HidResult};
-use std::{ops::Deref, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 use stream::HidStream;
+use url2::Url2;
 
 mod discover;
 mod stream;
@@ -38,6 +39,34 @@ impl HidTransport {
         HidTransport {
             stream: HidStream::new(device),
         }
+    }
+
+    pub fn with_url(hid: &HidApi, url: Url2) -> Result<HidTransport, HidError> {
+        // If we have a path, decode it.
+        let path = url.path();
+        if !path.is_empty() {
+            let path = urlencoding::decode(path).map_err(|_| HidError::OpenHidDeviceError)?;
+            return HidTransport::with_path(hid, path);
+        }
+
+        // If it's empty, try to get the vid and pid from the query string
+        let query: HashMap<_, _> = url.query_pairs().collect();
+        let vid = query.get("vid");
+        let pid = query.get("pid");
+
+        if let (Some(vid), Some(pid)) = (vid, pid) {
+            let vid = u16::from_str_radix(vid, 16).map_err(|_| HidError::HidApiError {
+                message: "couldn't parse vendor id".to_string(),
+            })?;
+            let pid = u16::from_str_radix(pid, 16).map_err(|_| HidError::HidApiError {
+                message: "couldn't parse product id".to_string(),
+            })?;
+            return HidTransport::with_product_id(hid, vid, pid);
+        }
+
+        Err(HidError::HidApiError {
+            message: "malformed url".to_string(),
+        })
     }
 
     pub fn with_path(hid: &HidApi, path: String) -> Result<HidTransport, HidError> {

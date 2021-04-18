@@ -10,6 +10,7 @@ use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 use tokio::sync::{broadcast, Mutex};
 use tower::Service;
+use url2::Url2;
 
 pub type SharedService = Arc<
     Mutex<
@@ -39,7 +40,9 @@ use crate::{
 pub mod frame_codec;
 pub mod multiplexer;
 pub use multiplexer::Multiplexer;
+pub mod hub;
 pub mod net;
+pub use hub::Hub;
 
 #[derive(Error, Debug)]
 pub enum MiniDSPError {
@@ -80,15 +83,32 @@ pub enum MiniDSPError {
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
 
-    #[error("Specified channel is out of range")]
+    #[error("Specified channel or peq is out of range")]
     OutOfRange,
+
+    #[error("The specified URL was invalid")]
+    InvalidURL,
 }
 
 #[async_trait]
 pub trait Openable {
     async fn open(&self) -> Result<Transport, MiniDSPError>;
+    fn to_string(&self) -> String;
 }
 
 pub trait IntoTransport {
     fn into_transport(self) -> Transport;
+}
+
+pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
+    match url.scheme() {
+        "usb" => {
+            let api = hid::initialize_api()?;
+            Ok(hid::HidTransport::with_url(&api, url)
+                .map_err(MiniDSPError::HIDError)?
+                .into_transport())
+        }
+        "tcp" => Ok(net::open_url(url).await?.into_transport()),
+        _ => Err(MiniDSPError::InvalidURL),
+    }
 }

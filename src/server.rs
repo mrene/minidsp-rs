@@ -1,9 +1,8 @@
 //! TCP server compatible with the official mobile and desktop application
-use crate::{transport, utils::ErrInto, MiniDSPError};
-use anyhow::Context;
-use anyhow::Result;
+use crate::{transport::net::Codec, utils::OwnedJoinHandle, MiniDSPError};
+use anyhow::{Context, Result};
 use bytes::Bytes;
-use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
+use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt, TryStreamExt};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::{TcpListener, ToSocketAddrs},
@@ -11,7 +10,6 @@ use tokio::{
     sync::broadcast,
 };
 use tokio_util::codec::Framed;
-use transport::net::Codec;
 
 /// Forwards the given tcp stream to a transport.
 /// This lets multiple users talk to the same device simultaneously, which depending on the
@@ -57,8 +55,8 @@ where
     let (stream_tx, mut stream_rx) = broadcast::channel::<Bytes>(10);
 
     // Truncate each HID frame after its ending
-    let stream = stream.map(|frame| {
-        let frame = frame.err_into()?;
+    let stream = stream.err_into().map(|frame| {
+        let frame = frame?;
         if frame.is_empty() {
             return Err(MiniDSPError::MalformedResponse(
                 "Received an empty frame".to_string(),
@@ -81,7 +79,7 @@ where
     let mut rx_handle = {
         let stream_tx = stream_tx.clone();
         let mut stream = Box::pin(stream);
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             while let Some(frame) = stream.next().await {
                 if let Ok(frame) = frame {
                     if let Err(e) = stream_tx.send(frame) {
@@ -90,18 +88,20 @@ where
                 }
             }
             Ok::<(), E>(())
-        })
+        });
+        OwnedJoinHandle::new(handle)
     };
 
     // Send
     let mut tx_handle = {
         let mut sink = Box::pin(sink);
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             while let Some(frame) = sink_rx.next().await {
                 sink.send(frame).await?;
             }
             Ok::<_, E>(())
-        })
+        });
+        OwnedJoinHandle::new(handle)
     };
 
     let listener = TcpListener::bind(bind_address).await?;
@@ -114,11 +114,11 @@ where
                }
            }
            result = &mut rx_handle => {
-            let result = result.expect("rx joinhandle");
-            if let Err(e) = result {
-                log::error!("rx error: {}", e.into());
+                let result = result.expect("rx joinhandle");
+                if let Err(e) = result {
+                    log::error!("rx error: {}", e.into());
+                }
             }
-        }
            result = listener.accept() => {
                 let (stream, addr) = result?;
                 log::info!("[{:?}] New connection", addr);

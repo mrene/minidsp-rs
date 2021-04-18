@@ -1,6 +1,7 @@
 use crate::{
     commands::{self, Commands, FloatView, MemoryView, Value},
     transport::{MiniDSPError, SharedService},
+    DeviceInfo,
 };
 
 pub struct Client {
@@ -17,6 +18,23 @@ impl Client {
         cmd: commands::Commands,
     ) -> Result<commands::Responses, MiniDSPError> {
         self.transport.lock().await.call(cmd).await
+    }
+
+    /// Gets the hardware id and dsp firmware version
+    pub async fn get_device_info(&self) -> Result<DeviceInfo, MiniDSPError> {
+        let hw_id = self
+            .roundtrip(Commands::ReadHardwareId)
+            .await?
+            .into_hardware_id()?;
+
+        let dsp_version_view = self.read_memory(0xffa1, 1).await?;
+        let serial_view = self.read_memory(0xfffc, 2).await?;
+        let info = DeviceInfo {
+            hw_id,
+            dsp_version: dsp_version_view.read_u8(0xffa1),
+            serial: 900000 + (serial_view.read_u16(0xfffc) as u32),
+        };
+        Ok(info)
     }
 
     /// Reads eeprom memory from the device
@@ -58,12 +76,12 @@ impl Client {
         loop {
             let mut begin: Option<u16> = None;
             let chunk: Vec<_> = {
-                (&mut addrs).take_while(|i| match begin {
+                (&mut addrs).take_while(|&i| match begin {
                     None => {
-                        begin = Some(*i);
+                        begin = Some(i);
                         true
                     }
-                    Some(val) => (*i - val) < commands::READ_FLOATS_MAX as u16,
+                    Some(val) => (i - val) < commands::READ_FLOATS_MAX as u16,
                 })
             }
             .collect();

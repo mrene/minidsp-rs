@@ -1,12 +1,10 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::{debug::run_debug, PEQTarget};
-use crate::{FilterCommand, RoutingCommand, SubCommand};
+use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
 use minidsp::{
-    commands::MasterStatus, rew::FromRew, transport::Transport, utils::wav::read_wav_filter,
-    Biquad, BiquadFilter, Channel, Crossover, Fir, Source,
+    model::StatusSummary, rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad,
+    BiquadFilter, Channel, Crossover, Fir,
 };
-use serde::{Deserialize, Serialize};
-use std::{fmt, str::FromStr, time::Duration, writeln};
+use std::{str::FromStr, time::Duration};
 
 pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
     if let SubCommand::Server {
@@ -36,55 +34,6 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
         server::serve(bind_address.as_str(), Box::pin(transport)).await?;
     }
     Ok(())
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct StatusSummary {
-    master: MasterStatus,
-    available_sources: Vec<String>,
-    input_levels: Vec<f32>,
-    output_levels: Vec<f32>,
-}
-
-impl StatusSummary {
-    pub async fn fetch(dsp: &MiniDSP<'_>) -> Result<Self> {
-        let master = dsp.get_master_status().await?;
-        let input_levels = dsp.get_input_levels().await?;
-        let output_levels = dsp.get_output_levels().await?;
-
-        let available_sources: Vec<_> = Source::mapping(&dsp.get_device_info().await?)
-            .iter()
-            .map(|x| x.0.to_string())
-            .collect();
-
-        Ok(StatusSummary {
-            master,
-            available_sources,
-            input_levels,
-            output_levels,
-        })
-    }
-}
-
-impl fmt::Display for StatusSummary {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{:?}", self.master)?;
-        let strs: Vec<String> = self
-            .input_levels
-            .iter()
-            .map(|x| format!("{:.1}", *x))
-            .collect();
-        writeln!(f, "Input levels: {}", strs.join(", "))?;
-
-        let strs: Vec<String> = self
-            .output_levels
-            .iter()
-            .map(|x| format!("{:.1}", *x))
-            .collect();
-        writeln!(f, "Output levels: {}", strs.join(", "))?;
-
-        Ok(())
-    }
 }
 
 pub(crate) async fn run_command(
@@ -144,7 +93,7 @@ pub(crate) async fn run_input(
             RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
         },
         PEQ { index, ref cmd } => match index {
-            PEQTarget::One(index) => run_peq(&[input.peq(index)], cmd).await?,
+            PEQTarget::One(index) => run_peq(&[input.peq(index)?], cmd).await?,
             PEQTarget::All => {
                 let eqs = input.peqs_all();
                 run_peq(eqs.as_ref(), cmd).await?
@@ -171,7 +120,7 @@ pub(crate) async fn run_output(
         }
         &Invert { value } => output.set_invert(value).await?,
         &PEQ { index, ref cmd } => match index {
-            PEQTarget::One(index) => run_peq(&[output.peq(index)], cmd).await?,
+            PEQTarget::One(index) => run_peq(&[output.peq(index)?], cmd).await?,
             PEQTarget::All => {
                 let eqs = output.peqs_all();
                 run_peq(eqs.as_ref(), cmd).await?
@@ -240,7 +189,11 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> R
             for (i, peq) in peqs.iter().enumerate() {
                 if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
                     peq.set_coefficients(biquad.to_array().as_ref()).await?;
-                    println!("PEQ {}: Applied imported filter: biquad{}", i, biquad.index);
+                    println!(
+                        "PEQ {}: Applied imported filter: biquad{}",
+                        i,
+                        biquad.index.unwrap_or_default()
+                    );
                 } else {
                     println!("PEQ {}: Cleared filter", i);
                     peq.clear().await?;
@@ -295,7 +248,9 @@ pub(crate) async fn run_xover(
                         .await?;
                     println!(
                         "Xover {}.{}: Applied imported filter: biquad{}",
-                        group, i, biquad.index
+                        group,
+                        i,
+                        biquad.index.unwrap_or_default()
                     );
                 } else {
                     println!("Xover {}.{}: Cleared filter", group, i);

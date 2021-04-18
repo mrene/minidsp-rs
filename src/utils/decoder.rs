@@ -8,9 +8,12 @@ use std::fmt;
 use bytes::Bytes;
 use termcolor::{Color, ColorSpec, WriteColor};
 
-use crate::commands::{Commands, Responses};
-use crate::xml_config::Setting;
-use crate::{commands, packet};
+use crate::{
+    commands,
+    commands::{Commands, Responses},
+    packet,
+    xml_config::Setting,
+};
 use bimap::BiMap;
 use lazy_static::lazy_static;
 use strong_xml::XmlRead;
