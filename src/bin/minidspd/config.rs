@@ -75,13 +75,6 @@ pub struct TcpServer {
     pub advertise: Option<Advertise>,
 }
 
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// #[serde(tag = "type")]
-// #[serde(rename_all = "lowercase")]
-// pub enum DeviceRef {
-
-// }
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Advertise {
     /// Avertise the given IP address using UDP broadcast frames compatible with the mobile apps
