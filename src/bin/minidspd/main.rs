@@ -1,13 +1,17 @@
 ///! Main entrypoint
 /// Launches the application by instantiating all components
 ///
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Clap;
 use config::Config;
+use confy::load_path;
 use discovery::{DiscoveryEvent, Registry};
-use lazy_static::lazy_static;
 use minidsp::utils::OwnedJoinHandle;
-use std::{path::PathBuf, str::FromStr, sync::Arc};
+use once_cell::sync::OnceCell;
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 use tokio::sync::RwLock;
 
 mod config;
@@ -17,10 +21,7 @@ mod http;
 mod logging;
 mod tcp;
 
-lazy_static! {
-    /// The global application instance.
-    static ref APP: Arc<RwLock<App>> = Arc::new(App::new().into());
-}
+static APP: OnceCell<RwLock<App>> = OnceCell::new();
 
 #[derive(Clone, Clap, Debug, Default)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
@@ -63,13 +64,8 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
-        let opts: Opts = Opts::parse();
+    pub fn start(opts: Opts, config: Config) -> Self {
         let registry = Registry::new();
-
-        use confy::load_path;
-        let config: Config = load_path(opts.config.as_ref().unwrap()).unwrap();
-        println!("CFG: {:?}", &config);
 
         // If we're advertising a device, make sure to avoid discovering ourselves
         let this_ip = opts
@@ -106,18 +102,24 @@ impl App {
             opts,
         }
     }
-}
 
-impl Default for App {
-    fn default() -> Self {
-        App::new()
+    fn load_config(path: Option<impl AsRef<Path>>) -> Result<Config, confy::ConfyError> {
+        match path {
+            None => Ok(Config::default()),
+            Some(path) => load_path(path),
+        }
     }
 }
-
 #[tokio::main]
-pub async fn main() {
+pub async fn main() -> anyhow::Result<()> {
     env_logger::init();
-    let _ = APP.clone();
+
+    let opts: Opts = Opts::parse();
+    let config: Config =
+        App::load_config(opts.config.as_ref()).context("cannot load configuration file")?;
+
+    let app = App::start(opts, config);
+    APP.set(app.into()).ok().unwrap();
 
     loop {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;

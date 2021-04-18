@@ -14,7 +14,7 @@ pub struct Combine<TSink, TStream> {
 
 impl<'a, TSink, TStream> Combine<TSink, TStream> {
     pub fn new(stream: TStream, sink: TSink) -> Self {
-        Self { stream, sink }
+        Self { sink, stream }
     }
 }
 

@@ -72,7 +72,7 @@ fn get_device_instance<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, E
 
 /// Gets a list of available devices
 async fn get_devices(req: Request<Body>) -> Result<Response<Body>, Error> {
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
 
     let devices = app.device_manager.devices();
@@ -84,7 +84,7 @@ async fn get_devices(req: Request<Body>) -> Result<Response<Body>, Error> {
 /// Creates a websocket bridge which forwards raw frames to a device
 async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device(&app, device_index)?;
     let hub = device.to_hub().ok_or(Error::DeviceNotReady)?;
@@ -108,7 +108,7 @@ async fn device_bridge(req: Request<Body>) -> Result<Response<Body>, Error> {
 async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
     let status = StatusSummary::fetch(&device).await?;
@@ -120,7 +120,7 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
 async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
 
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
 
@@ -140,7 +140,7 @@ async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Er
 // async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {
 async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
 

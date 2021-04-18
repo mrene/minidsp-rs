@@ -88,7 +88,7 @@ pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
 }
 
 pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
-    let app = super::APP.clone();
+    let app = super::APP.get().unwrap();
     let app = app.read().await;
 
     if let Err(adv_err) = start_advertise(&app.opts) {

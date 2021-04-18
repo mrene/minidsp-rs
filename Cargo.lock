@@ -699,6 +699,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mime",
+ "once_cell",
  "pin-project",
  "proc-macro2",
  "quote",

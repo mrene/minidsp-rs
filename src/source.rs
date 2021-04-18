@@ -63,10 +63,10 @@ impl Source {
         Source::NotInstalled
     }
 
-    pub fn to_id(&self, device_info: &DeviceInfo) -> u8 {
-        for (src, src_id) in Self::mapping(device_info) {
-            if *src == *self {
-                return *src_id;
+    pub fn to_id(self, device_info: &DeviceInfo) -> u8 {
+        for &(src, src_id) in Self::mapping(device_info) {
+            if src == self {
+                return src_id;
             }
         }
         0

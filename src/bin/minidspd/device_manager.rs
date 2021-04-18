@@ -194,7 +194,7 @@ impl Device {
             let stream = transport::open_url(url).await?;
 
             // If we have any logging options, log this stream
-            let app = super::APP.clone();
+            let app = super::APP.get().unwrap();
             let app = app.read().await;
             let stream = logging::transport_logging(stream, &app.opts);
 
