@@ -43,8 +43,7 @@
 // Silence naming until we move to 0.1.0
 #![allow(clippy::upper_case_acronyms)]
 
-pub use crate::commands::Gain;
-pub use crate::model::MasterStatus;
+pub use crate::{commands::Gain, model::MasterStatus};
 use crate::{
     commands::{Commands, FromMemory},
     device::Gate,

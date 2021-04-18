@@ -8,8 +8,7 @@ use minidsp::{
     transport::{net::Codec, Transport},
     MiniDSPError,
 };
-use std::str::FromStr;
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::TcpListener,

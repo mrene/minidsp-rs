@@ -1,5 +1,4 @@
-use crate::commands::Commands;
-use crate::packet;
+use crate::{commands::Commands, packet};
 use bytes::Bytes;
 use futures::{channel::mpsc, SinkExt, Stream, StreamExt};
 use std::{fmt, io::Cursor};

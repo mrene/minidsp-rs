@@ -7,14 +7,11 @@
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
 //!
-use crate::{model::MasterStatus, Source};
-use crate::{transport::MiniDSPError, DeviceInfo};
+use crate::{model::MasterStatus, transport::MiniDSPError, DeviceInfo, Source};
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
-use std::{convert::TryInto, fmt};
-use std::{fmt::Debug, str::FromStr};
+use std::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
 use thiserror::Error;
 
 /// Maximum number of floats that can be read in a single command

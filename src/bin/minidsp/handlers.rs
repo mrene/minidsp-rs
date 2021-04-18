@@ -1,6 +1,5 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::{debug::run_debug, PEQTarget};
-use crate::{FilterCommand, RoutingCommand, SubCommand};
+use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
 use minidsp::{
     model::StatusSummary, rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad,
     BiquadFilter, Channel, Crossover, Fir,

@@ -1,14 +1,10 @@
 //! Discovery of local devices
 use super::{initialize_api, HidTransport, VID_MINIDSP};
 use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use hidapi::{HidApi, HidError};
-use std::fmt;
-use std::fmt::Formatter;
-use std::ops::Deref;
-use std::str::FromStr;
+use std::{fmt, fmt::Formatter, ops::Deref, str::FromStr};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {

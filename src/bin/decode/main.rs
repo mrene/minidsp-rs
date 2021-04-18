@@ -5,9 +5,7 @@ use minidsp::{
     commands::Commands,
     utils::{decoder, recorder},
 };
-use std::borrow::BorrowMut;
-use std::convert::TryInto;
-use std::path::PathBuf;
+use std::{borrow::BorrowMut, convert::TryInto, path::PathBuf};
 use tokio::{fs::File, io::AsyncReadExt};
 use tokio_util::{
     codec::{Decoder, LinesCodec},

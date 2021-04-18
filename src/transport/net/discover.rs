@@ -1,6 +1,8 @@
 //! Allows talking with the [crate::server] component
-use crate::discovery;
-use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
+use crate::{
+    discovery,
+    transport::{IntoTransport, MiniDSPError, Openable, Transport},
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::{Stream, StreamExt};

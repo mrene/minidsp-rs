@@ -2,8 +2,7 @@
 //! The packet format is compatible with the official apps.
 use anyhow::{anyhow, Result};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use std::convert::TryInto;
-use std::net::Ipv4Addr;
+use std::{convert::TryInto, net::Ipv4Addr};
 use tokio_util::codec::{Decoder, Encoder};
 
 pub mod client;

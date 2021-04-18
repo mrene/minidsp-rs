@@ -5,12 +5,8 @@ use clap::Clap;
 
 use super::{parse_hex, parse_hex_u16};
 use minidsp::{
-    commands::{BytesWrap, Commands},
-    MiniDSP,
-};
-use minidsp::{
-    commands::{ExtendView, FloatView, MemoryView},
-    source,
+    commands::{BytesWrap, Commands, ExtendView, FloatView, MemoryView},
+    source, MiniDSP,
 };
 use std::ops::Deref;
 

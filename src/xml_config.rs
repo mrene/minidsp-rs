@@ -1,8 +1,7 @@
 //! Utilities for dealing with xml configuration files
 use bimap::BiMap;
 use bytes::Bytes;
-use std::fmt;
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 use strong_xml::{XmlRead, XmlWrite};
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
