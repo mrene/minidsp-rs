@@ -12,7 +12,7 @@ where
     let data = req
         .param(name)
         .ok_or_else(|| Error::parameter_missing(name))?;
-    Ok(T::from_str(data).map_err(|e| Error::parameter_error(name, e))?)
+    T::from_str(data).map_err(|e| Error::parameter_error(name, e))
 }
 
 pub async fn parse_body<'de, T: DeserializeOwned>(req: &mut Request<Body>) -> Result<T, Error> {

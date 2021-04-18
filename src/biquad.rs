@@ -33,8 +33,8 @@ impl Default for Biquad {
     }
 }
 
-impl Into<[f32; 5]> for &Biquad {
-    fn into(self) -> [f32; 5] {
-        [self.b0, self.b1, self.b2, self.a1, self.a2]
+impl From<&Biquad> for [f32; 5] {
+    fn from(bq: &Biquad) -> Self {
+        [bq.b0, bq.b1, bq.b2, bq.a1, bq.a2]
     }
 }

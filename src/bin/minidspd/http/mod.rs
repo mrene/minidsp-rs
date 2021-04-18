@@ -65,9 +65,9 @@ fn get_device(app: &App, index: usize) -> Result<Arc<device_manager::Device>, Er
 }
 
 fn get_device_instance<'dsp>(app: &App, index: usize) -> Result<MiniDSP<'dsp>, Error> {
-    Ok(get_device(app, index)?
+    get_device(app, index)?
         .to_minidsp()
-        .ok_or(Error::DeviceNotReady)?)
+        .ok_or(Error::DeviceNotReady)
 }
 
 /// Gets a list of available devices
@@ -232,9 +232,8 @@ pub async fn main(cfg: Option<HttpServer>) -> Result<(), anyhow::Error> {
     if let Some(server) = cfg {
         let bind_address = server
             .bind_address
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or_else(|| "0.0.0.0:5380")
+            .as_deref()
+            .unwrap_or("0.0.0.0:5380")
             .to_owned();
 
         futs.push(

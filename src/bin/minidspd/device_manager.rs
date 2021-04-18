@@ -162,12 +162,12 @@ impl Device {
 
     pub fn to_hub(&self) -> Option<transport::Hub> {
         let inner = self.inner.read().unwrap();
-        Some(inner.handle.as_ref()?.to_hub()?)
+        inner.handle.as_ref()?.to_hub()
     }
 
     pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
         let inner = self.inner.read().unwrap();
-        Some(inner.handle.as_ref()?.to_minidsp()?)
+        inner.handle.as_ref()?.to_minidsp()
     }
 
     pub fn device_info(&self) -> Option<DeviceInfo> {

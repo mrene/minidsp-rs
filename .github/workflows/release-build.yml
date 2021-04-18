@@ -2,6 +2,8 @@ name: Release build
 
 on:
   push:
+    branches:
+      - 'feature/windows-zip'
     tags:
       - 'v0.*'
       - 'v1.*'
@@ -47,14 +49,17 @@ jobs:
             os: ubuntu-latest
             bin: minidsp
             cross: false
+            archive: tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
             bin: minidsp
             cross: false
+            archive: tar.gz
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             bin: minidsp.exe
             cross: false
+            archive: zip
 
     runs-on: ${{ matrix.pair.os }}
     env:
@@ -111,17 +116,26 @@ jobs:
           if-no-files-found: error
 
       - name: Create binary
+        if: matrix.pair.archive == 'tar.gz'
         run: |
           mkdir archive
           cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
           cd archive/
           tar -czf ../minidsp.${{ matrix.pair.target }}.tar.gz *
 
+      - name: Create binary
+        if: matrix.pair.archive == 'zip'
+        run: |
+          mkdir archive
+          cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
+          cd archive/
+          compress-archive ${{ matrix.pair.bin }} ../minidsp.${{ matrix.pair.target }}.zip
+
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.1
         with:
           name: ${{ matrix.pair.target }}-artifact
-          path: minidsp.${{ matrix.pair.target }}.tar.gz
+          path: minidsp.${{ matrix.pair.target }}.${{ matrix.pair.archive }}
           if-no-files-found: error
 
   release:
@@ -142,7 +156,7 @@ jobs:
         run: |
           set -x
           assets=()
-          for asset in ./artifacts/*/*.{tar.gz,deb}; do
+          for asset in ./artifacts/*/*.{tar.gz,zip,deb}; do
             assets+=("-a" "$asset")
           done
           TAG="${GITHUB_REF##*/}"

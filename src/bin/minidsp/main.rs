@@ -1,10 +1,12 @@
 //! MiniDSP Control Program
 
+#![allow(clippy::upper_case_acronyms)]
+
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use futures::{pin_mut, StreamExt};
+use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
 use handlers::run_server;
 use minidsp::{
     client::Client,
@@ -53,6 +55,10 @@ struct Opts {
     #[clap(long, env = "MINIDSP_LOG")]
     /// Log commands and responses to a file
     log: Option<PathBuf>,
+
+    /// Apply the given commands to all matching local usb devices
+    #[clap(long)]
+    all_local_devices: bool,
 
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]
@@ -252,7 +258,7 @@ enum OutputCommand {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum PEQTarget {
     All,
     One(usize),
@@ -345,6 +351,21 @@ impl FromStr for ProductId {
         Ok(ProductId { vid, pid })
     }
 }
+
+#[cfg(feature = "hid")]
+async fn get_local_raw_transports() -> Result<Vec<Transport>> {
+    let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
+    let transports: Vec<_> = hid_devices
+        .iter()
+        .map(|dev| dev.open())
+        .collect::<FuturesUnordered<_>>()
+        .filter_map(|dev| async move { dev.ok() })
+        .collect::<Vec<_>>()
+        .await;
+
+    Ok(transports)
+}
+
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
         let tcp = if tcp.contains(':') {
@@ -437,12 +458,9 @@ fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
     Box::pin(transport)
 }
 
-async fn get_service(transport: Transport) -> Result<SharedService> {
+fn get_service(transport: Transport) -> SharedService {
     let mplex = Multiplexer::from_transport(transport);
-
-    // TODO: Layer tower middlewares here
-
-    Ok(Arc::new(Mutex::new(mplex.to_service())))
+    Arc::new(Mutex::new(mplex.to_service()))
 }
 
 async fn run_probe() -> Result<()> {
@@ -482,56 +500,89 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport = get_raw_transport(&opts).await?;
-    let transport = transport_logging(transport, &opts);
-
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
+        let transport = get_raw_transport(&opts).await?;
+        let transport = transport_logging(transport, &opts);
         run_server(opts.subcmd.unwrap(), transport).await?;
         return Ok(());
     }
 
-    let service: SharedService = get_service(transport).await?;
-    let client = Client::new(service);
-    let device_info = client.get_device_info().await?;
-    let spec = probe(&device_info).expect("this device is not supported");
-    let device = MiniDSP::from_client(client, spec, Some(device_info));
+    let devices: Vec<_> = {
+        if opts.all_local_devices {
+            let transports = get_local_raw_transports().await?;
+            futures::stream::iter(transports.into_iter().map(get_service))
+                .filter_map(|service| async move {
+                    let client = Client::new(service);
+                    let device_info = client.get_device_info().await.ok()?;
+                    let spec = probe(&device_info)?; //("this device is not supported");
+                    Some(MiniDSP::from_client(client, spec, Some(device_info)))
+                })
+                .collect()
+                .await
+        } else {
+            let transport = get_raw_transport(&opts).await?;
+            let transport = transport_logging(transport, &opts);
 
-    if let Some(filename) = &opts.file {
-        let file: Box<dyn Read> = {
-            if filename.to_string_lossy() == "-" {
-                Box::new(std::io::stdin())
-            } else {
-                Box::new(File::open(filename)?)
-            }
-        };
-        let reader = BufReader::new(file);
-        let cmds = reader.lines().filter_map(|s| {
-            let trimmed = s.ok()?.trim().to_string();
-            if !trimmed.is_empty() && !trimmed.starts_with('#') {
-                Some(trimmed)
-            } else {
-                None
-            }
-        });
+            let service: SharedService = get_service(transport);
+            let client = Client::new(service);
+            let device_info = client.get_device_info().await?;
+            let spec =
+                probe(&device_info).ok_or_else(|| anyhow!("this device is not recognized"))?;
 
-        for cmd in cmds {
-            let words = shellwords::split(&cmd)?;
-            let prefix = &["minidsp".to_string()];
-            let words = prefix.iter().chain(words.iter());
-            let this_opts = Opts::try_parse_from(words);
-            let this_opts = match this_opts {
-                Ok(x) => x,
-                Err(e) => {
-                    eprintln!("While executing: {}\n{}", cmd, e);
-                    return Err(anyhow!("Command failure"));
+            vec![MiniDSP::from_client(client, spec, Some(device_info))]
+        }
+    };
+
+    match &opts.file {
+        Some(filename) => {
+            let file: Box<dyn Read> = {
+                if filename.to_string_lossy() == "-" {
+                    Box::new(std::io::stdin())
+                } else {
+                    Box::new(File::open(filename)?)
                 }
             };
+            let reader = BufReader::new(file);
+            let cmds = reader.lines().filter_map(|s| {
+                let trimmed = s.ok()?.trim().to_string();
+                if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                    Some(trimmed)
+                } else {
+                    None
+                }
+            });
 
-            handlers::run_command(&device, this_opts.subcmd, &opts).await?;
+            for cmd in cmds {
+                let words = shellwords::split(&cmd)?;
+                let prefix = &["minidsp".to_string()];
+                let words = prefix.iter().chain(words.iter());
+                let this_opts = Opts::try_parse_from(words);
+                let this_opts = match this_opts {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("While executing: {}\n{}", cmd, e);
+                        return Err(anyhow!("Command failure"));
+                    }
+                };
+
+                // Run this command on all devices in parallel
+                devices
+                    .iter()
+                    .map(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
+                    .collect::<FuturesUnordered<_>>()
+                    .collect::<Vec<_>>()
+                    .await;
+            }
         }
-    } else {
-        handlers::run_command(&device, opts.subcmd.clone(), &opts).await?;
+        None => {
+            devices
+                .iter()
+                .map(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
+                .collect::<FuturesUnordered<_>>()
+                .collect::<Vec<_>>()
+                .await;
+        }
     }
 
     Ok(())

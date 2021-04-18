@@ -40,6 +40,7 @@
 
 // Silence clippy warning inside JsonSchema derived code
 #![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::upper_case_acronyms)]
 
 pub use crate::commands::Gain;
 pub use crate::model::MasterStatus;

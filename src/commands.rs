@@ -642,9 +642,9 @@ impl Gain {
     pub const MAX: f32 = 0.;
 }
 
-impl Into<u8> for Gain {
-    fn into(self) -> u8 {
-        (self.0.abs() * 2.) as u8
+impl From<Gain> for u8 {
+    fn from(val: Gain) -> Self {
+        (val.0.abs() * 2.) as u8
     }
 }
 

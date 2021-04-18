@@ -1,0 +1,10 @@
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static"]
+
+[target.i686-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static"]
+
+[target.arm-unknown-linux-gnueabihf]
+linker = "gcc-sysroot"
+strip = { path = "arm-linux-gnueabihf-strip" }
+objcopy = { path = "arm-linux-gnueabihf-objcopy" }
