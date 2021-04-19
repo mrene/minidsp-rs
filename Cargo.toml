@@ -19,7 +19,7 @@ required-features = ["codegen"]
 
 [dependencies]
 anyhow = "1.0.40"
-async-trait = "0.1.48"
+async-trait = "0.1.50"
 atomic_refcell = "0.1.7"
 bimap = "0.6.1"
 bytes = "1.0.1"
@@ -73,7 +73,7 @@ version = "1.2.5"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.4.0"
+version = "1.5.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]

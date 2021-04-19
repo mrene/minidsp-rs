@@ -776,7 +776,7 @@ impl ExtendView for MemoryView {
         data.extend(self.data.iter());
         data.extend(other.data.iter());
 
-        // Truncate anything past 0xFFFF since it's probably garbabe
+        // Truncate anything past 0xFFFF since it's probably garbage
         data.truncate((u16::MAX as usize) - (self.base as usize));
 
         self.data = data.freeze();

@@ -1,5 +1,7 @@
 //! Combines a Stream and Sink into a single object implementing both traits
 
+use std::{pin::Pin, task::{Context, Poll}};
+
 use futures::{Sink, Stream};
 use pin_project::pin_project;
 
@@ -25,9 +27,9 @@ where
     type Item = TStream::Item;
 
     fn poll_next(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Option<Self::Item>> {
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Self::Item>> {
         self.project().stream.poll_next(cx)
     }
 }
@@ -39,26 +41,26 @@ where
     type Error = TSink::Error;
 
     fn poll_ready(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
         self.project().sink.poll_ready(cx)
     }
 
-    fn start_send(self: std::pin::Pin<&mut Self>, item: TSinkItem) -> Result<(), Self::Error> {
+    fn start_send(self: Pin<&mut Self>, item: TSinkItem) -> Result<(), Self::Error> {
         self.project().sink.start_send(item)
     }
 
     fn poll_flush(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
         self.project().sink.poll_flush(cx)
     }
 
     fn poll_close(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
         self.project().sink.poll_close(cx)
     }
