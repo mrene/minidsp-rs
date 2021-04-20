@@ -1,0 +1,18 @@
+[package]
+authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
+edition = "2018"
+name = "minidsp_protocol"
+version = "0.1.0"
+
+[dependencies]
+anyhow = "1.0.40"
+bytes = "1.0.1"
+schemars = {version = "0.8.0", optional = true}
+serde = {version = "1.0.125", features = ["derive"], optional = true}
+thiserror = "1.0.24"
+
+[features]
+debug = ["std"]
+default = ["std", "debug"]
+std = []
+use_serde = ["std", "serde", "schemars"]

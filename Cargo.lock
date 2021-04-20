@@ -725,6 +725,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "minidsp_protocol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mio"
 version = "0.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
