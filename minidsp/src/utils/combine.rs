@@ -1,6 +1,9 @@
 //! Combines a Stream and Sink into a single object implementing both traits
 
-use std::{pin::Pin, task::{Context, Poll}};
+use std::{
+    pin::Pin,
+    task::{Context, Poll},
+};
 
 use futures::{Sink, Stream};
 use pin_project::pin_project;
@@ -26,10 +29,7 @@ where
 {
     type Item = TStream::Item;
 
-    fn poll_next(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         self.project().stream.poll_next(cx)
     }
 }

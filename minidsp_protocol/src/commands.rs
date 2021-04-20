@@ -14,8 +14,10 @@ use bytes::{Buf, BufMut, Bytes, BytesMut};
 use core::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
 #[cfg(feature = "use_serde")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "std")]
+#[cfg(feature = "debug")]
 use thiserror::Error;
+
+use crate::packet::ParseError;
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;
@@ -28,6 +30,9 @@ pub enum ProtocolError {
 
     #[cfg_attr(feature = "debug", error("unexpected response type"))]
     UnexpectedResponseType,
+
+    #[cfg_attr(feature = "debug", error("parse error: {0}"))]
+    ParseError(ParseError),
 }
 
 #[derive(Clone)]
@@ -773,7 +778,7 @@ impl WriteInt {
 }
 
 #[cfg(test)]
-#[cfg(feature = "std")]
+#[cfg(feature = "debug")]
 mod test {
     use super::*;
 

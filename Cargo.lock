@@ -732,6 +732,7 @@ dependencies = [
  "bytes",
  "schemars",
  "serde",
+ "strum",
  "thiserror",
 ]
 
