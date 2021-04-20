@@ -12,7 +12,7 @@ pub mod device;
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(
     feature = "use_serde",
-    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema,)
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)
 )]
 /// Hardware id and dsp version
 pub struct DeviceInfo {

@@ -57,9 +57,9 @@ pub fn unframe(response: Bytes) -> Result<Bytes, ParseError> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "std")]
 mod test {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn frame_test() {
@@ -85,7 +85,7 @@ mod test {
     #[test]
     fn unframe_test() {
         let response = Bytes::from_static(&[0x3, 0x1, 0x2, 0xFF, 0xFF, 0xFF]);
-        let frame = unframe(response).unwrap();
+        let frame = unframe(response).ok().unwrap();
         assert_eq!(
             frame,
             vec![0x1, 0x2],

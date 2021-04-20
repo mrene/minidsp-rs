@@ -10,7 +10,7 @@ pub use probe::probe;
 pub mod m2x4hd;
 
 /// Defines how the high level api should interact with the device based on its memory layout
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Device {
     /// The name identifying the product, e.g. "2x4HD"
     pub product_name: &'static str,
@@ -27,7 +27,7 @@ pub struct Device {
 }
 
 /// Defines an input channel and its features
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Input {
     /// Mute and Gain
     pub gate: Gate,
@@ -40,7 +40,7 @@ pub struct Input {
 }
 
 /// Defines an output channel and its features
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Output {
     /// Mute and Gain
     pub gate: Gate,
@@ -61,7 +61,7 @@ pub struct Output {
 }
 
 /// Reference to a control having both a mute and gain setting
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Gate {
     /// Address controlling whether audio is enabled, 1 = off 2 = on
     pub enable: u16,
@@ -69,7 +69,7 @@ pub struct Gate {
     /// Address where the gain is controlled
     pub gain: u16,
 }
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Compressor {
     pub bypass: u16,
     pub threshold: u16,
@@ -79,13 +79,13 @@ pub struct Compressor {
     pub meter: u16,
 }
 
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Crossover {
     /// First address of each biquad groups, each containing 4 sequential biquads.
     pub peqs: &'static [u16],
 }
 
-#[derive(Debug)]
+#[cfg_attr(feature="debug", derive(Debug))]
 pub struct Fir {
     /// Index to use in the FIRLoad commands
     pub index: u8,

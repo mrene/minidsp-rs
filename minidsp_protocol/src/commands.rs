@@ -734,6 +734,7 @@ impl UnaryResponse for MemoryView {
     }
 }
 
+#[cfg(feature = "debug")]
 impl fmt::Debug for MemoryView {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -778,7 +779,6 @@ impl WriteInt {
 }
 
 #[cfg(test)]
-#[cfg(feature = "debug")]
 mod test {
     use super::*;
 
@@ -797,8 +797,10 @@ mod test {
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xda, 0x1, 0x2, 0x3, 0x4, 0x0]);
         let memory = Responses::from_bytes(response)
+            .ok()
             .unwrap()
             .into_memory_view()
+            .ok()
             .unwrap();
         let data = memory.read_at(0xffda, 4);
 
@@ -821,8 +823,10 @@ mod test {
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
         let _memory = Responses::from_bytes(response)
+            .ok()
             .unwrap()
             .into_memory_view()
+            .ok()
             .unwrap();
         // let device_info = DeviceInfo {
         //     hw_id: 10,
@@ -853,7 +857,7 @@ mod test {
             data: (10u16..20).map(|x| x.into()).collect(),
         };
 
-        f1.extend_with(f2).unwrap();
+        f1.extend_with(f2).ok().unwrap();
         assert_eq!(f1.base, 0);
         assert_eq!(f1.data.len(), 20);
         assert!(f1
@@ -871,7 +875,7 @@ mod test {
             data: (10u8..20).collect(),
         };
 
-        m1.extend_with(m2).unwrap();
+        m1.extend_with(m2).ok().unwrap();
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
         assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
