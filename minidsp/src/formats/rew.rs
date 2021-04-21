@@ -69,7 +69,7 @@ pub enum RewParseError {
 mod test {
     use super::*;
 
-    const REW_DATA: &'static str = include_str!("test_fixtures/rew-filters.txt");
+    const REW_DATA: &'static str = include_str!("../test_fixtures/rew-filters.txt");
 
     #[test]
     fn test_parse() {

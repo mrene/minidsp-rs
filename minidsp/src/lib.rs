@@ -64,14 +64,13 @@ pub use minidsp_protocol::commands;
 pub mod device;
 pub mod discovery;
 pub use minidsp_protocol::packet;
-pub mod rew;
 pub mod server;
 pub use minidsp_protocol::source;
 pub mod transport;
 pub mod utils;
-pub mod xml_config;
 pub use biquad::Biquad;
 pub mod client;
+pub mod formats;
 pub mod model;
 
 /// High-level MiniDSP Control API

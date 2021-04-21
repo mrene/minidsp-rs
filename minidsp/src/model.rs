@@ -1,5 +1,7 @@
 ///! Remote control object model
-/// Exposes configurable components in a (de)serializable format, suitable for various RPC protocols. Each field is optional, and will trigger an action if set.
+/// Exposes configurable components in a (de)serializable format, suitable
+/// for various RPC protocols. Each field is optional, and will trigger an action if set.
+///
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 use anyhow::anyhow;
 use schemars::JsonSchema;

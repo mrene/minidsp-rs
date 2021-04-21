@@ -11,8 +11,8 @@ use termcolor::{Color, ColorSpec, WriteColor};
 use crate::{
     commands,
     commands::{Commands, Responses},
+    formats::xml_config::Setting,
     packet,
-    xml_config::Setting,
 };
 use bimap::BiMap;
 use lazy_static::lazy_static;

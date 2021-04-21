@@ -1,8 +1,8 @@
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
 use minidsp::{
-    model::StatusSummary, rew::FromRew, transport::Transport, utils::wav::read_wav_filter, Biquad,
-    BiquadFilter, Channel, Crossover, Fir,
+    formats::rew::FromRew, model::StatusSummary, transport::Transport, utils::wav::read_wav_filter,
+    Biquad, BiquadFilter, Channel, Crossover, Fir,
 };
 use std::{str::FromStr, time::Duration};
 

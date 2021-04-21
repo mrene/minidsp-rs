@@ -344,16 +344,16 @@ mod test {
         }
         let fixtures = &[
             Fixture {
-                xml: include_str!("./test_fixtures/config1/config.xml"),
-                sync: include_bytes!("./test_fixtures/config1/sync.txt"),
+                xml: include_str!("../test_fixtures/config1/config.xml"),
+                sync: include_bytes!("../test_fixtures/config1/sync.txt"),
             },
             Fixture {
-                xml: include_str!("./test_fixtures/config2/config.xml"),
-                sync: include_bytes!("./test_fixtures/config2/sync.txt"),
+                xml: include_str!("../test_fixtures/config2/config.xml"),
+                sync: include_bytes!("../test_fixtures/config2/sync.txt"),
             },
             Fixture {
-                xml: include_str!("./test_fixtures/config3/config.xml"),
-                sync: include_bytes!("./test_fixtures/config3/sync.txt"),
+                xml: include_str!("../test_fixtures/config3/config.xml"),
+                sync: include_bytes!("../test_fixtures/config3/sync.txt"),
             },
         ];
 
