@@ -17,7 +17,9 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "debug")]
 use thiserror::Error;
 
-use crate::packet::ParseError;
+use crate::{packet::ParseError, MasterStatus};
+
+use super::DeviceInfo;
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;
@@ -778,6 +780,28 @@ impl WriteInt {
     pub const BYPASSED: u16 = 3;
 }
 
+/// Types that can be read from a contiguous memory representation
+pub trait FromMemory<T: Sized>
+where
+    Self: Sized,
+{
+    fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self>;
+}
+
+impl FromMemory<MasterStatus> for MasterStatus
+where
+    Self: Sized,
+{
+    fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
+        Ok(Self {
+            preset: Some(view.read_u8(0xffd8)),
+            source: Some(super::Source::from_id(view.read_u8(0xffd9), device_info)),
+            volume: Some(view.read_u8(0xffda).into()),
+            mute: Some(view.read_u8(0xffdb) == 1),
+        })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -822,27 +846,25 @@ mod test {
         assert_eq!(req_packet.remaining(), 0);
 
         let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
-        let _memory = Responses::from_bytes(response)
+        let memory = Responses::from_bytes(response)
             .ok()
             .unwrap()
             .into_memory_view()
             .ok()
             .unwrap();
-        // let device_info = DeviceInfo {
-        //     hw_id: 10,
-        //     dsp_version: 100,
-        //     serial: 0,
-        // };
-        // let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
-        // assert_eq!(
-        //     status,
-        //     MasterStatus {
-        //         preset: Some(0),
-        //         source: Some(Source::Toslink),
-        //         volume: Some(Gain(-39.5)),
-        //         mute: Some(false),
-        //     }
-        // );
+
+        let device_info = DeviceInfo {
+            hw_id: 10,
+            dsp_version: 100,
+            serial: 0,
+        };
+        let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
+        assert!(status.eq(&MasterStatus {
+            preset: Some(0),
+            source: Some(crate::Source::Toslink),
+            volume: Some(Gain(-39.5)),
+            mute: Some(false),
+        }));
     }
 
     #[test]
