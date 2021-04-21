@@ -3,9 +3,9 @@ use anyhow::Context;
 use futures::future::join_all;
 use hyper::{Body, Request, Response, Server, StatusCode};
 use minidsp::{
-    model::{Config, StatusSummary},
+    model::{Config, MasterStatus, StatusSummary},
     utils::{ErrInto, OwnedJoinHandle},
-    MasterStatus, MiniDSP,
+    MiniDSP,
 };
 use routerify::{Router, RouterService};
 use serde::Serialize;

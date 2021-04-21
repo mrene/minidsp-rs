@@ -26,7 +26,7 @@ impl StatusSummary {
             .collect();
 
         Ok(StatusSummary {
-            master,
+            master: master.into(),
             available_sources,
             input_levels,
             output_levels,
@@ -69,6 +69,17 @@ pub struct MasterStatus {
 
     /// Mute status
     pub mute: Option<bool>,
+}
+
+impl From<minidsp_protocol::MasterStatus> for MasterStatus {
+    fn from(s: minidsp_protocol::MasterStatus) -> Self {
+        Self {
+            preset: s.preset,
+            source: s.source,
+            volume: s.volume,
+            mute: s.mute,
+        }
+    }
 }
 
 impl MasterStatus {

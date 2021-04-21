@@ -155,35 +155,13 @@ impl Multiplexer {
 
     /// Constructs a MultiplexerServive which implements the tower::Service trait
     pub fn to_service(self: Arc<Self>) -> MultiplexerService {
-        MultiplexerService::new(self)
+        MultiplexerService(self)
     }
 }
 
-impl Service<Commands> for Arc<Multiplexer> {
-    type Response = Responses;
-    type Error = MiniDSPError;
-    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn call(&mut self, req: Commands) -> Self::Future {
-        let this = self.clone();
-        Box::pin(this.roundtrip(req))
-    }
-}
+// Arc<T> is not marked as #[fundamental], therefore we cannot directly implement Service on Arc<Multiplexer>
 /// Wraps a Multiplexer object in a cloneable struct implementing tower::Service
-#[derive(Clone)]
-pub struct MultiplexerService {
-    mplex: Arc<Multiplexer>,
-}
-
-impl MultiplexerService {
-    pub fn new(mplex: Arc<Multiplexer>) -> Self {
-        Self { mplex }
-    }
-}
+pub struct MultiplexerService(Arc<Multiplexer>);
 
 impl Service<Commands> for MultiplexerService {
     type Response = Responses;
@@ -195,7 +173,7 @@ impl Service<Commands> for MultiplexerService {
     }
 
     fn call(&mut self, req: Commands) -> Self::Future {
-        let this = self.mplex.clone();
+        let this = self.0.clone();
         Box::pin(this.roundtrip(req))
     }
 }

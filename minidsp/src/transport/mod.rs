@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use commands::Commands;
 use futures::future::BoxFuture;
+use minidsp_protocol::commands::ProtocolError;
 use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 use tokio::sync::{broadcast, Mutex};
@@ -63,7 +64,7 @@ pub enum MiniDSPError {
     TooManyCoefficients,
 
     #[error("Parse error")]
-    ParseError(#[from] commands::ParseError),
+    ParseError(#[from] minidsp_protocol::ParseError),
 
     #[error("Malformed filter data")]
     MalformedFilterData,
@@ -88,6 +89,9 @@ pub enum MiniDSPError {
 
     #[error("The specified URL was invalid")]
     InvalidURL,
+
+    #[error("Protocol error: {0}")]
+    ProtocolError(#[from] ProtocolError),
 }
 
 #[async_trait]

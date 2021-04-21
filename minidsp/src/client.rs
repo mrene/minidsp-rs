@@ -1,6 +1,7 @@
 use crate::{
     commands::{self, Commands, FloatView, MemoryView, Value},
     transport::{MiniDSPError, SharedService},
+    utils::ErrInto,
     DeviceInfo,
 };
 
@@ -42,6 +43,7 @@ impl Client {
         self.roundtrip(Commands::ReadMemory { addr, size })
             .await?
             .into_memory_view()
+            .err_into()
     }
 
     /// Reads a series of contiguous floats
@@ -49,6 +51,7 @@ impl Client {
         self.roundtrip(Commands::ReadFloats { addr, len })
             .await?
             .into_float_view()
+            .err_into()
     }
 
     /// Writes data to the dsp memory area
@@ -59,6 +62,7 @@ impl Client {
         })
         .await?
         .into_ack()
+        .err_into()
     }
 
     /// Reads floats (using `read_floats`) using the least amount of commands possible

@@ -1,19 +1,24 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 //! Main protocol implementation.
-//! 
+//!
 //! This crate provides the basic components in order to be able to send and receive
 //! commands and events from a device.
-//! 
-//! It is meant to be as lean as possible in order to run in restricted environments. 
+//!
+//! It is meant to be as lean as possible in order to run in restricted environments.
 //! For this reason, it doesn't include any transport implementations.
 
 extern crate alloc;
 
 pub mod commands;
+pub use commands::{Commands, FromMemory};
+
 pub mod packet;
+pub use packet::ParseError;
+
 pub mod source;
 pub use source::Source;
+
 pub mod device;
 
 #[derive(Copy, Clone)]
@@ -28,7 +33,6 @@ pub struct DeviceInfo {
     pub dsp_version: u8,
     pub serial: u32,
 }
-
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]

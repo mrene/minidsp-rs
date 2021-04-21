@@ -43,15 +43,14 @@
 // Silence naming until we move to 0.1.0
 #![allow(clippy::upper_case_acronyms)]
 
-pub use crate::{commands::Gain, model::MasterStatus};
-use crate::{
-    commands::{Commands, FromMemory},
-    device::Gate,
-};
+pub use crate::commands::Gain;
+use crate::device::Gate;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
-pub use source::Source;
+pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
+use utils::ErrInto;
+
 use std::convert::TryInto;
 use tokio::{sync::Mutex, time::Duration};
 pub use transport::MiniDSPError;
@@ -60,13 +59,14 @@ use transport::SharedService;
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
-pub mod commands;
+pub use minidsp_protocol::commands;
+
 pub mod device;
 pub mod discovery;
-pub mod packet;
+pub use minidsp_protocol::packet;
 pub mod rew;
 pub mod server;
-pub mod source;
+pub use minidsp_protocol::source;
 pub mod transport;
 pub mod utils;
 pub mod xml_config;
@@ -144,6 +144,7 @@ impl MiniDSP<'_> {
             .roundtrip(Commands::SetVolume { value })
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets the current master mute status
@@ -152,6 +153,7 @@ impl MiniDSP<'_> {
             .roundtrip(Commands::SetMute { value })
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets the current input source
@@ -164,6 +166,7 @@ impl MiniDSP<'_> {
             })
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets the active configuration
@@ -175,6 +178,7 @@ impl MiniDSP<'_> {
             })
             .await?
             .into_config_changed()
+            .err_into()
     }
 
     /// Gets an object wrapping an input channel
@@ -214,14 +218,6 @@ impl MiniDSP<'_> {
     }
 }
 
-/// Hardware id and dsp version
-#[derive(Clone, Copy, Debug, serde::Serialize, schemars::JsonSchema)]
-pub struct DeviceInfo {
-    pub hw_id: u8,
-    pub dsp_version: u8,
-    pub serial: u32,
-}
-
 #[async_trait]
 pub trait Channel {
     /// internal: Returns the address for this channel to include mute/gain functions
@@ -235,6 +231,7 @@ pub trait Channel {
             .roundtrip(Commands::mute(gate.enable, value))
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets the current gain setting
@@ -278,6 +275,7 @@ impl<'a> Input<'a> {
             ))
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets the routing matrix gain for this [input, output_index] pair
@@ -286,6 +284,7 @@ impl<'a> Input<'a> {
             .client
             .write_dsp(self.spec.routing[output_index].gain, gain.0)
             .await
+            .err_into()
     }
 }
 
@@ -380,6 +379,7 @@ impl<'a> BiquadFilter<'a> {
             })
             .await?
             .into_ack()
+            .err_into()
     }
 
     /// Sets whether this filter is bypassed
@@ -392,6 +392,7 @@ impl<'a> BiquadFilter<'a> {
             })
             .await?
             .into_ack()
+            .err_into()
     }
 }
 
@@ -447,6 +448,7 @@ impl<'a> Crossover<'a> {
             })
             .await?
             .into_ack()
+            .err_into()
     }
 
     pub fn num_groups(&self) -> usize {
