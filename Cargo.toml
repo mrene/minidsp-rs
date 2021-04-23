@@ -39,7 +39,7 @@ log = "0.4.14"
 mime = "0.3.16"
 once_cell = "1.7.2"
 pin-project = "1.0.6"
-routerify = "2.0.0"
+routerify = "2.0.1"
 routerify-unixsocket = "0.1.1"
 schemars = "0.8.0"
 serde = {version = "1.0.125", features = ["derive"]}
