@@ -229,7 +229,7 @@ impl<T: FromStr> FromStr for CommaSeparatedList<T> {
         let mut vec = Vec::new();
         for part in s.split(',') {
             if !part.is_empty() {
-                vec.push(<T as FromStr>::from_str(part)?);
+                vec.push(<T as FromStr>::from_str(part.trim())?);
             }
         }
         Ok(CommaSeparatedList { inner: vec })
@@ -373,6 +373,12 @@ mod test {
         let parsed = CommaSeparatedList::<f32>::from_str(s).unwrap();
         assert!(parsed.inner.iter().cloned().eq(expected.iter().cloned()));
         assert_eq!(parsed.to_string().as_str(), s);
+
+
+        let s = "1, 2,, 3, 4";
+        let expected: &[f32] = &[1.0, 2.0, 3.0, 4.];
+        let parsed = CommaSeparatedList::<f32>::from_str(s).unwrap();
+        assert!(parsed.inner.iter().cloned().eq(expected.iter().cloned()));
 
         let s = "01020304,05060708,090a0b0c";
         let expected: &[&[u8]] = &[

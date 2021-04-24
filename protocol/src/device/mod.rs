@@ -17,6 +17,8 @@ pub static GENERIC: Device = Device {
     outputs: &[],
     fir_max_taps: 0,
     internal_sampling_rate: 0,
+    #[cfg(feature="symbols")]
+    symbols: &[],
 };
 
 /// Defines how the high level api should interact with the device based on its memory layout
@@ -34,6 +36,9 @@ pub struct Device {
     pub fir_max_taps: u16,
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
+    // A mapping of all symbols by name, as defined in the xml config
+    #[cfg(feature="symbols")]
+    pub symbols: &'static [(&'static str, u16)],
 }
 
 /// Defines an input channel and its features

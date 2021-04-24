@@ -7,7 +7,7 @@ use super::spec::*;
 pub struct Target {}
 impl crate::Target for Target {
     fn filename() -> &'static str {
-        "m2x4hd.rs"
+        "msharc4x8.rs"
     }
 
     fn symbols() -> bimap::BiMap<String, usize> {
@@ -68,18 +68,21 @@ pub(crate) fn output(output: usize) -> Output {
             index: output as u8,
             num_coefficients: format!("FIR_{}_0_Taps", output + 3),
             bypass: format!("FIR_{}_0_status", output + 3),
-            max_coefficients: 4096,
+            max_coefficients: 2048,
         }),
     }
 }
 
+
 pub fn device() -> Device {
     Device {
-        product_name: "2x4HD".into(),
-        sources: vec!["Analog".into(), "Toslink".into(), "Usb".into()],
-        inputs: (0..2).map(input).collect(),
-        outputs: (0..4).map(output).collect(),
-        fir_max_taps: 4096,
+        product_name: "MiniSHARC 4x8".into(),
+        sources: Vec::new(),
+        inputs: (0..4).map(input).collect(),
+        outputs: (0..8).map(output).collect(),
+        fir_max_taps: 9600,
+
+        // FIXME: This depends on the installed plugin
         internal_sampling_rate: 96000,
     }
 }
@@ -88,6 +91,7 @@ pub fn symbols() -> BiHashMap<String, usize> {
     let cfg = include_str!("config.xml");
     Setting::from_str(cfg).unwrap().name_map()
 }
+
 
 #[cfg(test)]
 #[test]

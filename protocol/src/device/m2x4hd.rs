@@ -540,4 +540,6 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 4096,
     internal_sampling_rate: 96000,
+    #[cfg(feature="symbols")]
+    symbols: SYMBOLS,
 };

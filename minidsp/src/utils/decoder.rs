@@ -7,34 +7,28 @@ use std::fmt;
 
 use bimap::BiMap;
 use bytes::Bytes;
-use lazy_static::lazy_static;
-use strong_xml::XmlRead;
 use termcolor::{Color, ColorSpec, WriteColor};
 
 use crate::{
     commands,
     commands::{Commands, Responses},
-    formats::xml_config::Setting,
     packet,
 };
-
-lazy_static! {
-    pub static ref DEFAULT_CONFIG: Setting =
-        Setting::from_str(include_str!("../../test_fixtures/config1/config.xml")).unwrap();
-    pub static ref NAME_MAP: BiMap<String, usize> = DEFAULT_CONFIG.name_map();
-}
 
 /// Main decoder
 pub struct Decoder {
     quiet: bool,
     w: Box<dyn WriteColor + Send + Sync>,
+    name_map: Option<BiMap<String, usize>>,
 }
 
 impl Decoder {
-    pub fn new(w: Box<dyn WriteColor + Send + Sync>, quiet: bool) -> Self {
-        // Load name map from the default config
-
-        Decoder { quiet, w }
+    pub fn new(
+        w: Box<dyn WriteColor + Send + Sync>,
+        quiet: bool,
+        name_map: Option<BiMap<String, usize>>,
+    ) -> Self {
+        Decoder { quiet, w, name_map }
     }
 
     /// Feed a sent frame
@@ -142,16 +136,18 @@ impl Decoder {
             .w
             .set_color(ColorSpec::new().set_fg(Some(Color::Magenta)));
 
-        writeln!(
-            self.w,
-            "(0x{:02x?} | {:?}) <> {}",
-            addr,
-            addr,
-            NAME_MAP
-                .get_by_right(&(*addr as usize))
-                .unwrap_or(&"<unknown>".to_string())
-        )?;
+        let name = self.resolve_addr(*addr).unwrap_or("<unknown>".to_string());
+        writeln!(self.w, "(0x{:02x?} | {:?}) <> {}", addr, addr, name,)?;
         Ok(())
+    }
+
+    fn resolve_addr(&self, addr: u16) -> Option<String> {
+        Some(
+            self.name_map
+                .as_ref()?
+                .get_by_right(&(addr as usize))?
+                .clone(),
+        )
     }
 }
 
@@ -171,6 +167,7 @@ mod test {
         let mut d = Decoder {
             w: writer,
             quiet: false,
+            name_map: None,
         };
         d.feed_sent(&Bytes::from_static(&[0x05, 0x14, 0x00, 0x46, 0x04, 0x63]));
         d.feed_recv(&Bytes::from_static(&[

@@ -33,6 +33,8 @@ impl ToSymbolTokens for Device {
                 outputs: #outputs,
                 fir_max_taps: #fir_max_taps,
                 internal_sampling_rate: #internal_sampling_rate,
+                #[cfg(feature="symbols")]
+                symbols: SYMBOLS,
             };
         }
     }

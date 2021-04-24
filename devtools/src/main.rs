@@ -9,7 +9,7 @@ use std::{
 use anyhow::Result;
 use bimap::BiMap;
 use clap::{self as clap, Clap};
-use codegen::{generate_static_config, m2x4hd, spec::Device};
+use codegen::{generate_static_config, m2x4hd, msharc4x8, spec::Device};
 use futures::{Stream, StreamExt};
 use minidsp::{
     commands::Commands,
@@ -117,7 +117,7 @@ async fn decode(framed: impl Stream<Item = recorder::Message>) -> Result<()> {
     let mut decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stdout(ColorChoice::Always);
-        decoder::Decoder::new(Box::new(writer), true)
+        decoder::Decoder::new(Box::new(writer), true, None)
     };
 
     let mut n_recv: i32 = 0;
@@ -164,5 +164,6 @@ fn gen_write<T: Target>(output: &Path) -> Result<()> {
 
 fn codegen_main(output: PathBuf) -> Result<()> {
     gen_write::<m2x4hd::Target>(&output)?;
+    gen_write::<msharc4x8::Target>(&output)?;
     Ok(())
 }
