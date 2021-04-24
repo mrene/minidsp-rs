@@ -2,24 +2,6 @@
 
 #![allow(clippy::upper_case_acronyms)]
 
-use anyhow::{anyhow, Result};
-use bytes::Bytes;
-use clap::Clap;
-use debug::DebugCommands;
-use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
-use handlers::run_server;
-use minidsp::{
-    client::Client,
-    device::probe,
-    discovery, server,
-    transport::{
-        multiplexer::Multiplexer,
-        net::{self, StreamTransport},
-        IntoTransport, SharedService, Transport,
-    },
-    utils::{self, decoder::Decoder, logger, recorder::Recorder},
-    Gain, MiniDSP, Source,
-};
 use std::{
     fmt,
     fs::File,
@@ -29,15 +11,35 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+
+use anyhow::{anyhow, Result};
+use bytes::Bytes;
+use clap::Clap;
+use debug::DebugCommands;
+use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
+use handlers::run_server;
+use minidsp::{
+    client::Client,
+    device::probe,
+    discovery, tcp_server,
+    transport::{
+        multiplexer::Multiplexer,
+        net::{self, StreamTransport},
+        IntoTransport, SharedService, Transport,
+    },
+    utils::{self, decoder::Decoder, logger, recorder::Recorder},
+    Gain, MiniDSP, Source,
+};
 use tokio::{net::TcpStream, sync::Mutex};
 
 mod debug;
 mod handlers;
 
+use std::{io::Read, ops::Deref, time::Duration};
+
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 use minidsp::transport::Openable;
-use std::{io::Read, ops::Deref, time::Duration};
 
 #[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]

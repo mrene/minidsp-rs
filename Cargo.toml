@@ -1,7 +1,7 @@
 [workspace]
-members=["minidsp", "minidsp_protocol"]
+members = ["minidsp", "minidsp_protocol", "minidsp_daemon"]
 
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = 3
+# [profile.release]
+# codegen-units = 1
+# lto = true
+# opt-level = 3

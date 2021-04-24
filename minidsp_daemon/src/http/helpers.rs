@@ -1,8 +1,10 @@
-use super::error::Error;
+use std::str::FromStr;
+
 use hyper::{body, Body, Request, Response};
 use routerify::prelude::*;
 use serde::de::DeserializeOwned;
-use std::str::FromStr;
+
+use super::error::Error;
 
 pub fn parse_param<T>(req: &Request<Body>, name: &str) -> Result<T, Error>
 where

@@ -668,12 +668,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
-name = "mime"
-version = "0.3.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
-
-[[package]]
 name = "minidsp"
 version = "0.0.7"
 dependencies = [
@@ -685,7 +679,6 @@ dependencies = [
  "bimap",
  "bytes",
  "clap",
- "confy",
  "env_logger",
  "futures",
  "futures-sink",
@@ -693,19 +686,12 @@ dependencies = [
  "hex",
  "hexplay",
  "hidapi",
- "hyper",
- "hyper-tungstenite",
- "hyperlocal",
  "lazy_static",
  "log",
- "mime",
  "minidsp_protocol",
- "once_cell",
  "pin-project",
  "proc-macro2",
  "quote",
- "routerify",
- "routerify-unixsocket",
  "schemars",
  "serde",
  "serde_json",
@@ -717,12 +703,43 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-util",
- "toml",
  "tower",
- "tungstenite",
  "url2",
  "urlencoding",
  "wav",
+]
+
+[[package]]
+name = "minidsp_daemon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "clap",
+ "confy",
+ "env_logger",
+ "futures",
+ "futures-sink",
+ "futures-util",
+ "hyper",
+ "hyper-tungstenite",
+ "hyperlocal",
+ "lazy_static",
+ "log",
+ "minidsp",
+ "once_cell",
+ "routerify",
+ "routerify-unixsocket",
+ "schemars",
+ "serde",
+ "serde_json",
+ "strum",
+ "termcolor 1.1.2",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tungstenite",
+ "url2",
 ]
 
 [[package]]

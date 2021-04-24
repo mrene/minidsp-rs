@@ -1,10 +1,11 @@
 //! HID transport for local USB devices
+use std::{collections::HashMap, ops::Deref, sync::Arc};
+
 use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
 use futures::{SinkExt, TryStreamExt};
 use hidapi::{HidApi, HidDevice, HidError, HidResult};
-use std::{collections::HashMap, ops::Deref, sync::Arc};
 use stream::HidStream;
 use url2::Url2;
 

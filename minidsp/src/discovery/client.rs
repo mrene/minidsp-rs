@@ -1,9 +1,10 @@
-use super::DiscoveryPacketCodec;
-use anyhow::Result;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use tokio::net::UdpSocket;
 
+use anyhow::Result;
+use tokio::net::UdpSocket;
 use tokio_util::udp::UdpFramed;
+
+use super::DiscoveryPacketCodec;
 
 /// Returns a stream with incoming discovery packets
 pub async fn discover() -> Result<UdpFramed<DiscoveryPacketCodec>> {

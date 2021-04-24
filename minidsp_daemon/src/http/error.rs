@@ -1,5 +1,6 @@
-use minidsp::MiniDSPError;
 use std::sync::Arc;
+
+use minidsp::MiniDSPError;
 use thiserror::Error;
 
 #[derive(Clone, Debug, serde::Serialize, Error)]

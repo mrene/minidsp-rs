@@ -1,4 +1,5 @@
 use std::path::Path;
+
 use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WavReadError {
@@ -55,10 +56,10 @@ fn convert_data(data: wav::BitDepth) -> Result<Vec<f32>, WavReadError> {
 mod test {
     use std::vec;
 
+    use assert_approx_eq::assert_approx_eq;
     use wav::BitDepth;
 
     use super::convert_data;
-    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_u8() {

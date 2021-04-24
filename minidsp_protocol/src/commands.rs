@@ -9,17 +9,17 @@
 //!
 
 use alloc::vec::Vec;
+use core::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
+
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use core::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
 #[cfg(feature = "use_serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "debug")]
 use thiserror::Error;
 
-use crate::{packet::ParseError, MasterStatus};
-
 use super::DeviceInfo;
+use crate::{packet::ParseError, MasterStatus};
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;

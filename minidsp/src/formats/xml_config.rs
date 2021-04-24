@@ -1,7 +1,8 @@
 //! Utilities for dealing with xml configuration files
+use std::{fmt, str::FromStr};
+
 use bimap::BiMap;
 use bytes::Bytes;
-use std::{fmt, str::FromStr};
 use strong_xml::{XmlRead, XmlWrite};
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
@@ -283,12 +284,13 @@ impl fmt::Display for HexString {
 
 #[cfg(test)]
 mod test {
+    use futures::{pin_mut, AsyncReadExt, Future, StreamExt, TryStreamExt};
+
     use super::*;
     use crate::{
         commands::Commands,
         utils::recorder::{self as recorder},
     };
-    use futures::{pin_mut, AsyncReadExt, Future, StreamExt, TryStreamExt};
 
     /// Extracts a restore blob from a built-in recorded fixture
     async fn extract_blob<F, Fut>(fixture: &'static [u8], f: F) -> Bytes

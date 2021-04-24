@@ -43,18 +43,19 @@
 // Silence naming until we move to 0.1.0
 #![allow(clippy::upper_case_acronyms)]
 
-pub use crate::commands::Gain;
-use crate::device::Gate;
+use std::convert::TryInto;
+
 use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
 pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
-use utils::ErrInto;
-
-use std::convert::TryInto;
 use tokio::{sync::Mutex, time::Duration};
 pub use transport::MiniDSPError;
 use transport::SharedService;
+use utils::ErrInto;
+
+pub use crate::commands::Gain;
+use crate::device::Gate;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
@@ -64,7 +65,7 @@ pub use minidsp_protocol::commands;
 pub mod device;
 pub mod discovery;
 pub use minidsp_protocol::packet;
-pub mod server;
+pub mod tcp_server;
 pub use minidsp_protocol::source;
 pub mod transport;
 pub mod utils;

@@ -12,9 +12,10 @@
 //! On the client side, the length prefix includes itself, and there is no CRC byte. [01] is a valid zero-length response used for acknowledgments.
 //!
 
+use std::io;
+
 use anyhow::Result;
 use bytes::{Buf, Bytes};
-use std::io;
 use tokio_util::codec::{Decoder, Encoder};
 
 #[derive(Copy, Clone)]
@@ -69,9 +70,10 @@ impl Encoder<Bytes> for Codec {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use bytes::{Bytes, BytesMut};
     use tokio_util::codec::Decoder;
+
+    use super::*;
 
     #[test]
     fn test() {

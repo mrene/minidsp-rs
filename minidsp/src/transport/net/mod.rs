@@ -4,7 +4,6 @@ mod discover;
 
 use std::sync::Arc;
 
-use super::{frame_codec::FrameCodec, multiplexer::Multiplexer, IntoTransport, MiniDSPError};
 pub use codec::Codec;
 pub use discover::{discover, discover_timeout};
 use futures::{SinkExt, TryStreamExt};
@@ -14,6 +13,8 @@ use tokio::{
 };
 use tokio_util::codec::Framed;
 use url2::Url2;
+
+use super::{frame_codec::FrameCodec, multiplexer::Multiplexer, IntoTransport, MiniDSPError};
 
 pub struct StreamTransport<T>
 where

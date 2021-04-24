@@ -1,20 +1,20 @@
 //! TCP server compatible with the official mobile and desktop application
-use std::net::Ipv4Addr;
+use std::{net::Ipv4Addr, str::FromStr, time::Duration};
 
-use crate::{config, Opts};
 use anyhow::{Context, Result};
 use futures::{pin_mut, SinkExt, StreamExt};
 use minidsp::{
     transport::{net::Codec, Transport},
     MiniDSPError,
 };
-use std::{str::FromStr, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::TcpListener,
     select,
 };
 use tokio_util::codec::Framed;
+
+use super::{config, Opts};
 
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.

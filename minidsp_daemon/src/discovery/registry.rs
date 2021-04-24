@@ -1,10 +1,10 @@
+use std::{collections::HashMap, sync::RwLock, time};
+
 ///! Device registry
 /// This module is responsible for keeping track of discovered urls. Other components are free
 /// to call `register` with urls that they want to probe, they will be added to the registry and events will fire,
 /// triggering any external probing logic.
 use futures::channel::mpsc;
-use std::{collections::HashMap, sync::RwLock, time};
-
 pub struct Registry {
     pub inner: RwLock<Inner>,
 }

@@ -3,26 +3,27 @@
 //! and matches it with the appropriate response. Unrelated received messages are pushed to another
 //! channel.
 
-use crate::{
-    commands::{Commands, Responses},
-    transport::MiniDSPError,
-    utils::StreamSink,
-    Result,
-};
-use bytes::Bytes;
-use futures::{
-    channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt, TryStreamExt,
-};
 use std::{
     collections::VecDeque,
     pin::Pin,
     sync::{Arc, Mutex},
     task::{Context, Poll},
 };
+
+use bytes::Bytes;
+use futures::{
+    channel::oneshot, future::BoxFuture, Future, Sink, SinkExt, StreamExt, TryStreamExt,
+};
 use tokio::sync::broadcast;
 use tower::Service;
 
 use super::frame_codec::FrameCodec;
+use crate::{
+    commands::{Commands, Responses},
+    transport::MiniDSPError,
+    utils::StreamSink,
+    Result,
+};
 
 type BoxSink<E> = Pin<Box<dyn Sink<Commands, Error = E> + Send + Sync>>;
 type BoxStream = futures::stream::BoxStream<'static, Result<Responses, MiniDSPError>>;
@@ -180,10 +181,11 @@ impl Service<Commands> for MultiplexerService {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::commands::BytesWrap;
     use bytes::Bytes;
     use futures::channel::mpsc;
+
+    use super::*;
+    use crate::commands::BytesWrap;
 
     #[tokio::test]
     async fn test_golden_path() {

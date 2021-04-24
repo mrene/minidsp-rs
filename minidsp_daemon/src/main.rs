@@ -1,25 +1,26 @@
 ///! Main entrypoint
 /// Launches the application by instantiating all components
 ///
-use anyhow::{Context, Result};
-use clap::Clap;
-use config::Config;
-use confy::load_path;
-use discovery::{DiscoveryEvent, Registry};
-use minidsp::utils::OwnedJoinHandle;
-use once_cell::sync::OnceCell;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
+
+use anyhow::{Context, Result};
+use clap::Clap;
+use confy::load_path;
+use minidsp::utils::OwnedJoinHandle;
+use once_cell::sync::OnceCell;
 use tokio::sync::RwLock;
 
-mod config;
-mod device_manager;
-mod discovery;
-mod http;
-mod logging;
-mod tcp;
+use crate::{config::Config, device_manager::DeviceManager, discovery::Registry};
+
+pub mod config;
+pub mod device_manager;
+pub mod discovery;
+pub mod http;
+pub mod logging;
+pub mod tcp;
 
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 
@@ -59,7 +60,7 @@ pub struct App {
     opts: Opts,
     config: Config,
     #[allow(dead_code)]
-    device_manager: Option<device_manager::DeviceManager>,
+    device_manager: Option<DeviceManager>,
     #[allow(dead_code)]
     handles: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>>,
 }
@@ -84,7 +85,7 @@ impl App {
             .as_ref()
             .and_then(|ip| std::net::IpAddr::from_str(ip.as_str()).ok());
 
-        let device_mgr = device_manager::DeviceManager::new(registry, this_ip);
+        let device_mgr = DeviceManager::new(registry, this_ip);
 
         let http_server = self.config.http_server.clone();
         self.handles.push(
@@ -116,6 +117,7 @@ impl App {
         }
     }
 }
+
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
     env_logger::init();

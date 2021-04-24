@@ -1,6 +1,5 @@
 pub mod decoder;
 pub mod recorder;
-pub mod wav;
 
 mod err_into;
 pub use err_into::ErrInto;

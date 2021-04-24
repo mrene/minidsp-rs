@@ -1,9 +1,11 @@
-use crate::{commands::Commands, packet};
+use std::{fmt, io::Cursor};
+
 use bytes::Bytes;
 use futures::{channel::mpsc, SinkExt, Stream, StreamExt};
-use std::{fmt, io::Cursor};
 use tokio::{fs::File, io::AsyncRead};
 use tokio_util::codec::{Decoder, LinesCodec};
+
+use crate::{commands::Commands, packet};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Message {

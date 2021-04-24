@@ -1,15 +1,16 @@
 //! Allows talking with the [crate::server] component
+use std::{collections::HashMap, fmt, net::SocketAddr, time::Duration};
+
+use anyhow::Result;
+use async_trait::async_trait;
+use futures::{Stream, StreamExt};
+use tokio::net::TcpStream;
+
+use super::StreamTransport;
 use crate::{
     discovery,
     transport::{IntoTransport, MiniDSPError, Openable, Transport},
 };
-use anyhow::Result;
-use async_trait::async_trait;
-use futures::{Stream, StreamExt};
-use std::{collections::HashMap, fmt, net::SocketAddr, time::Duration};
-use tokio::net::TcpStream;
-
-use super::StreamTransport;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {

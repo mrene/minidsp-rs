@@ -1,9 +1,11 @@
 //! Room Eq Wizard utilities
 //! Provides a way to read exported biquad filter files
 
-use crate::Biquad;
 use std::str::FromStr;
+
 use thiserror::Error;
+
+use crate::Biquad;
 
 pub trait FromRew: Sized {
     fn from_rew_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Option<Self>;

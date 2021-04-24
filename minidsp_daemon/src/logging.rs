@@ -1,21 +1,16 @@
-use bytes::Bytes;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::{path::PathBuf, sync::Arc};
 
+use bytes::Bytes;
 use futures::{pin_mut, StreamExt};
 use minidsp::{
     transport::Transport,
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
+use tokio::sync::Mutex;
 
-use super::Opts;
-
-pub fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
+pub fn transport_logging(transport: Transport, verbose: i32, log: Option<PathBuf>) -> Transport {
     let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
     let transport = logger(transport, log_tx);
-
-    let verbose = opts.verbose;
-    let log = opts.log.clone();
 
     tokio::spawn(async move {
         let result = async move {

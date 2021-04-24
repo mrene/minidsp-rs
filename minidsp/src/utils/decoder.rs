@@ -5,7 +5,10 @@
 
 use std::fmt;
 
+use bimap::BiMap;
 use bytes::Bytes;
+use lazy_static::lazy_static;
+use strong_xml::XmlRead;
 use termcolor::{Color, ColorSpec, WriteColor};
 
 use crate::{
@@ -14,9 +17,6 @@ use crate::{
     formats::xml_config::Setting,
     packet,
 };
-use bimap::BiMap;
-use lazy_static::lazy_static;
-use strong_xml::XmlRead;
 
 lazy_static! {
     pub static ref DEFAULT_CONFIG: Setting =

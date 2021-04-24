@@ -1,6 +1,5 @@
 //! Functions for framing and unframing packets, and computing their checksums
 use bytes::{BufMut, Bytes, BytesMut};
-
 #[cfg(feature = "debug")]
 use thiserror::Error;
 
@@ -58,8 +57,9 @@ pub fn unframe(response: Bytes) -> Result<Bytes, ParseError> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn frame_test() {

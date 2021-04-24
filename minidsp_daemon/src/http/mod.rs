@@ -1,4 +1,5 @@
-use crate::{config::HttpServer, device_manager, App};
+use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
+
 use anyhow::Context;
 use futures::future::join_all;
 use hyper::{Body, Request, Response, Server, StatusCode};
@@ -9,8 +10,9 @@ use minidsp::{
 };
 use routerify::{Router, RouterService};
 use serde::Serialize;
-use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
 use websocket::websocket_transport_bridge;
+
+use super::{config::HttpServer, device_manager, App};
 
 mod error;
 pub use error::{Error, FormattedError};
@@ -211,9 +213,10 @@ pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
 
 #[cfg(target_family = "unix")]
 pub async fn unix_main() -> Result<(), anyhow::Error> {
+    use std::path::Path;
+
     use hyperlocal::UnixServerExt;
     use routerify_unixsocket::UnixRouterService;
-    use std::path::Path;
 
     let service = UnixRouterService::new(router()).expect("while building router service");
 

@@ -1,13 +1,14 @@
 //! Transport base traits for talking to devices
 
 //! Wraps a Stream + Sink backend into a transport
+use std::{pin::Pin, sync::Arc};
+
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
 use commands::Commands;
 use futures::future::BoxFuture;
 use minidsp_protocol::commands::ProtocolError;
-use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 use tokio::sync::{broadcast, Mutex};
 use tower::Service;

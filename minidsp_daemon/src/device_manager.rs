@@ -1,6 +1,9 @@
 ///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
-use super::{DiscoveryEvent, Registry};
-use crate::logging;
+use std::{
+    net::IpAddr,
+    sync::{Arc, RwLock, Weak},
+};
+
 use anyhow::{anyhow, Result};
 use futures::{StreamExt, TryFutureExt};
 use minidsp::{
@@ -10,12 +13,13 @@ use minidsp::{
     utils::OwnedJoinHandle,
     DeviceInfo, MiniDSP,
 };
-use std::{
-    net::IpAddr,
-    sync::{Arc, RwLock, Weak},
-};
 use tokio::sync::Mutex;
 use url2::Url2;
+
+use super::{
+    discovery::{DiscoveryEvent, Registry},
+    logging,
+};
 
 pub struct DeviceManager {
     #[allow(dead_code)]
@@ -196,7 +200,7 @@ impl Device {
             // If we have any logging options, log this stream
             let app = super::APP.get().unwrap();
             let app = app.read().await;
-            let stream = logging::transport_logging(stream, &app.opts);
+            let stream = logging::transport_logging(stream, app.opts.verbose, app.opts.log.clone());
 
             transport::Hub::new(stream)
         };

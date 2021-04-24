@@ -1,5 +1,6 @@
-use hidapi::HidDevice;
 use std::ops::Deref;
+
+use hidapi::HidDevice;
 
 /// Wraps an underlying HidDevice, adding Sync+Send
 pub struct HidDeviceWrapper {

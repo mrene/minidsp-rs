@@ -1,14 +1,15 @@
 //! This contain command line utilities for debugging and inspecting lower level protocol commands
+use std::ops::Deref;
+
 use anyhow::Result;
 use bytes::Bytes;
 use clap::Clap;
-
-use super::{parse_hex, parse_hex_u16};
 use minidsp::{
     commands::{BytesWrap, Commands, ExtendView, FloatView, MemoryView},
     source, MiniDSP,
 };
-use std::ops::Deref;
+
+use super::{parse_hex, parse_hex_u16};
 
 pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Result<()> {
     match debug {

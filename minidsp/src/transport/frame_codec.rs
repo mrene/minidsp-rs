@@ -2,11 +2,6 @@
 
 use std::task;
 
-use crate::{
-    commands::{self, Responses},
-    packet,
-    utils::ErrInto,
-};
 use bytes::Bytes;
 use futures::{Sink, Stream};
 use futures_util::ready;
@@ -14,6 +9,11 @@ use pin_project::pin_project;
 use task::Poll;
 
 use super::MiniDSPError;
+use crate::{
+    commands::{self, Responses},
+    packet,
+    utils::ErrInto,
+};
 
 #[pin_project]
 pub struct FrameCodec<Backend> {

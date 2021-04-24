@@ -1,7 +1,4 @@
-use bytes::{BufMut, Bytes, BytesMut};
 use core::panic;
-use futures::{channel::mpsc, Future, FutureExt, Sink, Stream};
-use hidapi::{HidDevice, HidError};
 use std::{
     pin::Pin,
     sync::Arc,
@@ -9,9 +6,15 @@ use std::{
     thread, time,
 };
 
-use super::wrapper::HidDeviceWrapper;
-use futures::channel::mpsc::TrySendError;
+use bytes::{BufMut, Bytes, BytesMut};
+use futures::{
+    channel::{mpsc, mpsc::TrySendError},
+    Future, FutureExt, Sink, Stream,
+};
+use hidapi::{HidDevice, HidError};
 use pin_project::pin_project;
+
+use super::wrapper::HidDeviceWrapper;
 
 // 65 byte wide: 1 byte report id + 64 bytes data
 const HID_PACKET_SIZE: usize = 65;
@@ -155,10 +158,10 @@ impl Sink<Bytes> for HidStream {
 
 #[cfg(test)]
 mod test {
-    use crate::transport::hid::initialize_api;
+    use futures::{SinkExt, StreamExt};
 
     use super::*;
-    use futures::{SinkExt, StreamExt};
+    use crate::transport::hid::initialize_api;
 
     #[tokio::test]
     #[ignore]

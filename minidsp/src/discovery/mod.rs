@@ -1,8 +1,9 @@
 //! Enables discovery and advertisement of tcp servers.
 //! The packet format is compatible with the official apps.
+use std::{convert::TryInto, net::Ipv4Addr};
+
 use anyhow::{anyhow, Result};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use std::{convert::TryInto, net::Ipv4Addr};
 use tokio_util::codec::{Decoder, Encoder};
 
 pub mod client;
@@ -95,10 +96,12 @@ impl Encoder<DiscoveryPacket> for DiscoveryPacketCodec {
 
 #[cfg(test)]
 mod test {
-    use crate::discovery::DiscoveryPacket;
+    use std::net::Ipv4Addr;
+
     use anyhow::Result;
     use bytes::Bytes;
-    use std::net::Ipv4Addr;
+
+    use crate::discovery::DiscoveryPacket;
 
     #[test]
     fn test_bytes_parse() -> Result<()> {

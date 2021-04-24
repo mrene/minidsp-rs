@@ -1,10 +1,14 @@
-use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
+use std::{str::FromStr, time::Duration};
+
 use minidsp::{
-    formats::rew::FromRew, model::StatusSummary, transport::Transport, utils::wav::read_wav_filter,
+    formats::{rew::FromRew, wav::read_wav_filter},
+    model::StatusSummary,
+    transport::Transport,
     Biquad, BiquadFilter, Channel, Crossover, Fir,
 };
-use std::{str::FromStr, time::Duration};
+
+use super::{InputCommand, MiniDSP, OutputCommand, Result};
+use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
 
 pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
     if let SubCommand::Server {
@@ -14,8 +18,9 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
     } = subcmd
     {
         if let Some(hostname) = advertise {
-            use crate::discovery;
             use std::net::Ipv4Addr;
+
+            use crate::discovery;
             let mut packet = discovery::DiscoveryPacket {
                 mac_address: [10, 20, 30, 40, 50, 60],
                 ip_address: Ipv4Addr::UNSPECIFIED,
@@ -30,8 +35,8 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
             let interval = Duration::from_secs(1);
             tokio::spawn(discovery::server::advertise_packet(packet, interval));
         }
-        use crate::server;
-        server::serve(bind_address.as_str(), Box::pin(transport)).await?;
+        use crate::tcp_server;
+        tcp_server::serve(bind_address.as_str(), Box::pin(transport)).await?;
     }
     Ok(())
 }
