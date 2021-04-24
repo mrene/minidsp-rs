@@ -163,6 +163,6 @@ fn gen_write<T: Target>(output: &Path) -> Result<()> {
 }
 
 fn codegen_main(output: PathBuf) -> Result<()> {
-    gen_write::<m2x4hd::TARGET>(&output)?;
+    gen_write::<m2x4hd::Target>(&output)?;
     Ok(())
 }

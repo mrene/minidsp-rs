@@ -69,6 +69,7 @@ impl ToRew for Biquad {
 
 #[cfg(test)]
 mod test {
+    #![allow(clippy::float_cmp)]
     use super::*;
 
     const REW_DATA: &str = include_str!("../../test_fixtures/rew-filters.txt");

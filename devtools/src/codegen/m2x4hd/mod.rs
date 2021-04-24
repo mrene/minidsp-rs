@@ -3,10 +3,9 @@ use minidsp::formats::xml_config::Setting;
 use strong_xml::XmlRead;
 
 use super::spec::*;
-use crate::Target;
 
-pub struct TARGET {}
-impl Target for TARGET {
+pub struct Target {}
+impl crate::Target for Target {
     fn filename() -> &'static str {
         "m2x4hd.rs"
     }
