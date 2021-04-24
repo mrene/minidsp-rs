@@ -43,7 +43,7 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
     }
 }
 
-fn resolve_symbol<T: AsRef<str>>(mut symbols: &mut SymbolMap, name: T) -> TokenStream {
+fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStream {
     symbols
         .remove_by_left(name.as_ref())
         .unwrap_or_else(|| panic!("Couldn't find config entry {}", name.as_ref()));
@@ -55,7 +55,7 @@ fn resolve_symbol<T: AsRef<str>>(mut symbols: &mut SymbolMap, name: T) -> TokenS
     quote! { #name }
 }
 
-pub fn generate_static_config(mut symbol_map: &mut SymbolMap, spec: &spec::Device) -> TokenStream {
+pub fn generate_static_config(symbol_map: &mut SymbolMap, spec: &spec::Device) -> TokenStream {
     let symbols = generate_symbols(&symbol_map);
     let device = spec.to_symbol_tokens(|s| resolve_symbol(symbol_map, s));
 

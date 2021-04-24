@@ -687,7 +687,7 @@ dependencies = [
  "hidapi",
  "lazy_static",
  "log",
- "minidsp_protocol",
+ "minidsp-protocol",
  "pin-project",
  "schemars",
  "serde",
@@ -704,6 +704,39 @@ dependencies = [
  "url2",
  "urlencoding",
  "wav",
+]
+
+[[package]]
+name = "minidsp-devtools"
+version = "0.1.0"
+dependencies = [
+ "Inflector",
+ "anyhow",
+ "bimap",
+ "clap",
+ "env_logger",
+ "futures",
+ "futures-sink",
+ "futures-util",
+ "minidsp",
+ "proc-macro2",
+ "quote",
+ "strong-xml",
+ "termcolor 1.1.2",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
+name = "minidsp-protocol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "schemars",
+ "serde",
+ "strum",
+ "thiserror",
 ]
 
 [[package]]
@@ -737,39 +770,6 @@ dependencies = [
  "tokio-util",
  "tungstenite",
  "url2",
-]
-
-[[package]]
-name = "minidsp_devtools"
-version = "0.1.0"
-dependencies = [
- "Inflector",
- "anyhow",
- "bimap",
- "clap",
- "env_logger",
- "futures",
- "futures-sink",
- "futures-util",
- "minidsp",
- "proc-macro2",
- "quote",
- "strong-xml",
- "termcolor 1.1.2",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "minidsp_protocol"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytes",
- "schemars",
- "serde",
- "strum",
- "thiserror",
 ]
 
 [[package]]
