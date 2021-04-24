@@ -71,7 +71,7 @@ impl ToRew for Biquad {
 mod test {
     use super::*;
 
-    const REW_DATA: &'static str = include_str!("../../test_fixtures/rew-filters.txt");
+    const REW_DATA: &str = include_str!("../../test_fixtures/rew-filters.txt");
 
     #[test]
     fn test_parse() {
@@ -83,18 +83,18 @@ mod test {
 
         assert_eq!(filters.len(), 10);
         assert_eq!(filters[0].index, Some(1));
-        assert_eq!(filters[0].b0, 0.999194903557377f32);
-        assert_eq!(filters[0].b1, -1.9973354686174658);
-        assert_eq!(filters[0].b2, 0.9981886333563846);
-        assert_eq!(filters[0].a1, 1.9973354686174658);
-        assert_eq!(filters[0].a2, -0.9973835369137615);
+        assert_eq!(filters[0].b0, 0.999_194_9_f32);
+        assert_eq!(filters[0].b1, -1.997_335_4_f32);
+        assert_eq!(filters[0].b2, 0.998_188_6_f32);
+        assert_eq!(filters[0].a1, 1.997_335_4_f32);
+        assert_eq!(filters[0].a2, -0.997_383_53_f32);
 
         assert_eq!(filters[9].index, Some(10));
-        assert_eq!(filters[9].b0, 0.8784231224481471);
-        assert_eq!(filters[9].b1, -1.2978927199484762);
-        assert_eq!(filters[9].b2, 0.7320089079645271);
-        assert_eq!(filters[9].a1, 1.2978927199484762);
-        assert_eq!(filters[9].a2, -0.6104320304126742);
+        assert_eq!(filters[9].b0, 0.878_423_1_f32);
+        assert_eq!(filters[9].b1, -1.297_892_7_f32);
+        assert_eq!(filters[9].b2, 0.732_008_93_f32);
+        assert_eq!(filters[9].a1, 1.297_892_7_f32);
+        assert_eq!(filters[9].a2, -0.610_432_f32);
     }
     #[test]
     fn test_string() {
