@@ -669,7 +669,7 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
 name = "minidsp"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_approx_eq",
@@ -707,6 +707,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "minidsp-daemon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "clap",
+ "confy",
+ "env_logger",
+ "futures",
+ "futures-sink",
+ "futures-util",
+ "hyper",
+ "hyper-tungstenite",
+ "hyperlocal",
+ "lazy_static",
+ "log",
+ "minidsp",
+ "once_cell",
+ "routerify",
+ "routerify-unixsocket",
+ "schemars",
+ "serde",
+ "serde_json",
+ "strum",
+ "termcolor 1.1.2",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tungstenite",
+ "url2",
+]
+
+[[package]]
 name = "minidsp-devtools"
 version = "0.1.0"
 dependencies = [
@@ -737,39 +770,6 @@ dependencies = [
  "serde",
  "strum",
  "thiserror",
-]
-
-[[package]]
-name = "minidsp_daemon"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytes",
- "clap",
- "confy",
- "env_logger",
- "futures",
- "futures-sink",
- "futures-util",
- "hyper",
- "hyper-tungstenite",
- "hyperlocal",
- "lazy_static",
- "log",
- "minidsp",
- "once_cell",
- "routerify",
- "routerify-unixsocket",
- "schemars",
- "serde",
- "serde_json",
- "strum",
- "termcolor 1.1.2",
- "thiserror",
- "tokio",
- "tokio-util",
- "tungstenite",
- "url2",
 ]
 
 [[package]]
