@@ -2,6 +2,7 @@
 
 pub mod m2x4hd;
 pub mod spec;
+pub mod spec_to_tokens;
 
 use bimap::BiHashMap;
 use inflector::Inflector;
@@ -94,7 +95,7 @@ pub trait DeviceSpec: Sized {
 
             #symbols
 
-            pub const #name: Device = Device {
+            pub const DEVICE: Device = Device {
                 product_name: #product_name,
                 sources: &[#(#sources),*],
                 inputs: &[ #(#inputs),* ],
