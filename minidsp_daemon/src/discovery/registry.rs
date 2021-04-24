@@ -6,7 +6,7 @@ use std::{collections::HashMap, sync::RwLock, time};
 /// triggering any external probing logic.
 use futures::channel::mpsc;
 pub struct Registry {
-    pub inner: RwLock<Inner>,
+    inner: RwLock<Inner>,
 }
 
 impl Registry {
@@ -40,14 +40,14 @@ impl Default for Registry {
     }
 }
 #[derive(Debug)]
-pub struct Inner {
-    pub devices: HashMap<String, Device>,
-    pub sender: mpsc::UnboundedSender<DiscoveryEvent>,
-    pub subscriber: Option<mpsc::UnboundedReceiver<DiscoveryEvent>>,
+struct Inner {
+    devices: HashMap<String, Device>,
+    sender: mpsc::UnboundedSender<DiscoveryEvent>,
+    subscriber: Option<mpsc::UnboundedReceiver<DiscoveryEvent>>,
 }
 
 impl Inner {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let (sender, subscriber) = mpsc::unbounded();
         Self {
             devices: HashMap::new(),
@@ -56,7 +56,7 @@ impl Inner {
         }
     }
 
-    pub fn subscribe(&mut self) -> mpsc::UnboundedReceiver<DiscoveryEvent> {
+    fn subscribe(&mut self) -> mpsc::UnboundedReceiver<DiscoveryEvent> {
         if self.subscriber.is_none() {
             panic!("a subscriber is already present");
         }
@@ -65,7 +65,7 @@ impl Inner {
     }
 
     /// Adds a device to the list of reachable devices if it doesn't exist.
-    pub fn register(&mut self, dev: &str) {
+    fn register(&mut self, dev: &str) {
         let id = dev.to_string();
         let device = self.devices.get_mut(id.as_str());
 
@@ -82,7 +82,7 @@ impl Inner {
         self.cleanup();
     }
 
-    pub fn remove(&mut self, dev: &str) {
+    fn remove(&mut self, dev: &str) {
         self.devices.retain(|k, _| k != dev);
     }
 

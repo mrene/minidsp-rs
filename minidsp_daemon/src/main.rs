@@ -127,7 +127,7 @@ pub async fn main() -> anyhow::Result<()> {
         App::load_config(opts.config.as_ref()).context("cannot load configuration file")?;
 
     let app = App::new(opts, config);
-    APP.set(app.into()).ok().unwrap();
+    APP.set(app).ok().unwrap();
 
     {
         let mut app_mut = APP.get().unwrap().try_write().unwrap();
