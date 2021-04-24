@@ -10,7 +10,7 @@ pub fn probe(device_info: &DeviceInfo) -> Option<&'static super::Device> {
         4 => Some(&super::msharc4x8::DEVICE),
 
         #[cfg(feature = "device_2x4hd")]
-        10 => Some(&super::m2x4hd::DEVICE),
+        10 | 12 => Some(&super::m2x4hd::DEVICE),
 
         _ => Some(&super::GENERIC),
     }

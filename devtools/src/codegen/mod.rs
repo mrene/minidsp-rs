@@ -2,6 +2,8 @@
 
 pub mod m2x4hd;
 pub mod msharc4x8;
+pub mod m4x10hd;
+
 pub mod spec;
 pub mod spec_to_tokens;
 
