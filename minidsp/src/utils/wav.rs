@@ -43,6 +43,9 @@ fn convert_data(data: wav::BitDepth) -> Result<Vec<f32>, WavReadError> {
         wav::BitDepth::Empty => {
             return Err(WavReadError::NoData);
         }
+        wav::BitDepth::ThirtyTwoFloat(data) => {
+            samples = data;
+        }
     }
 
     Ok(samples)
