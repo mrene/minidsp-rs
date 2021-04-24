@@ -65,7 +65,7 @@ pub struct Compressor {
     pub ratio: String,
     pub attack: String,
     pub release: String,
-    pub meter: String,
+    pub meter: Option<String>,
 }
 
 #[derive(Debug)]

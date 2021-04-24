@@ -23,9 +23,6 @@ pub struct Setting {
     #[xml(child = "label")]
     pub labels: Vec<Label>,
 
-    #[xml(flatten_text = "link")]
-    pub link: String,
-
     #[xml(child = "item", child = "fir", child = "filter")]
     pub items: Vec<AddressableElement>,
 }
@@ -373,7 +370,6 @@ mod test {
         let parsed = CommaSeparatedList::<f32>::from_str(s).unwrap();
         assert!(parsed.inner.iter().cloned().eq(expected.iter().cloned()));
         assert_eq!(parsed.to_string().as_str(), s);
-
 
         let s = "1, 2,, 3, 4";
         let expected: &[f32] = &[1.0, 2.0, 3.0, 4.];

@@ -20,7 +20,7 @@ pub fn transport_logging(transport: Transport, verbose: i32, log: Option<PathBuf
                 Some(Arc::new(Mutex::new(Decoder::new(
                     Box::new(writer),
                     verbose == 1,
-                    None
+                    None,
                 ))))
             } else {
                 None

@@ -136,7 +136,9 @@ impl Decoder {
             .w
             .set_color(ColorSpec::new().set_fg(Some(Color::Magenta)));
 
-        let name = self.resolve_addr(*addr).unwrap_or("<unknown>".to_string());
+        let name = self
+            .resolve_addr(*addr)
+            .unwrap_or_else(|| "<unknown>".to_string());
         writeln!(self.w, "(0x{:02x?} | {:?}) <> {}", addr, addr, name,)?;
         Ok(())
     }

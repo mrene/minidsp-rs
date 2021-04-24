@@ -438,7 +438,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_3_0_RATIO,
                 attack: COMP_3_0_ATIME,
                 release: COMP_3_0_RTIME,
-                meter: METER_10_C1_0,
+                meter: Some(METER_10_C1_0),
             }),
             fir: Some(Fir {
                 index: 0,
@@ -468,7 +468,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_4_0_RATIO,
                 attack: COMP_4_0_ATIME,
                 release: COMP_4_0_RTIME,
-                meter: METER_10_C1_1,
+                meter: Some(METER_10_C1_1),
             }),
             fir: Some(Fir {
                 index: 1,
@@ -498,7 +498,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_5_0_RATIO,
                 attack: COMP_5_0_ATIME,
                 release: COMP_5_0_RTIME,
-                meter: METER_10_C1_2,
+                meter: Some(METER_10_C1_2),
             }),
             fir: Some(Fir {
                 index: 2,
@@ -528,7 +528,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_6_0_RATIO,
                 attack: COMP_6_0_ATIME,
                 release: COMP_6_0_RTIME,
-                meter: METER_10_C1_3,
+                meter: Some(METER_10_C1_3),
             }),
             fir: Some(Fir {
                 index: 3,
@@ -540,6 +540,6 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 4096,
     internal_sampling_rate: 96000,
-    #[cfg(feature="symbols")]
+    #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

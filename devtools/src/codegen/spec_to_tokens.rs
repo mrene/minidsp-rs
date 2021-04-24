@@ -1,6 +1,7 @@
-use super::spec::*;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::quote;
+
+use super::spec::*;
 
 macro_rules! resolve_sym {
     ($self:tt, $resolve:tt, $($name:tt),+) => {
