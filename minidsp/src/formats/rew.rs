@@ -2,7 +2,9 @@
 //! Provides a way to read exported biquad filter files
 
 use std::str::FromStr;
+
 use thiserror::Error;
+
 use crate::Biquad;
 
 #[derive(Error, Debug)]

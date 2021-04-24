@@ -1,7 +1,6 @@
 ///! Remote control object model
 /// Exposes configurable components in a (de)serializable format, suitable
 /// for various RPC protocols. Each field is optional, and will trigger an action if set.
-
 use std::{fmt, time::Duration};
 
 use anyhow::anyhow;

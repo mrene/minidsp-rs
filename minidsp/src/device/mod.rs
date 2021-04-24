@@ -7,9 +7,6 @@ use super::Source::{self as Source, *};
 mod probe;
 pub use probe::probe;
 
-#[cfg(feature = "codegen")]
-pub mod specs;
-
 pub mod m2x4hd;
 pub use m2x4hd::DEVICE as DEVICE_2X4HD;
 
