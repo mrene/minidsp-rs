@@ -10,6 +10,11 @@ pub use probe::probe;
 #[cfg(feature = "device_2x4hd")]
 pub mod m2x4hd;
 
+#[cfg(feature = "device_msharc4x8")]
+pub mod msharc4x8;
+
+
+
 pub static GENERIC: Device = Device {
     product_name: "Generic",
     sources: &[],
@@ -17,7 +22,7 @@ pub static GENERIC: Device = Device {
     outputs: &[],
     fir_max_taps: 0,
     internal_sampling_rate: 0,
-    #[cfg(feature="symbols")]
+    #[cfg(feature = "symbols")]
     symbols: &[],
 };
 
@@ -37,7 +42,7 @@ pub struct Device {
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
     // A mapping of all symbols by name, as defined in the xml config
-    #[cfg(feature="symbols")]
+    #[cfg(feature = "symbols")]
     pub symbols: &'static [(&'static str, u16)],
 }
 
@@ -91,7 +96,7 @@ pub struct Compressor {
     pub ratio: u16,
     pub attack: u16,
     pub release: u16,
-    pub meter: u16,
+    pub meter: Option<u16>,
 }
 
 #[cfg_attr(feature = "debug", derive(Debug))]

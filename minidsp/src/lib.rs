@@ -495,17 +495,18 @@ impl<'a> Compressor<'a> {
     }
 
     pub async fn get_level(&self) -> Result<f32> {
+        let meter = self.spec.meter.ok_or(MiniDSPError::NoSuchPeripheral)?;
         let view = self
             .dsp
             .client
             .roundtrip(Commands::ReadFloats {
-                addr: self.spec.meter,
+                addr: meter,
                 len: 1,
             })
             .await?
             .into_float_view()?;
 
-        Ok(view.get(self.spec.meter))
+        Ok(view.get(meter))
     }
 }
 

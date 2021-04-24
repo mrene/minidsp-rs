@@ -414,7 +414,7 @@ fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
                 Some(Arc::new(Mutex::new(Decoder::new(
                     Box::new(writer),
                     verbose == 1,
-                    None
+                    None,
                 ))))
             } else {
                 None
