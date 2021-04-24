@@ -50,7 +50,7 @@ impl Decoder for Codec {
         // If `src` is strictly 64 bytes long, we are probably dealing with a raw hid frame being forwarded over the network.
         // This behaviour is different depending on the device doing the network to hid translation.
         // See [`widg_nonzero_padding`] for more details.
-        if !self.server && !self.received_small_packet {
+        if !self.server && !self.received_small_packet && !src.is_empty() {
             if src.len() % 64 == 0 {
                 let mut buf = src.split_to(64);
                 return Ok(Some(buf.split_to(buf[0] as usize).freeze()));
@@ -173,5 +173,8 @@ mod test {
 
         let decoded = codec.decode(&mut packet).unwrap().unwrap();
         assert_eq!(hex::encode(decoded), "0505ffa164");
+
+        let decoded = codec.decode(&mut packet).unwrap();
+        assert_eq!(decoded, None);
     }
 }
