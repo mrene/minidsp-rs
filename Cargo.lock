@@ -531,9 +531,9 @@ checksum = "4a1ce40d6fc9764887c2fdc7305c3dcc429ba11ff981c1509416afd5697e4437"
 
 [[package]]
 name = "httpdate"
-version = "0.3.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
+checksum = "05842d0d43232b23ccb7060ecb0f0626922c21f30012e97b767b30afd4a5d4b9"
 
 [[package]]
 name = "humantime"
@@ -543,9 +543,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "0.14.5"
+version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bf09f61b52cfcf4c00de50df88ae423d6c02354e385a86341133b5338630ad1"
+checksum = "1e5f105c494081baa3bf9e200b279e27ec1623895cd504c7dbef8d0b080fcf54"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -668,16 +668,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
-name = "mime"
-version = "0.3.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
-
-[[package]]
 name = "minidsp"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
- "Inflector",
  "anyhow",
  "assert_approx_eq",
  "async-trait",
@@ -685,7 +678,6 @@ dependencies = [
  "bimap",
  "bytes",
  "clap",
- "confy",
  "env_logger",
  "futures",
  "futures-sink",
@@ -693,18 +685,10 @@ dependencies = [
  "hex",
  "hexplay",
  "hidapi",
- "hyper",
- "hyper-tungstenite",
- "hyperlocal",
  "lazy_static",
  "log",
- "mime",
- "once_cell",
+ "minidsp-protocol",
  "pin-project",
- "proc-macro2",
- "quote",
- "routerify",
- "routerify-unixsocket",
  "schemars",
  "serde",
  "serde_json",
@@ -716,12 +700,76 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-util",
- "toml",
  "tower",
- "tungstenite",
  "url2",
  "urlencoding",
  "wav",
+]
+
+[[package]]
+name = "minidsp-daemon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "clap",
+ "confy",
+ "env_logger",
+ "futures",
+ "futures-sink",
+ "futures-util",
+ "hyper",
+ "hyper-tungstenite",
+ "hyperlocal",
+ "lazy_static",
+ "log",
+ "minidsp",
+ "once_cell",
+ "routerify",
+ "routerify-unixsocket",
+ "schemars",
+ "serde",
+ "serde_json",
+ "strum",
+ "termcolor 1.1.2",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tungstenite",
+ "url2",
+]
+
+[[package]]
+name = "minidsp-devtools"
+version = "0.1.0"
+dependencies = [
+ "Inflector",
+ "anyhow",
+ "bimap",
+ "clap",
+ "env_logger",
+ "futures",
+ "futures-sink",
+ "futures-util",
+ "minidsp",
+ "proc-macro2",
+ "quote",
+ "strong-xml",
+ "termcolor 1.1.2",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
+name = "minidsp-protocol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "schemars",
+ "serde",
+ "strum",
+ "thiserror",
 ]
 
 [[package]]
@@ -1038,9 +1086,9 @@ checksum = "b9b1a3d5f46d53f4a3478e2be4a5a5ce5108ea58b100dcd139830eae7f79a3a1"
 
 [[package]]
 name = "routerify"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c18f54182904acfbd8082adb04985c59eb037027105631e3a68a5a51de31294d"
+checksum = "9fd40d4248cbd553e1bf8294986d31c80a2d75e4d699a0df664dc208485f1466"
 dependencies = [
  "http",
  "hyper",
@@ -1636,9 +1684,9 @@ checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
 name = "wav"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f57d7ddfab03e51496696ce01738f9b22372fa62da563b236e694e8ac6afa51"
+checksum = "549df97e073e1f901a489f159eb451bbe9c790e2f217394f4ce01acda0380b0c"
 dependencies = [
  "riff",
 ]
