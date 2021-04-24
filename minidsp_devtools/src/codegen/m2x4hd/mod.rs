@@ -1,7 +1,7 @@
+use minidsp::formats::xml_config::Setting;
 use strong_xml::XmlRead;
 
 use super::{CompressorSpec, DeviceSpec, FirSpec, SymbolMap};
-use minidsp::formats::xml_config::Setting;
 
 pub struct Spec {
     pub sym_map: SymbolMap,
