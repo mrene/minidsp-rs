@@ -19,6 +19,7 @@ pub use packet::ParseError;
 pub mod source;
 pub use source::Source;
 
+#[cfg(feature = "devices")]
 pub mod device;
 
 #[derive(Copy, Clone)]
