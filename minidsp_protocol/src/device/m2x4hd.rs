@@ -423,12 +423,12 @@ pub const DEVICE: Device = Device {
                 gain: D_GAIN_3_0,
             },
             meter: METER_10_C1_4,
+            delay_addr: DELAY_3_0,
+            invert_addr: POLARITY_OUT_1_0,
             peq: &[
                 PEQ_3_10, PEQ_3_9, PEQ_3_8, PEQ_3_7, PEQ_3_6, PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2,
                 PEQ_3_1,
             ],
-            delay_addr: DELAY_3_0,
-            invert_addr: POLARITY_OUT_1_0,
             xover: Some(Crossover {
                 peqs: &[BPF_3_1, BPF_3_5],
             }),
@@ -453,12 +453,12 @@ pub const DEVICE: Device = Device {
                 gain: D_GAIN_4_0,
             },
             meter: METER_10_C1_5,
+            delay_addr: DELAY_4_0,
+            invert_addr: POLARITY_OUT_2_0,
             peq: &[
                 PEQ_4_10, PEQ_4_9, PEQ_4_8, PEQ_4_7, PEQ_4_6, PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2,
                 PEQ_4_1,
             ],
-            delay_addr: DELAY_4_0,
-            invert_addr: POLARITY_OUT_2_0,
             xover: Some(Crossover {
                 peqs: &[BPF_4_1, BPF_4_5],
             }),
@@ -483,12 +483,12 @@ pub const DEVICE: Device = Device {
                 gain: D_GAIN_5_0,
             },
             meter: METER_10_C1_6,
+            delay_addr: DELAY_5_0,
+            invert_addr: POLARITY_OUT_3_0,
             peq: &[
                 PEQ_5_10, PEQ_5_9, PEQ_5_8, PEQ_5_7, PEQ_5_6, PEQ_5_5, PEQ_5_4, PEQ_5_3, PEQ_5_2,
                 PEQ_5_1,
             ],
-            delay_addr: DELAY_5_0,
-            invert_addr: POLARITY_OUT_3_0,
             xover: Some(Crossover {
                 peqs: &[BPF_5_1, BPF_5_5],
             }),
@@ -513,12 +513,12 @@ pub const DEVICE: Device = Device {
                 gain: D_GAIN_6_0,
             },
             meter: METER_10_C1_7,
+            delay_addr: DELAY_6_0,
+            invert_addr: POLARITY_OUT_4_0,
             peq: &[
                 PEQ_6_10, PEQ_6_9, PEQ_6_8, PEQ_6_7, PEQ_6_6, PEQ_6_5, PEQ_6_4, PEQ_6_3, PEQ_6_2,
                 PEQ_6_1,
             ],
-            delay_addr: DELAY_6_0,
-            invert_addr: POLARITY_OUT_4_0,
             xover: Some(Crossover {
                 peqs: &[BPF_6_1, BPF_6_5],
             }),

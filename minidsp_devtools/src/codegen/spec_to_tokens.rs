@@ -20,7 +20,7 @@ impl ToSymbolTokens for Device {
         let sources = self
             .sources
             .iter()
-            .map(|name| Ident::new(&name.to_string(), Span::call_site()));
+            .map(|name| Ident::new(name, Span::call_site()));
         let fir_max_taps = Literal::usize_unsuffixed(self.fir_max_taps as usize);
         let internal_sampling_rate = Literal::u32_unsuffixed(self.internal_sampling_rate);
         resolve_sym!(self, resolve, inputs, outputs);
@@ -83,7 +83,10 @@ where
     fn to_symbol_tokens<F: FnMut(&str) -> TokenStream>(&self, resolve: F) -> TokenStream {
         match self {
             None => quote! { None },
-            Some(x) => x.to_symbol_tokens(resolve),
+            Some(x) => {
+                let tokens = x.to_symbol_tokens(resolve);
+                quote! { Some(#tokens) }
+            }
         }
     }
 }

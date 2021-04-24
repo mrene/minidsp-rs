@@ -1,11 +1,10 @@
-
 /// Defines how the high level api should interact with the device based on its memory layout
 #[derive(Debug)]
 pub struct Device {
     /// The name identifying the product, e.g. "2x4HD"
     pub product_name: String,
     /// The name of the input sources
-    pub sources: Vec<minidsp::Source>,
+    pub sources: Vec<String>,
     /// The definitions for all input channels
     pub inputs: Vec<Input>,
     /// The definitions for all output channels
@@ -89,4 +88,3 @@ pub struct Fir {
     /// Maximum supported coefficients
     pub max_coefficients: u16,
 }
-
