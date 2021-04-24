@@ -43,8 +43,8 @@ pub mod frame_codec;
 pub mod multiplexer;
 pub use multiplexer::Multiplexer;
 pub mod hub;
-pub mod net;
 pub use hub::Hub;
+pub mod net;
 
 #[derive(Error, Debug)]
 pub enum MiniDSPError {

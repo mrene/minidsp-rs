@@ -9,14 +9,6 @@ name = "minidsp"
 repository = "https://github.com/mrene/minidsp-rs"
 version = "0.0.7"
 
-[[bin]]
-name = "decode"
-required-features = ["debug"]
-
-[[bin]]
-name = "codegen"
-required-features = ["codegen"]
-
 [dependencies]
 anyhow = "1.0.40"
 async-trait = "0.1.50"
@@ -49,11 +41,6 @@ wav = "0.6.0"
 
 minidsp_protocol = { path="../minidsp_protocol", features=["use_serde", "debug"] }
 
-# Codegen only
-Inflector = {version = "0.11.4", optional = true}
-proc-macro2 = {version = "1.0.26", optional = true}
-quote = {version = "1.0.9", optional = true}
-
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
 
@@ -72,7 +59,6 @@ features = ["net", "codec", "io"]
 version = "0.6.6"
 
 [features]
-codegen = ["quote", "proc-macro2", "Inflector"]
 debug = []
 default = ["hid"]
 hid = ["hidapi"]

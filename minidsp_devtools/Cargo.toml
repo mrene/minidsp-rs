@@ -1,0 +1,33 @@
+[package]
+authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
+edition = "2018"
+name = "minidsp_devtools"
+version = "0.1.0"
+
+[features]
+default = []
+
+[dependencies]
+anyhow = "1.0.40"
+bimap = "0.6.1"
+clap = "3.0.0-beta.2"
+env_logger = "0.8.3"
+futures = "0.3.14"
+futures-sink = "0.3.14"
+futures-util = "0.3.14"
+minidsp = {path = "../minidsp", features = []}
+strong-xml = "0.6.1"
+termcolor = "1.1.2"
+
+# Codegen
+Inflector = {version = "0.11.4"}
+proc-macro2 = {version = "1.0.26"}
+quote = {version = "1.0.9"}
+
+[dependencies.tokio]
+features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
+version = "1.5.0"
+
+[dependencies.tokio-util]
+features = ["net", "codec", "io"]
+version = "0.6.6"

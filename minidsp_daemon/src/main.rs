@@ -134,7 +134,5 @@ pub async fn main() -> anyhow::Result<()> {
         app_mut.start();
     }
 
-    loop {
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
+    std::future::pending().await
 }

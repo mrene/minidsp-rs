@@ -2,10 +2,14 @@
 //! Provides a way to read exported biquad filter files
 
 use std::str::FromStr;
-
 use thiserror::Error;
-
 use crate::Biquad;
+
+#[derive(Error, Debug)]
+pub enum RewParseError {
+    #[error("The filter text data was not in the expected format")]
+    MalformedFilter,
+}
 
 pub trait FromRew: Sized {
     fn from_rew_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Option<Self>;
@@ -61,17 +65,11 @@ impl ToRew for Biquad {
     }
 }
 
-#[derive(Error, Debug)]
-pub enum RewParseError {
-    #[error("The filter text data was not in the expected format")]
-    MalformedFilter,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
-    const REW_DATA: &'static str = include_str!("../test_fixtures/rew-filters.txt");
+    const REW_DATA: &'static str = include_str!("../../test_fixtures/rew-filters.txt");
 
     #[test]
     fn test_parse() {

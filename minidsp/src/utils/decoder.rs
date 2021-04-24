@@ -20,7 +20,7 @@ use crate::{
 
 lazy_static! {
     pub static ref DEFAULT_CONFIG: Setting =
-        Setting::from_str(include_str!("../test_fixtures/config1/config.xml")).unwrap();
+        Setting::from_str(include_str!("../../test_fixtures/config1/config.xml")).unwrap();
     pub static ref NAME_MAP: BiMap<String, usize> = DEFAULT_CONFIG.name_map();
 }
 

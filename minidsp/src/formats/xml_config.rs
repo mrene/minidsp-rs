@@ -287,10 +287,7 @@ mod test {
     use futures::{pin_mut, AsyncReadExt, Future, StreamExt, TryStreamExt};
 
     use super::*;
-    use crate::{
-        commands::Commands,
-        utils::recorder::{self as recorder},
-    };
+    use crate::{commands::Commands, utils::recorder};
 
     /// Extracts a restore blob from a built-in recorded fixture
     async fn extract_blob<F, Fut>(fixture: &'static [u8], f: F) -> Bytes
@@ -346,16 +343,16 @@ mod test {
         }
         let fixtures = &[
             Fixture {
-                xml: include_str!("../test_fixtures/config1/config.xml"),
-                sync: include_bytes!("../test_fixtures/config1/sync.txt"),
+                xml: include_str!("../../test_fixtures/config1/config.xml"),
+                sync: include_bytes!("../../test_fixtures/config1/sync.txt"),
             },
             Fixture {
-                xml: include_str!("../test_fixtures/config2/config.xml"),
-                sync: include_bytes!("../test_fixtures/config2/sync.txt"),
+                xml: include_str!("../../test_fixtures/config2/config.xml"),
+                sync: include_bytes!("../../test_fixtures/config2/sync.txt"),
             },
             Fixture {
-                xml: include_str!("../test_fixtures/config3/config.xml"),
-                sync: include_bytes!("../test_fixtures/config3/sync.txt"),
+                xml: include_str!("../../test_fixtures/config3/config.xml"),
+                sync: include_bytes!("../../test_fixtures/config3/sync.txt"),
             },
         ];
 

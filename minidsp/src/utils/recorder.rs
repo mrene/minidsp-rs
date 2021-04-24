@@ -107,7 +107,7 @@ mod test {
 
     #[tokio::test]
     async fn test_reader() {
-        let data: &'static [u8] = include_bytes!("../test_fixtures/config1/sync.txt");
+        let data: &'static [u8] = include_bytes!("../../test_fixtures/config1/sync.txt");
         let mut x = Box::pin(fixtures_reader(data));
         while let Some(msg) = x.next().await {
             println!("{:02x?}", msg);
