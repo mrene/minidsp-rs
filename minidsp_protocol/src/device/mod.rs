@@ -8,6 +8,7 @@ mod probe;
 pub use probe::probe;
 
 pub mod m2x4hd;
+pub use m2x4hd::DEVICE as DEVICE_2X4HD;
 
 /// Defines how the high level api should interact with the device based on its memory layout
 #[cfg_attr(feature = "debug", derive(Debug))]

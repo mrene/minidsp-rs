@@ -55,14 +55,12 @@ use transport::SharedService;
 use utils::ErrInto;
 
 pub use crate::commands::Gain;
-use crate::device::Gate;
 
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
-pub use minidsp_protocol::commands;
+pub use minidsp_protocol::{commands, device, device::Gate};
 
-pub mod device;
 pub mod discovery;
 pub use minidsp_protocol::packet;
 pub mod tcp_server;
