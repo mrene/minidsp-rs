@@ -1,6 +1,7 @@
 //! Code to generate device definitions
 
 pub mod m2x4hd;
+pub mod spec;
 
 use bimap::BiHashMap;
 use inflector::Inflector;
@@ -120,10 +121,20 @@ pub trait DeviceSpec: Sized {
             quote! { pub const #k :u16 = #v; }
         });
 
+        let mapped = syms.iter().map(|(k, _)| {
+            let name = k.to_screaming_snake_case();
+            let sym_ref = Ident::new(&name, Span::call_site());
+            let sym_name = Literal::string(&name);
+            quote! { (#sym_name, #sym_ref) }
+        });
+
         quote! {
             pub mod sym {
                 #[allow(dead_code)]
                 #(#vals)*
+
+                #[cfg(feature="symbols")]
+                pub const SYMBOLS: &[(&str, u16)] = &[#(#mapped),*];
             }
             use sym::*;
         }
@@ -251,9 +262,9 @@ pub trait DeviceSpec: Sized {
                 peq: #peqs,
                 delay_addr: #delay_addr,
                 invert_addr: #invert_addr,
-                xover: #xover,
-                compressor: #compressor,
-                fir: #fir,
+                xover: Some(#xover),
+                compressor: Some(#compressor),
+                fir: Some(#fir),
             }
         }
     }

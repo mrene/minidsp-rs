@@ -4,7 +4,7 @@
 //! an instance of this program running the `server` component, see [`transport::net::NetTransport`].
 //!
 //! ```no_run
-//! use minidsp::{MiniDSP, device::DEVICE_2X4HD, transport::{hid, Multiplexer}, Channel, Gain};
+//! use minidsp::{MiniDSP, device::m2x4hd::DEVICE, transport::{hid, Multiplexer}, Channel, Gain};
 //! use anyhow::Result;
 //! use std::sync::Arc;
 //! use tokio::sync::Mutex;
@@ -16,7 +16,7 @@
 //!     let transport = Box::new(hid::HidTransport::with_product_id(&hid_api, 0x2752, 0x0011)?.into_multiplexer().to_service());
 //!
 //!     // Instantiate a 2x4HD handler for this device.
-//!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE_2X4HD);
+//!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE);
 //!     
 //!     let status = dsp.get_master_status().await?;
 //!     println!("Master volume: {:.1}", status.volume.unwrap().0);
@@ -324,18 +324,18 @@ impl<'a> Output<'a> {
     }
 
     /// Helper for setting crossover settings
-    pub fn crossover(&'_ self) -> Crossover<'_> {
-        Crossover::new(self.dsp, &self.spec.xover)
+    pub fn crossover(&'_ self) -> Option<Crossover<'_>> {
+        Some(Crossover::new(self.dsp, self.spec.xover.as_ref()?))
     }
 
     /// Helper for setting compressor settings
-    pub fn compressor(&'_ self) -> Compressor<'_> {
-        Compressor::new(self.dsp, &self.spec.compressor)
+    pub fn compressor(&'_ self) -> Option<Compressor<'_>> {
+        Some(Compressor::new(self.dsp, self.spec.compressor.as_ref()?))
     }
 
     /// Helper for setting fir settings
-    pub fn fir(&'_ self) -> Fir<'_> {
-        Fir::new(self.dsp, &self.spec.fir)
+    pub fn fir(&'_ self) -> Option<Fir<'_>> {
+        Some(Fir::new(self.dsp, self.spec.fir.as_ref()?))
     }
 }
 

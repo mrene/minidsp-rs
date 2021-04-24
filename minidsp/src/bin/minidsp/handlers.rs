@@ -4,7 +4,7 @@ use minidsp::{
     formats::{rew::FromRew, wav::read_wav_filter},
     model::StatusSummary,
     transport::Transport,
-    Biquad, BiquadFilter, Channel, Crossover, Fir,
+    Biquad, BiquadFilter, Channel, Crossover, Fir, MiniDSPError,
 };
 
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
@@ -131,12 +131,27 @@ pub(crate) async fn run_output(
                 run_peq(eqs.as_ref(), cmd).await?
             }
         },
-        FIR { cmd } => run_fir(dsp, &output.fir(), cmd).await?,
+        FIR { cmd } => {
+            run_fir(
+                dsp,
+                &output.fir().ok_or(MiniDSPError::NoSuchPeripheral)?,
+                cmd,
+            )
+            .await?
+        }
         &Crossover {
             group,
             index,
             ref cmd,
-        } => run_xover(&output.crossover(), cmd, group, index).await?,
+        } => {
+            run_xover(
+                &output.crossover().ok_or(MiniDSPError::NoSuchPeripheral)?,
+                cmd,
+                group,
+                index,
+            )
+            .await?
+        }
         &Compressor {
             bypass,
             threshold,
@@ -144,7 +159,7 @@ pub(crate) async fn run_output(
             attack,
             release,
         } => {
-            let compressor = output.compressor();
+            let compressor = output.compressor().ok_or(MiniDSPError::NoSuchPeripheral)?;
             if let Some(bypass) = bypass {
                 compressor.set_bypass(bypass).await?;
             }

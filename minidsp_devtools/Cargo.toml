@@ -15,7 +15,7 @@ env_logger = "0.8.3"
 futures = "0.3.14"
 futures-sink = "0.3.14"
 futures-util = "0.3.14"
-minidsp = {path = "../minidsp", features = []}
+minidsp = {path = "../minidsp", default-features = false, features = []}
 strong-xml = "0.6.1"
 termcolor = "1.1.2"
 

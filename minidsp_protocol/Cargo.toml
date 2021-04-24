@@ -14,8 +14,10 @@ thiserror = "1.0.24"
 
 [features]
 debug = ["std"]
-default = ["std", "debug"]
+default = ["std", "debug", "device_2x4hd"]
 std = []
 use_serde = ["std", "serde", "schemars", "strum"]
 devices = []
 device_2x4hd = [ "devices" ]
+# Provides a name mapping for every symbol in every device spec
+symbols = []

@@ -39,7 +39,7 @@ url2 = "0.0.6"
 urlencoding = "1.1.1"
 wav = "0.6.0"
 
-minidsp_protocol = { path="../minidsp_protocol", features=["use_serde", "debug"] }
+minidsp_protocol = { path="../minidsp_protocol", default-features=false, features=["use_serde", "debug", "devices"] }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
@@ -62,6 +62,7 @@ version = "0.6.6"
 debug = []
 default = ["hid"]
 hid = ["hidapi"]
+devices = ["minidsp_protocol/devices", "minidsp_protocol/device_2x4hd"]
 
 [package.metadata.deb]
 assets = [

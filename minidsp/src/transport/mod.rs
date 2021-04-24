@@ -93,6 +93,9 @@ pub enum MiniDSPError {
 
     #[error("Protocol error: {0}")]
     ProtocolError(#[from] ProtocolError),
+
+    #[error("This device does not have this peripheral")]
+    NoSuchPeripheral,
 }
 
 #[async_trait]
@@ -107,6 +110,7 @@ pub trait IntoTransport {
 
 pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
     match url.scheme() {
+        #[cfg(feature = "hid")]
         "usb" => {
             let api = hid::initialize_api()?;
             Ok(hid::HidTransport::with_url(&api, url)

@@ -7,8 +7,17 @@ use super::Source::{self as Source, *};
 mod probe;
 pub use probe::probe;
 
-#[cfg(feature="device_2x4hd")]
+#[cfg(feature = "device_2x4hd")]
 pub mod m2x4hd;
+
+pub static GENERIC: Device = Device {
+    product_name: "Generic",
+    sources: &[],
+    inputs: &[],
+    outputs: &[],
+    fir_max_taps: 0,
+    internal_sampling_rate: 0,
+};
 
 /// Defines how the high level api should interact with the device based on its memory layout
 #[cfg_attr(feature = "debug", derive(Debug))]
@@ -54,11 +63,11 @@ pub struct Output {
     /// Parametric equalizers
     pub peq: &'static [u16],
     /// Crossover biquads
-    pub xover: Crossover,
+    pub xover: Option<Crossover>,
     /// Compressor
-    pub compressor: Compressor,
+    pub compressor: Option<Compressor>,
     /// Address of the FIR bypass toggle
-    pub fir: Fir,
+    pub fir: Option<Fir>,
 }
 
 /// Reference to a control having both a mute and gain setting

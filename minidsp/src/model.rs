@@ -236,15 +236,18 @@ impl Output {
         }
 
         for xover in &self.crossover {
-            xover.apply(&output.crossover()).await?;
+            let device_xover = output.crossover().ok_or(MiniDSPError::NoSuchPeripheral)?;
+            xover.apply(&device_xover).await?;
         }
 
         if let Some(compressor) = &self.compressor {
-            compressor.apply(&output.compressor()).await?;
+            let device_compressor = output.compressor().ok_or(MiniDSPError::NoSuchPeripheral)?;
+            compressor.apply(&device_compressor).await?;
         }
 
         if let Some(fir) = &self.fir {
-            fir.apply(&output.fir()).await?;
+            let device_fir = output.fir().ok_or(MiniDSPError::NoSuchPeripheral)?;
+            fir.apply(&device_fir).await?;
         }
 
         Ok(())
