@@ -62,7 +62,13 @@ version = "0.6.6"
 debug = []
 default = ["hid"]
 hid = ["hidapi"]
-devices = ["minidsp-protocol/devices", "minidsp-protocol/device_2x4hd"]
+devices = [
+  "minidsp-protocol/devices", 
+  "minidsp-protocol/device_2x4hd", 
+  "minidsp-protocol/device_4x10hd", 
+  "minidsp-protocol/device_msharc4x8",
+  "minidsp-protocol/device_shd"
+]
 
 [package.metadata.deb]
 assets = [

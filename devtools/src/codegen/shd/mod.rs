@@ -7,7 +7,7 @@ use super::spec::*;
 pub struct Target {}
 impl crate::Target for Target {
     fn filename() -> &'static str {
-        "m4x10hd.rs"
+        "shd.rs"
     }
 
     fn symbols() -> bimap::BiMap<String, usize> {
@@ -21,7 +21,7 @@ impl crate::Target for Target {
 
 pub fn device() -> Device {
     Device {
-        product_name: "MiniDSP 4x10HD".into(),
+        product_name: "MiniDSP SHD".into(),
         sources: Vec::new(),
         inputs: Vec::new(),
         outputs: Vec::new(),
