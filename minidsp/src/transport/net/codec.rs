@@ -21,15 +21,25 @@ use tokio_util::codec::{Decoder, Encoder};
 #[derive(Copy, Clone)]
 pub struct Codec {
     server: bool,
+    // If true, we have received a frame smaller than 64 bytes, and we
+    // should not discard extraneous data after a packet, even though the
+    // total available data size is a multiple of 64
+    received_small_packet: bool,
 }
 
 impl Codec {
     pub fn new_server() -> Self {
-        Codec { server: true }
+        Codec {
+            server: true,
+            received_small_packet: false,
+        }
     }
 
     pub fn new_client() -> Self {
-        Codec { server: false }
+        Codec {
+            server: false,
+            received_small_packet: false,
+        }
     }
 }
 
@@ -38,6 +48,20 @@ impl Decoder for Codec {
     type Error = io::Error;
 
     fn decode(&mut self, src: &mut bytes::BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        // If `src` is strictly 64 bytes long, we are probably dealing with a raw hid frame being forwarded over the network.
+        // This behaviour is different depending on the device doing the network to hid translation.
+        // See [`widg_nonzero_padding`] for more details.
+        if !self.server && !self.received_small_packet && !src.is_empty() {
+            if src.len() % 64 == 0 {
+                let mut buf = src.split_to(64);
+                return Ok(Some(buf.split_to(buf[0] as usize).freeze()));
+            } else {
+                // If a single received frame is not 64 bytes long, drop out of this hack, as it may hinder
+                // properly behaving servers under certain circumstances, where their packets could be 64 bytes too.
+                self.received_small_packet = true
+            }
+        }
+
         while !src.is_empty() {
             let additional_length = if self.server { 1 } else { 0 };
 
@@ -125,5 +149,34 @@ mod test {
 
         let decoded = codec.decode(&mut packet).unwrap().unwrap();
         assert_eq!(decoded.len(), 20);
+    }
+
+    #[test]
+    fn widg_nonzero_padding() {
+        // A user reported some commands did not yield a valid response, and were stalling the device probing process.
+        // From a provided pcap, it's clear that fixed-size 64 bytes frames are returned, with what appears to be
+        // random memory filling the rest of the buffer. These really look like full HID frames, because they have the
+        // incrementing last hex byte defining these.
+
+        let parts = [
+            "0531010c0ada01bb23f90100bb253dbb9419bb13b6bb2394f682f628986b040024bb440db4f6061c6c040032bb43ed3cf606f632bb12aabb1407bb5409f62810",
+            "0505ffa164da01bb23f90100bb253dbb9419bb13b6bb2394f682f628986b040024bb440db4f6061c6c040032bb43ed3cf606f632bb12aabb1407bb5409f62811",
+        ];
+
+        let mut packet: BytesMut = parts
+            .iter()
+            .flat_map(|s| hex::decode(s).unwrap().into_iter())
+            .collect();
+
+        let mut codec = Codec::new_client();
+
+        let decoded = codec.decode(&mut packet).unwrap().unwrap();
+        assert_eq!(hex::encode(decoded), "0531010c0a");
+
+        let decoded = codec.decode(&mut packet).unwrap().unwrap();
+        assert_eq!(hex::encode(decoded), "0505ffa164");
+
+        let decoded = codec.decode(&mut packet).unwrap();
+        assert_eq!(decoded, None);
     }
 }
