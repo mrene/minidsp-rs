@@ -516,7 +516,7 @@ async fn main() -> Result<()> {
                 .filter_map(|service| async move {
                     let client = Client::new(service);
                     let device_info = client.get_device_info().await.ok()?;
-                    let spec = probe(&device_info)?; //("this device is not supported");
+                    let spec = probe(&device_info); //("this device is not supported");
                     Some(MiniDSP::from_client(client, spec, Some(device_info)))
                 })
                 .collect()
@@ -528,8 +528,7 @@ async fn main() -> Result<()> {
             let service: SharedService = get_service(transport);
             let client = Client::new(service);
             let device_info = client.get_device_info().await?;
-            let spec =
-                probe(&device_info).ok_or_else(|| anyhow!("this device is not recognized"))?;
+            let spec = probe(&device_info);
 
             vec![MiniDSP::from_client(client, spec, Some(device_info))]
         }

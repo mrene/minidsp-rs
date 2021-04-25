@@ -220,7 +220,7 @@ impl Device {
         // knowing the device-specific memory layout.
         let client = Client::new(service.clone());
         let device_info = client.get_device_info().await.ok();
-        let device_spec = device_info.and_then(|dev| device::probe(&dev));
+        let device_spec = device_info.map(|dev| device::probe(&dev));
 
         let handle = DeviceHandle {
             service,
