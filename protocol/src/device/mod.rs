@@ -2,6 +2,8 @@
 //!
 //! This is where support for other devices should be added
 //!
+
+#[cfg(feature = "devices")]
 use super::Source::{self as Source, *};
 
 mod probe;

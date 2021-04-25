@@ -47,8 +47,9 @@ pub(crate) fn output(output: usize) -> Output {
         meter: format!("Meter10_C1_{}", 4 + output),
         delay_addr: format!("Delay_{}_0", 3 + output),
         invert_addr: format!("polarity_out_{}_0", 1 + output),
-        peq: (0..10usize)
-            .map(|index| format!("PEQ_{}_{}", output + 3, 10 - index))
+        peq: (1..=10usize)
+            .rev()
+            .map(|index| format!("PEQ_{}_{}", output + 3, index))
             .collect(),
         xover: Some(Crossover {
             peqs: [1, 5]
