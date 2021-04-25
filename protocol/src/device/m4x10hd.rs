@@ -612,6 +612,7 @@ pub mod sym {
         ("READ_BACK_ALG_SIGMA_2001", READ_BACK_ALG_SIGMA_2001),
     ];
 }
+#[allow(unused_imports)]
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "MiniDSP 4x10HD",

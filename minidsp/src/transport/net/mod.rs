@@ -1,6 +1,7 @@
 //! Allows talking with the [crate::server] component
 mod codec;
 mod discover;
+pub mod discovery;
 
 use std::sync::Arc;
 

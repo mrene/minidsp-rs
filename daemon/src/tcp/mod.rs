@@ -4,7 +4,10 @@ use std::{net::Ipv4Addr, str::FromStr, time::Duration};
 use anyhow::{Context, Result};
 use futures::{pin_mut, SinkExt, StreamExt};
 use minidsp::{
-    transport::{net::Codec, Transport},
+    transport::{
+        net::{discovery, Codec},
+        Transport,
+    },
     MiniDSPError,
 };
 use tokio::{
@@ -67,7 +70,7 @@ where
 
 pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
     if let Some(ref hostname) = opts.advertise {
-        let mut packet = minidsp::discovery::DiscoveryPacket {
+        let mut packet = discovery::DiscoveryPacket {
             mac_address: [10, 20, 30, 40, 50, 60],
             ip_address: Ipv4Addr::UNSPECIFIED,
             hwid: 10,
@@ -79,9 +82,7 @@ pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
             packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
         }
         let interval = Duration::from_secs(1);
-        tokio::spawn(minidsp::discovery::server::advertise_packet(
-            packet, interval,
-        ));
+        tokio::spawn(discovery::server::advertise_packet(packet, interval));
     }
     Ok(())
 }

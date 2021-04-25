@@ -14,10 +14,10 @@ thiserror = "1.0.24"
 
 [features]
 debug = ["std"]
-default = ["std", "debug", "device_2x4hd", "device_msharc4x8"]
+default = ["std", "debug", "symbols", "device_2x4hd", "device_msharc4x8", "device_4x10hd", "device_shd"]
 device_2x4hd = ["devices"]
-device_msharc4x8 = ["devices"]
 device_4x10hd = ["devices"]
+device_msharc4x8 = ["devices"]
 device_shd = ["devices"]
 devices = []
 std = []

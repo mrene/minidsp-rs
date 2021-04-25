@@ -280,6 +280,7 @@ pub mod sym {
         ("BPF_4_5", BPF_4_5),
     ];
 }
+#[allow(unused_imports)]
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "MiniDSP SHD",

@@ -6,11 +6,9 @@ use async_trait::async_trait;
 use futures::{Stream, StreamExt};
 use tokio::net::TcpStream;
 
+use super::discovery;
 use super::StreamTransport;
-use crate::{
-    discovery,
-    transport::{IntoTransport, MiniDSPError, Openable, Transport},
-};
+use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {

@@ -352,6 +352,7 @@ pub mod sym {
         ("BPF_6_5", BPF_6_5),
     ];
 }
+#[allow(unused_imports)]
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "2x4HD",

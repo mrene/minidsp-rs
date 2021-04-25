@@ -43,6 +43,7 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
             #[cfg(feature="symbols")]
             pub const SYMBOLS: &[(&str, u16)] = &[#(#mapped),*];
         }
+        #[allow(unused_imports)]
         use sym::*;
     }
 }

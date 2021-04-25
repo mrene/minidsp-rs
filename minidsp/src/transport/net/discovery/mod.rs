@@ -96,12 +96,11 @@ impl Encoder<DiscoveryPacket> for DiscoveryPacketCodec {
 
 #[cfg(test)]
 mod test {
-    use std::net::Ipv4Addr;
-
     use anyhow::Result;
     use bytes::Bytes;
+    use std::net::Ipv4Addr;
 
-    use crate::discovery::DiscoveryPacket;
+    use super::*;
 
     #[test]
     fn test_bytes_parse() -> Result<()> {

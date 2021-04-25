@@ -808,6 +808,7 @@ pub mod sym {
         ("BPF_12_5", BPF_12_5),
     ];
 }
+#[allow(unused_imports)]
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "MiniSHARC 4x8",

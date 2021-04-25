@@ -21,10 +21,10 @@ use handlers::run_server;
 use minidsp::{
     client::Client,
     device::probe,
-    discovery, tcp_server,
+    tcp_server,
     transport::{
         multiplexer::Multiplexer,
-        net::{self, StreamTransport},
+        net::{self, discovery, StreamTransport},
         IntoTransport, SharedService, Transport,
     },
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
