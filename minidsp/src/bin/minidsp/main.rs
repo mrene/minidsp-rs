@@ -352,18 +352,25 @@ impl FromStr for ProductId {
     }
 }
 
-#[cfg(feature = "hid")]
 async fn get_local_raw_transports() -> Result<Vec<Transport>> {
-    let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
-    let transports: Vec<_> = hid_devices
-        .iter()
-        .map(|dev| dev.open())
-        .collect::<FuturesUnordered<_>>()
-        .filter_map(|dev| async move { dev.ok() })
-        .collect::<Vec<_>>()
-        .await;
+    #[cfg(feature = "hid")]
+    {
+        let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
+        let transports: Vec<_> = hid_devices
+            .iter()
+            .map(|dev| dev.open())
+            .collect::<FuturesUnordered<_>>()
+            .filter_map(|dev| async move { dev.ok() })
+            .collect::<Vec<_>>()
+            .await;
 
-    Ok(transports)
+        Ok(transports)
+    }
+
+    #[cfg(not(feature = "hid"))]
+    {
+        Ok(Vec::new())
+    }
 }
 
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
@@ -388,7 +395,7 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
         if hid_devices.len() == 1 {
             return Ok(hid_devices[0].open().await?);
         } else if !hid_devices.is_empty() {
-            eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
+            eprintln!("There are multiple potential devices, use --usb path=... to disambiguate, or --all-local-devices to apply commands to all connected local devices.");
             for device in &hid_devices {
                 eprintln!("{}", device)
             }
@@ -523,6 +530,7 @@ async fn main() -> Result<()> {
                 .await
         } else {
             let transport = get_raw_transport(&opts).await?;
+
             let transport = transport_logging(transport, &opts);
 
             let service: SharedService = get_service(transport);
