@@ -6,8 +6,7 @@ use async_trait::async_trait;
 use futures::{Stream, StreamExt};
 use tokio::net::TcpStream;
 
-use super::discovery;
-use super::StreamTransport;
+use super::{discovery, StreamTransport};
 use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

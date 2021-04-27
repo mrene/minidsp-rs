@@ -1,7 +1,10 @@
 //! Device discovery integrated as the builder pattern
 
+use std::{collections::HashMap, net::ToSocketAddrs, path::PathBuf, sync::Arc};
+
 use futures::{StreamExt, TryStreamExt};
 use minidsp_protocol::device;
+use tokio::sync::Mutex;
 use url2::Url2;
 
 use crate::{
@@ -11,8 +14,6 @@ use crate::{
     utils::decoder::Decoder,
     MiniDSP, MiniDSPError,
 };
-use std::{collections::HashMap, net::ToSocketAddrs, path::PathBuf, sync::Arc};
-use tokio::sync::Mutex;
 
 ///
 #[derive(Default)]
@@ -172,7 +173,7 @@ mod tests {
     #[tokio::test]
     async fn test_builder() {
         // Device selection. Options are *additive*
-        let b = Builder::new()
+        let _b = Builder::new()
             // Discover any matching usb devices
             .with_default_usb()
             .unwrap()

@@ -9,29 +9,24 @@ use std::{
     num::ParseIntError,
     path::PathBuf,
     str::FromStr,
-    sync::Arc,
 };
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
+use futures::{stream::FuturesUnordered, StreamExt};
 use handlers::run_server;
 use minidsp::{
-    client::Client,
-    device::probe,
     logging::transport_logging,
     tcp_server,
     transport::{
-        multiplexer::Multiplexer,
         net::{self, discovery, StreamTransport},
-        IntoTransport, SharedService, Transport,
+        IntoTransport, Transport,
     },
-    utils::{self, decoder::Decoder, logger, recorder::Recorder},
-    Gain, MiniDSP, MiniDSPError, Source,
+    Gain, MiniDSP, Source,
 };
-use tokio::{net::TcpStream, sync::Mutex};
+use tokio::net::TcpStream;
 
 mod debug;
 mod handlers;
@@ -384,11 +379,6 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     }
 
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
-}
-
-fn get_service(transport: Transport) -> SharedService {
-    let mplex = Multiplexer::from_transport(transport);
-    Arc::new(Mutex::new(mplex.to_service()))
 }
 
 async fn run_probe() -> Result<()> {

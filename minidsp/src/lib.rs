@@ -59,9 +59,7 @@ pub use crate::commands::Gain;
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
-pub use minidsp_protocol::{commands, device, device::Gate};
-
-pub use minidsp_protocol::packet;
+pub use minidsp_protocol::{commands, device, device::Gate, packet};
 pub mod tcp_server;
 pub use minidsp_protocol::source;
 pub mod transport;

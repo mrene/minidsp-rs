@@ -1,12 +1,13 @@
 use std::{path::PathBuf, sync::Arc};
 
+use bytes::Bytes;
+use futures::{pin_mut, StreamExt};
+use tokio::sync::Mutex;
+
 use crate::{
     transport::Transport,
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
-use bytes::Bytes;
-use futures::{pin_mut, StreamExt};
-use tokio::sync::Mutex;
 
 pub fn transport_logging(
     transport: Transport,
