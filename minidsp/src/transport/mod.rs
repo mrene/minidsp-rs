@@ -108,7 +108,7 @@ pub trait IntoTransport {
     fn into_transport(self) -> Transport;
 }
 
-pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
+pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
     match url.scheme() {
         #[cfg(feature = "hid")]
         "usb" => {
@@ -119,5 +119,16 @@ pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
         }
         "tcp" => Ok(net::open_url(url).await?.into_transport()),
         _ => Err(MiniDSPError::InvalidURL),
+    }
+}
+
+#[async_trait]
+impl Openable for Url2 {
+    async fn open(&self) -> Result<Transport, MiniDSPError> {
+        open_url(self).await
+    }
+
+    fn to_string(&self) -> String {
+        ToString::to_string(&self)
     }
 }

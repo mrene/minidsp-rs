@@ -8,7 +8,7 @@ use anyhow::{anyhow, Result};
 use futures::{StreamExt, TryFutureExt};
 use minidsp::{
     client::Client,
-    device,
+    device, logging,
     transport::{self, SharedService},
     utils::OwnedJoinHandle,
     DeviceInfo, MiniDSP,
@@ -16,10 +16,7 @@ use minidsp::{
 use tokio::sync::Mutex;
 use url2::Url2;
 
-use super::{
-    discovery::{DiscoveryEvent, Registry},
-    logging,
-};
+use super::discovery::{DiscoveryEvent, Registry};
 
 pub struct DeviceManager {
     #[allow(dead_code)]
@@ -195,12 +192,12 @@ impl Device {
         // Connect to the device by url, and get a frame-level transport
         let mut transport = {
             let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
-            let stream = transport::open_url(url).await?;
+            let stream = transport::open_url(&url).await?;
 
             // If we have any logging options, log this stream
             let app = super::APP.get().unwrap();
             let app = app.read().await;
-            let stream = logging::transport_logging(stream, app.opts.verbose, app.opts.log.clone());
+            let stream = logging::transport_logging(stream, app.opts.verbose as u8, app.opts.log.clone());
 
             transport::Hub::new(stream)
         };

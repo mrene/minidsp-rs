@@ -70,6 +70,8 @@ pub use biquad::Biquad;
 pub mod client;
 pub mod formats;
 pub mod model;
+pub mod builder;
+pub mod logging;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
@@ -91,12 +93,12 @@ impl<'a> MiniDSP<'a> {
     pub fn from_client(
         client: Client,
         device: &'a device::Device,
-        device_info: Option<DeviceInfo>,
+        device_info: impl Into<Option<DeviceInfo>>,
     ) -> Self {
         MiniDSP {
             client,
             device,
-            device_info: device_info.into(),
+            device_info: Mutex::new(device_info.into()),
         }
     }
 }

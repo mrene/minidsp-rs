@@ -5,7 +5,8 @@ use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
 use futures::{SinkExt, TryStreamExt};
-use hidapi::{HidApi, HidDevice, HidError, HidResult};
+use hidapi::{HidApi, HidDevice, HidResult};
+pub use hidapi::HidError;
 use stream::HidStream;
 use url2::Url2;
 
@@ -42,7 +43,7 @@ impl HidTransport {
         }
     }
 
-    pub fn with_url(hid: &HidApi, url: Url2) -> Result<HidTransport, HidError> {
+    pub fn with_url(hid: &HidApi, url: &Url2) -> Result<HidTransport, HidError> {
         // If we have a path, decode it.
         let path = url.path();
         if !path.is_empty() {

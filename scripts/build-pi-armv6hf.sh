@@ -10,6 +10,7 @@ HIDAPI_VER="0.8.0~rc1+git20140818.d17db57+dfsg-2"
 LIBUSB_VER="1.0.22-2"
 LIBUDEV_VER="241-7~deb10u7+rpi1"
 LIBC_VER="2.28-10+rpi1"
+OPENSSL_VER="1.1.1k-1"
 DEPS=( \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-libusb0_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-dev_${HIDAPI_VER}_armhf.deb" \
@@ -17,7 +18,9 @@ DEPS=( \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/libu/libusb-1.0/libusb-1.0-0-dev_${LIBUSB_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/s/systemd/libudev1_${LIBUDEV_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/s/systemd/libudev-dev_${LIBUDEV_VER}_armhf.deb" \
-  "http://mirrordirector.raspbian.org/raspbian/pool/main/g/glibc/libc6_${LIBC_VER}_armhf.deb"
+  "http://mirrordirector.raspbian.org/raspbian/pool/main/g/glibc/libc6_${LIBC_VER}_armhf.deb" \
+  "http://mirrordirector.raspbian.org/raspbian/pool/main/o/openssl/libssl1.1_${OPENSSL_VER}_armhf.deb" \
+  "http://mirrordirector.raspbian.org/raspbian/pool/main/o/openssl/libssl-dev_${OPENSSL_VER}_armhf.deb"
 )
 
 # Collect Paths

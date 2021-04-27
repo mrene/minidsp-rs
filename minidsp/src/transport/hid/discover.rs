@@ -97,3 +97,14 @@ pub fn discover(hid: &HidApi) -> Result<Vec<Device>, HidError> {
         })
         .collect())
 }
+
+pub fn discover_with<F: Fn(&hidapi::DeviceInfo)->bool>(hid: &HidApi, func: F) -> Result<Vec<Device>, HidError> {
+    Ok(hid
+        .device_list()
+        .filter(|di| func(di))
+        .map(|di| Device {
+            id: Some((di.vendor_id(), di.product_id())),
+            path: Some(di.path().to_string_lossy().to_string()),
+        })
+        .collect())
+}

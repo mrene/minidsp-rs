@@ -19,7 +19,6 @@ pub mod config;
 pub mod device_manager;
 pub mod discovery;
 pub mod http;
-pub mod logging;
 pub mod tcp;
 
 static APP: OnceCell<RwLock<App>> = OnceCell::new();

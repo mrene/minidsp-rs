@@ -2,13 +2,13 @@ use std::{path::PathBuf, sync::Arc};
 
 use bytes::Bytes;
 use futures::{pin_mut, StreamExt};
-use minidsp::{
+use crate::{
     transport::Transport,
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
 };
 use tokio::sync::Mutex;
 
-pub fn transport_logging(transport: Transport, verbose: i32, log: Option<PathBuf>) -> Transport {
+pub fn transport_logging(transport: Transport, verbose: u8, log: Option<PathBuf>) -> Transport {
     let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
     let transport = logger(transport, log_tx);
 
