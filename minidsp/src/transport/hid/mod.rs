@@ -5,8 +5,8 @@ use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
 use futures::{SinkExt, TryStreamExt};
-use hidapi::{HidApi, HidDevice, HidResult};
 pub use hidapi::HidError;
+use hidapi::{HidApi, HidDevice, HidResult};
 use stream::HidStream;
 use url2::Url2;
 

@@ -8,6 +8,7 @@ use crate::{
     client::Client,
     device::DeviceKind,
     transport::{hid, Multiplexer, Openable},
+    utils::decoder::Decoder,
     MiniDSP, MiniDSPError,
 };
 use std::{collections::HashMap, net::ToSocketAddrs, path::PathBuf, sync::Arc};
@@ -117,20 +118,22 @@ impl Builder {
         } = self;
 
         // Attempt to instantiate every candidate device
-        futures::stream::iter(candidate_devices.into_iter())
+        futures::stream::iter(candidate_devices)
             .then(|(_, dev)| {
                 let log_filename = log_filename.clone();
 
                 async move {
                     let mut transport = dev.open().await?;
-
+                    let mut decoder: Option<Arc<Mutex<Decoder>>> = None;
                     // Apply any logging options
                     if log_console.is_some() || log_filename.is_some() {
-                        transport = crate::logging::transport_logging(
+                        let wrapped = crate::logging::transport_logging(
                             transport,
                             log_console.unwrap_or_default(),
                             log_filename.clone(),
                         );
+                        decoder = wrapped.0;
+                        transport = wrapped.1;
                     }
 
                     // Convert to a service
@@ -145,6 +148,11 @@ impl Builder {
                         None => device::probe(&device_info),
                         Some(k) => device::by_kind(k),
                     };
+
+                    if let Some(decoder) = decoder {
+                        let mut decoder = decoder.lock().await;
+                        decoder.set_name_map(device.symbols.iter().copied());
+                    }
 
                     let dsp = MiniDSP::from_client(client, device, device_info);
                     Ok::<_, MiniDSPError>(dsp)

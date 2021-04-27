@@ -7,7 +7,7 @@
 use super::Source::{self as Source, *};
 
 mod probe;
-pub use probe::{probe, by_kind, DeviceKind};
+pub use probe::{by_kind, probe, DeviceKind};
 
 #[cfg(feature = "device_2x4hd")]
 pub mod m2x4hd;

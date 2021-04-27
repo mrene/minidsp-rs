@@ -64,6 +64,7 @@ default = ["hid", "devices"]
 hid = ["hidapi"]
 devices = [
   "minidsp-protocol/devices", 
+  "minidsp-protocol/symbols", 
   "minidsp-protocol/device_2x4hd", 
   "minidsp-protocol/device_4x10hd", 
   "minidsp-protocol/device_msharc4x8",

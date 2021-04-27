@@ -31,6 +31,14 @@ impl Decoder {
         Decoder { quiet, w, name_map }
     }
 
+    pub fn set_name_map<'a>(&mut self, it: impl Iterator<Item = (&'a str, u16)>) {
+        let mut map = BiMap::new();
+        for (k, v) in it {
+            map.insert(k.to_string(), v as usize);
+        }
+        self.name_map.replace(map);
+    }
+
     /// Feed a sent frame
     pub fn feed_sent(&mut self, frame: &Bytes) {
         if let Ok(frame) = packet::unframe(frame.clone()) {

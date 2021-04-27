@@ -21,6 +21,7 @@ use handlers::run_server;
 use minidsp::{
     client::Client,
     device::probe,
+    logging::transport_logging,
     tcp_server,
     transport::{
         multiplexer::Multiplexer,
@@ -28,7 +29,7 @@ use minidsp::{
         IntoTransport, SharedService, Transport,
     },
     utils::{self, decoder::Decoder, logger, recorder::Recorder},
-    Gain, MiniDSP, Source,
+    Gain, MiniDSP, MiniDSPError, Source,
 };
 use tokio::{net::TcpStream, sync::Mutex};
 
@@ -352,27 +353,6 @@ impl FromStr for ProductId {
     }
 }
 
-async fn get_local_raw_transports() -> Result<Vec<Transport>> {
-    #[cfg(feature = "hid")]
-    {
-        let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
-        let transports: Vec<_> = hid_devices
-            .iter()
-            .map(|dev| dev.open())
-            .collect::<FuturesUnordered<_>>()
-            .filter_map(|dev| async move { dev.ok() })
-            .collect::<Vec<_>>()
-            .await;
-
-        Ok(transports)
-    }
-
-    #[cfg(not(feature = "hid"))]
-    {
-        Ok(Vec::new())
-    }
-}
-
 async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     if let Some(tcp) = &opts.tcp_option {
         let tcp = if tcp.contains(':') {
@@ -404,66 +384,6 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
     }
 
     return Err(anyhow!("Couldn't find any MiniDSP devices"));
-}
-
-fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
-    let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
-    let transport = logger(transport, log_tx);
-
-    let verbose = opts.verbose;
-    let log = opts.log.clone();
-
-    tokio::spawn(async move {
-        let result = async move {
-            let decoder = if verbose > 0 {
-                use termcolor::{ColorChoice, StandardStream};
-                let writer = StandardStream::stderr(ColorChoice::Auto);
-                Some(Arc::new(Mutex::new(Decoder::new(
-                    Box::new(writer),
-                    verbose == 1,
-                    None,
-                ))))
-            } else {
-                None
-            };
-
-            let mut recorder = match log {
-                Some(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
-                _ => None,
-            };
-
-            pin_mut!(log_rx);
-
-            while let Some(msg) = log_rx.next().await {
-                match msg {
-                    utils::Message::Sent(msg) => {
-                        if let Some(decoder) = &decoder {
-                            decoder.lock().await.feed_sent(&msg);
-                        }
-                        if let Some(recorder) = recorder.as_mut() {
-                            recorder.feed_sent(&msg);
-                        }
-                    }
-                    utils::Message::Received(msg) => {
-                        if let Some(decoder) = &decoder {
-                            decoder.lock().await.feed_recv(&msg);
-                        }
-                        if let Some(recorder) = recorder.as_mut() {
-                            recorder.feed_recv(&msg);
-                        }
-                    }
-                }
-            }
-
-            Ok::<(), anyhow::Error>(())
-        };
-
-        if let Err(e) = result.await {
-            log::error!("transport logging exiting: {}", e);
-        }
-    });
-
-    Box::pin(transport)
 }
 
 fn get_service(transport: Transport) -> SharedService {
@@ -511,36 +431,35 @@ async fn main() -> Result<()> {
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
         let transport = get_raw_transport(&opts).await?;
-        let transport = transport_logging(transport, &opts);
+        let (_, transport) = transport_logging(transport, opts.verbose as u8, opts.file);
         run_server(opts.subcmd.unwrap(), transport).await?;
         return Ok(());
     }
 
-    let devices: Vec<_> = {
-        if opts.all_local_devices {
-            let transports = get_local_raw_transports().await?;
-            futures::stream::iter(transports.into_iter().map(get_service))
-                .filter_map(|service| async move {
-                    let client = Client::new(service);
-                    let device_info = client.get_device_info().await.ok()?;
-                    let spec = probe(&device_info); //("this device is not supported");
-                    Some(MiniDSP::from_client(client, spec, Some(device_info)))
-                })
-                .collect()
-                .await
+    let mut builder = minidsp::builder::Builder::new();
+    if let Some(tcp) = &opts.tcp_option {
+        let tcp = if tcp.contains(':') {
+            tcp.to_string()
         } else {
-            let transport = get_raw_transport(&opts).await?;
-
-            let transport = transport_logging(transport, &opts);
-
-            let service: SharedService = get_service(transport);
-            let client = Client::new(service);
-            let device_info = client.get_device_info().await?;
-            let spec = probe(&device_info);
-
-            vec![MiniDSP::from_client(client, spec, Some(device_info))]
+            format!("{}:5333", tcp)
+        };
+        builder = builder.with_tcp(tcp).unwrap();
+    } else if let Some(device) = opts.hid_option.as_ref() {
+        if let Some(ref path) = device.path {
+            builder = builder.with_usb_path(path);
+        } else if let Some((vid, pid)) = device.id {
+            builder = builder.with_usb_product_id(vid, pid)?;
         }
-    };
+    }
+
+    let mut devices = builder.probe().await?;
+    if !opts.all_local_devices {
+        devices.truncate(1);
+    }
+
+    if devices.is_empty() {
+        return Err(anyhow!("No devices found"));
+    }
 
     match &opts.file {
         Some(filename) => {

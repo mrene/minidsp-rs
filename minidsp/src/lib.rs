@@ -67,11 +67,11 @@ pub use minidsp_protocol::source;
 pub mod transport;
 pub mod utils;
 pub use biquad::Biquad;
+pub mod builder;
 pub mod client;
 pub mod formats;
-pub mod model;
-pub mod builder;
 pub mod logging;
+pub mod model;
 
 /// High-level MiniDSP Control API
 pub struct MiniDSP<'a> {
