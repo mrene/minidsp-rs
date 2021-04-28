@@ -15,7 +15,10 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use futures::{stream::FuturesUnordered, StreamExt};
+use futures::{
+    stream::{self},
+    StreamExt,
+};
 use handlers::run_server;
 use minidsp::{
     logging::transport_logging,
@@ -378,7 +381,7 @@ async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
         }
     }
 
-    return Err(anyhow!("Couldn't find any MiniDSP devices"));
+    Err(anyhow!("Couldn't find any MiniDSP devices"))
 }
 
 async fn run_probe() -> Result<()> {
@@ -442,10 +445,20 @@ async fn main() -> Result<()> {
         }
     }
 
-    let mut devices = builder.probe().await?;
+    let mut devices: Vec<_> = builder
+        .probe()
+        .filter_map(|x| async move { x.ok() })
+        .collect()
+        .await;
+
     if !opts.all_local_devices {
         devices.truncate(1);
     }
+
+    let devices: Vec<_> = devices
+        .into_iter()
+        .map(|dev| dev.to_minidsp().expect("device has disappeared"))
+        .collect();
 
     if devices.is_empty() {
         return Err(anyhow!("No devices found"));
@@ -484,19 +497,15 @@ async fn main() -> Result<()> {
                 };
 
                 // Run this command on all devices in parallel
-                devices
-                    .iter()
-                    .map(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
-                    .collect::<FuturesUnordered<_>>()
+                stream::iter(&devices)
+                    .then(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
                     .collect::<Vec<_>>()
                     .await;
             }
         }
         None => {
-            devices
-                .iter()
-                .map(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
-                .collect::<FuturesUnordered<_>>()
+            stream::iter(&devices)
+                .then(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
                 .collect::<Vec<_>>()
                 .await;
         }

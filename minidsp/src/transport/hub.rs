@@ -96,7 +96,7 @@ impl Hub {
     }
 
     /// Clones the transport if it is still available, returns None if it has been closed
-    pub fn duplicate(&self) -> Option<Self> {
+    pub fn try_clone(&self) -> Option<Self> {
         let inner = self.inner.lock().unwrap();
         let device_rx = BroadcastStream::new(inner.as_ref()?.device_rx.subscribe());
         Some(Self {

@@ -1,30 +1,69 @@
 //! Device discovery integrated as the builder pattern
 
-use std::{collections::HashMap, net::ToSocketAddrs, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, net::ToSocketAddrs, path::PathBuf, pin::Pin, sync::Arc};
 
-use futures::{StreamExt, TryStreamExt};
-use minidsp_protocol::device;
+use futures::{Stream, StreamExt};
+use minidsp_protocol::{
+    device::{self, Device},
+    DeviceInfo,
+};
 use tokio::sync::Mutex;
 use url2::Url2;
 
 use crate::{
     client::Client,
     device::DeviceKind,
-    transport::{hid, Multiplexer, Openable},
+    transport::{hid, Hub, Multiplexer, Openable},
     utils::decoder::Decoder,
     MiniDSP, MiniDSPError,
 };
 
-///
+/// Discovers, probes and instantiate device instances
+/// The general flow is:
+/// - Configure what devices to probe
+/// - Consume builder into a vec of transports (+options)
+/// (minidsp server still needs raw transport access at this stage)
+/// - Probe transports (create Hub, bind client to it, probe devie)
 #[derive(Default)]
 pub struct Builder {
-    log_filename: Option<PathBuf>,
-    log_console: Option<u8>,
-    kind: Option<DeviceKind>,
-
     /// The candidate device pool, devices get added when their helper methods
     /// detect matching ones. (url -> openable)
     candidate_devices: HashMap<String, Box<dyn Openable>>,
+    options: DeviceOptions,
+}
+
+#[derive(Default, Clone)]
+pub struct DeviceOptions {
+    log_filename: Option<PathBuf>,
+    log_console: Option<u8>,
+    kind: Option<DeviceKind>,
+}
+
+/// TODO: Copied from minidspd
+
+pub struct DeviceHandle {
+    // Frame-level multiplexer
+    pub transport: Hub,
+
+    // Probed hardware id and dsp version
+    pub device_info: DeviceInfo,
+
+    // Device spec structure indicating the address of every component
+    pub device_spec: &'static Device,
+}
+
+impl DeviceHandle {
+    pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
+        let transport = self.transport.try_clone()?;
+        let multiplexer = Multiplexer::from_transport(transport);
+        let client = Client::new(Arc::new(Mutex::new(multiplexer.to_service())));
+        let dsp = MiniDSP::from_client(client, self.device_spec, self.device_info);
+        Some(dsp)
+    }
+
+    pub fn to_hub(&self) -> Option<Hub> {
+        self.transport.try_clone()
+    }
 }
 
 impl Builder {
@@ -98,69 +137,73 @@ impl Builder {
         T: Into<Option<U>>,
         U: Into<PathBuf>,
     {
-        self.log_console.replace(level);
-        self.log_filename = T::into(filename).map(U::into);
+        self.options.log_console.replace(level);
+        self.options.log_filename = T::into(filename).map(U::into);
         self
     }
 
     /// Do not probe the device to identify what hardware it is, and use the specified DeviceKind instead.
     pub fn force_device_kind(mut self, kind: DeviceKind) -> Self {
-        self.kind.replace(kind);
+        self.options.kind.replace(kind);
         self
     }
-
     /// Probe all candidate devices
-    pub async fn probe(self) -> Result<Vec<MiniDSP<'static>>, MiniDSPError> {
+    pub fn probe(self) -> Pin<Box<impl Stream<Item = Result<DeviceHandle, MiniDSPError>>>> {
         let Self {
-            log_filename,
-            log_console,
-            kind,
+            options,
             candidate_devices,
         } = self;
 
+        let options = Arc::new(options);
+
         // Attempt to instantiate every candidate device
-        futures::stream::iter(candidate_devices)
-            .then(|(_, dev)| {
-                let log_filename = log_filename.clone();
+        Box::pin(
+            futures::stream::iter(candidate_devices).then(move |(_, dev)| {
+                let options = options.clone();
 
                 async move {
                     let mut transport = dev.open().await?;
                     let mut decoder: Option<Arc<Mutex<Decoder>>> = None;
                     // Apply any logging options
-                    if log_console.is_some() || log_filename.is_some() {
+                    if options.log_console.is_some() || options.log_filename.is_some() {
                         let wrapped = crate::logging::transport_logging(
                             transport,
-                            log_console.unwrap_or_default(),
-                            log_filename.clone(),
+                            options.log_console.unwrap_or_default(),
+                            options.log_filename.clone(),
                         );
                         decoder = wrapped.0;
                         transport = wrapped.1;
                     }
 
+                    let hub = Hub::new(transport);
+
                     // Convert to a service
                     // FIXME: This is convoluted, should be a part of Client
-                    let mplex = Multiplexer::from_transport(transport);
-                    let svc = Arc::new(Mutex::new(mplex.to_service()));
-
                     // Probe the device for its hw id and serial
+                    let mplex = Multiplexer::from_transport(
+                        hub.try_clone().ok_or(MiniDSPError::TransportClosed)?,
+                    );
+                    let svc = Arc::new(Mutex::new(mplex.to_service()));
                     let client = Client::new(svc);
+
                     let device_info = client.get_device_info().await?;
-                    let device = match kind {
+                    let device_spec = match options.kind {
                         None => device::probe(&device_info),
                         Some(k) => device::by_kind(k),
                     };
 
                     if let Some(decoder) = decoder {
                         let mut decoder = decoder.lock().await;
-                        decoder.set_name_map(device.symbols.iter().copied());
+                        decoder.set_name_map(device_spec.symbols.iter().copied());
                     }
-
-                    let dsp = MiniDSP::from_client(client, device, device_info);
-                    Ok::<_, MiniDSPError>(dsp)
+                    Ok::<_, MiniDSPError>(DeviceHandle {
+                        transport: hub,
+                        device_info,
+                        device_spec,
+                    })
                 }
-            })
-            .try_collect()
-            .await
+            }),
+        )
     }
 }
 
@@ -193,6 +236,8 @@ mod tests {
             .force_device_kind(DeviceKind::M2x4Hd)
             // Probe all matching devices
             .probe()
-            .await;
+            .next()
+            .await
+            .unwrap();
     }
 }

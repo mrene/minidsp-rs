@@ -31,6 +31,7 @@ impl Decoder {
         Decoder { quiet, w, name_map }
     }
 
+    /// Sets the symbol names to be printed
     pub fn set_name_map<'a>(&mut self, it: impl Iterator<Item = (&'a str, u16)>) {
         let mut map = BiMap::new();
         for (k, v) in it {

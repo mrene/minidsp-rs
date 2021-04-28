@@ -206,7 +206,7 @@ impl Device {
         // Wrap the transport into a multiplexed service for command-level multiplexing
         let service = {
             let transport = transport
-                .duplicate()
+                .try_clone()
                 .ok_or_else(|| anyhow!("transport closed prematurely"))?;
             let mplex = transport::Multiplexer::from_transport(transport);
             Arc::new(Mutex::new(mplex.to_service()))
@@ -223,7 +223,7 @@ impl Device {
         let handle = DeviceHandle {
             service,
             transport: transport
-                .duplicate()
+                .try_clone()
                 .ok_or_else(|| anyhow!("transport closed prematurely"))?,
             device_spec,
             device_info,
@@ -309,6 +309,6 @@ impl DeviceHandle {
     }
 
     pub fn to_hub(&self) -> Option<transport::Hub> {
-        self.transport.duplicate()
+        self.transport.try_clone()
     }
 }
