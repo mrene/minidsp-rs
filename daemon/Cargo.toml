@@ -4,6 +4,10 @@ edition = "2018"
 name = "minidsp-daemon"
 version = "0.1.0"
 
+[[bin]]
+name="minidspd"
+path="src/main.rs"
+
 [features]
 default = ["serde", "strum", "schemars"]
 

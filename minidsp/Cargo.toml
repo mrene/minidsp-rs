@@ -74,9 +74,10 @@ devices = [
 [package.metadata.deb]
 assets = [
   ["target/release/minidsp", "usr/bin/", "755"],
-  ["README.md", "usr/share/doc/minidsp/README", "644"],
-  ["debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
-  ["debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
+  ["target/release/minidspd", "usr/bin/", "755"],
+  ["../README.md", "usr/share/doc/minidsp/README", "644"],
+  ["../debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
+  ["../debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
 ]
 copyright = "2021, Mathieu Rene <mathieu.rene@gmail.com>"
 depends = "libusb-1.0-0 (>= 2:1.0.22), libc6 (>= 2.17), libudev1 (>= 183)"
