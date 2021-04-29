@@ -18,7 +18,7 @@ jobs:
       - name: Setup cross environment
         run: docker build -t rpirust -f scripts/Dockerfile.rpi scripts/
       - name: Run build
-        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh deb
+        run: docker run --rm -v $(pwd):/src -w /src rpirust ./scripts/build-pi-armv6hf.sh deb -p minidsp
       - name: Copy debian package
         run: |
           cp -v target/arm-unknown-linux-gnueabihf/debian/${{ matrix.pair.bin }}* .
