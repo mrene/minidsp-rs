@@ -6,7 +6,6 @@
 //!
 //! It's typical to use the [roundtrip] method in order to send the command to a transport and
 //! obtained its parsed response.
-//!
 
 use alloc::vec::Vec;
 use core::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};

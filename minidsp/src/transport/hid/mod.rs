@@ -18,6 +18,7 @@ pub use discover::*;
 use super::{frame_codec, multiplexer::Multiplexer, IntoTransport};
 
 pub const VID_MINIDSP: u16 = 0x2752;
+pub const OLD_MINIDSP_PID: (u16, u16) = (0x04d8, 0x003f);
 
 static HIDAPI_INSTANCE: AtomicRefCell<Option<Arc<HidApi>>> = AtomicRefCell::new(None);
 

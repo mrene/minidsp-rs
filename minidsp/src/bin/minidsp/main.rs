@@ -15,30 +15,23 @@ use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use futures::{
-    stream::{self},
-    StreamExt,
-};
+use futures::{stream, StreamExt};
 use handlers::run_server;
 use minidsp::{
-    logging::transport_logging,
+    builder::{Builder, DeviceHandle},
+    device::DeviceKind,
     tcp_server,
-    transport::{
-        net::{self, discovery, StreamTransport},
-        IntoTransport, Transport,
-    },
-    Gain, MiniDSP, Source,
+    transport::net::{self, discovery},
+    Gain, MiniDSP, MiniDSPError, Source,
 };
-use tokio::net::TcpStream;
 
 mod debug;
 mod handlers;
 
-use std::{io::Read, ops::Deref, time::Duration};
+use std::{io::Read, time::Duration};
 
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
-use minidsp::transport::Openable;
 
 #[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
@@ -68,12 +61,44 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
+    #[clap(name = "force-kind", long)]
+    /// Force the device to a specific product instead of probing its hardware id. May break things, use at your own risk.
+    force_kind: Option<DeviceKind>,
+
     #[clap(short = 'f')]
     /// Read commands to run from the given filename (use - for stdin)
     file: Option<PathBuf>,
 
     #[clap(subcommand)]
     subcmd: Option<SubCommand>,
+}
+
+impl Opts {
+    // Applies transport and logging options to this builder
+    fn apply_builder(&self, mut builder: Builder) -> Result<Builder, MiniDSPError> {
+        if let Some(tcp) = &self.tcp_option {
+            let tcp = if tcp.contains(':') {
+                tcp.to_string()
+            } else {
+                format!("{}:5333", tcp)
+            };
+            builder = builder.with_tcp(tcp).unwrap();
+        } else if let Some(device) = self.hid_option.as_ref() {
+            if let Some(ref path) = device.path {
+                builder = builder.with_usb_path(path);
+            } else if let Some((vid, pid)) = device.id {
+                builder = builder.with_usb_product_id(vid, pid)?;
+            }
+        }
+
+        builder = builder.with_logging(self.verbose as u8, self.log.clone());
+
+        if let Some(force_kind) = self.force_kind {
+            builder = builder.force_device_kind(force_kind);
+        }
+
+        Ok(builder)
+    }
 }
 
 #[derive(Clone, Clap, Debug)]
@@ -351,55 +376,20 @@ impl FromStr for ProductId {
     }
 }
 
-async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
-    if let Some(tcp) = &opts.tcp_option {
-        let tcp = if tcp.contains(':') {
-            tcp.to_string()
-        } else {
-            format!("{}:5333", tcp)
-        };
-        let stream = TcpStream::connect(tcp).await?;
-        return Ok(StreamTransport::new(stream).into_transport());
-    }
-
-    #[cfg(feature = "hid")]
-    {
-        if let Some(device) = &opts.hid_option {
-            return Ok(device.open().await?);
-        }
-
-        // If no device was passed, do a best effort to figure out the right device to open
-        let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
-        if hid_devices.len() == 1 {
-            return Ok(hid_devices[0].open().await?);
-        } else if !hid_devices.is_empty() {
-            eprintln!("There are multiple potential devices, use --usb path=... to disambiguate, or --all-local-devices to apply commands to all connected local devices.");
-            for device in &hid_devices {
-                eprintln!("{}", device)
-            }
-            return Err(anyhow!("Multiple candidate usb devices are detected."));
-        }
-    }
-
-    Err(anyhow!("Couldn't find any MiniDSP devices"))
-}
-
-async fn run_probe() -> Result<()> {
-    #[cfg(feature = "hid")]
-    {
-        // Probe for local usb devices
-        let devices = hid::discover(hid::initialize_api()?.deref())?;
-        if devices.is_empty() {
-            println!("No matching local USB devices detected.")
-        } else {
-            for device in &devices {
-                println!("Found: {}", device);
-            }
-        }
+async fn run_probe(devices: Vec<DeviceHandle>) -> Result<()> {
+    for dev in &devices {
+        println!(
+            "Found {} with serial {} at {} [hw_id: {}, dsp_version: {}]",
+            dev.device_spec.product_name,
+            dev.device_info.serial,
+            dev.url,
+            dev.device_info.hw_id,
+            dev.device_info.dsp_version
+        );
     }
 
     println!("Probing for network devices...");
-    let devices = net::discover_timeout(Duration::from_secs(2)).await?;
+    let devices = net::discover_timeout(Duration::from_secs(8)).await?;
     if devices.is_empty() {
         println!("No network devices detected")
     } else {
@@ -416,34 +406,7 @@ async fn main() -> Result<()> {
     env_logger::init();
     let opts: Opts = Opts::parse();
 
-    if let Some(SubCommand::Probe) = opts.subcmd {
-        run_probe().await?;
-        return Ok(());
-    }
-
-    if let Some(SubCommand::Server { .. }) = opts.subcmd {
-        log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
-        let transport = get_raw_transport(&opts).await?;
-        let (_, transport) = transport_logging(transport, opts.verbose as u8, opts.file);
-        run_server(opts.subcmd.unwrap(), transport).await?;
-        return Ok(());
-    }
-
-    let mut builder = minidsp::builder::Builder::new();
-    if let Some(tcp) = &opts.tcp_option {
-        let tcp = if tcp.contains(':') {
-            tcp.to_string()
-        } else {
-            format!("{}:5333", tcp)
-        };
-        builder = builder.with_tcp(tcp).unwrap();
-    } else if let Some(device) = opts.hid_option.as_ref() {
-        if let Some(ref path) = device.path {
-            builder = builder.with_usb_path(path);
-        } else if let Some((vid, pid)) = device.id {
-            builder = builder.with_usb_product_id(vid, pid)?;
-        }
-    }
+    let builder = opts.apply_builder(Builder::new())?;
 
     let mut devices: Vec<_> = builder
         .probe()
@@ -451,8 +414,27 @@ async fn main() -> Result<()> {
         .collect()
         .await;
 
+    if let Some(SubCommand::Probe) = opts.subcmd {
+        run_probe(devices).await?;
+        return Ok(());
+    }
+
     if !opts.all_local_devices {
         devices.truncate(1);
+    }
+
+    if let Some(SubCommand::Server { .. }) = opts.subcmd {
+        log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
+
+        let transport = devices
+            .first()
+            .ok_or_else(|| anyhow!("No devices found"))?
+            .transport
+            .try_clone()
+            .expect("device has disappeared");
+
+        run_server(opts.subcmd.unwrap(), Box::pin(transport)).await?;
+        return Ok(());
     }
 
     let devices: Vec<_> = devices

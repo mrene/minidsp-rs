@@ -1,7 +1,6 @@
 //! Static device definitions
 //!
 //! This is where support for other devices should be added
-//!
 
 #[allow(unused_imports)]
 use super::Source::{self as Source, *};

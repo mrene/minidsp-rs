@@ -4,20 +4,27 @@
 //! an instance of this program running the `server` component, see [`transport::net::NetTransport`].
 //!
 //! ```no_run
-//! use minidsp::{MiniDSP, device::m2x4hd::DEVICE, transport::{hid, Multiplexer}, Channel, Gain};
 //! use anyhow::Result;
-//! use std::sync::Arc;
-//! use tokio::sync::Mutex;
+//! use futures::StreamExt;
+//! use minidsp::{
+//!     transport::{hid, Multiplexer},
+//!     Builder, Channel, Gain, MiniDSP,
+//! };
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
-//!     let hid_api = hid::initialize_api()?;
-//!     // Find a locally connected minidsp using usb hid, with the default vendor and product id.
-//!     let transport = Box::new(hid::HidTransport::with_product_id(&hid_api, 0x2752, 0x0011)?.into_multiplexer().to_service());
+//!     // Get a list of local devices
+//!     let mut devices: Vec<_> = Builder::new()
+//!         // Probe each candidate device for its hardware id and serial number
+//!         .probe()
+//!         // Filter the list to keep the working devices
+//!         .filter_map(|x| async move { x.ok() })
+//!         .collect()
+//!         .await;
 //!
-//!     // Instantiate a 2x4HD handler for this device.
-//!     let dsp = MiniDSP::new(Arc::new(Mutex::new(transport)), &DEVICE);
-//!     
+//!     // Use the first device for further commands
+//!     let dsp = devices.first().unwrap().to_minidsp().unwrap();
+//!
 //!     let status = dsp.get_master_status().await?;
 //!     println!("Master volume: {:.1}", status.volume.unwrap().0);
 //!
@@ -34,8 +41,6 @@
 //!
 //!     Ok(())
 //! }
-//!
-//!
 //! ```   
 
 // Silence clippy warning inside JsonSchema derived code
@@ -66,6 +71,7 @@ pub mod transport;
 pub mod utils;
 pub use biquad::Biquad;
 pub mod builder;
+pub use builder::Builder;
 pub mod client;
 pub mod formats;
 pub mod logging;

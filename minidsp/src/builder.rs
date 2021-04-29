@@ -18,12 +18,11 @@ use crate::{
     MiniDSP, MiniDSPError,
 };
 
-/// Discovers, probes and instantiate device instances
-/// The general flow is:
-/// - Configure what devices to probe
-/// - Consume builder into a vec of transports (+options)
-/// (minidsp server still needs raw transport access at this stage)
-/// - Probe transports (create Hub, bind client to it, probe devie)
+/// Discovers, probes and instantiate device instances.
+///
+/// - Configure what devices to probe using the `with_` methods
+/// - Consume builder into a vec of transports using [`probe`]
+/// - Get an instance of [`MiniDSP`] using [`to_minidsp`]
 #[derive(Default)]
 pub struct Builder {
     /// The candidate device pool, devices get added when their helper methods
@@ -42,6 +41,8 @@ pub struct DeviceOptions {
 /// TODO: Copied from minidspd
 
 pub struct DeviceHandle {
+    pub url: String,
+
     // Frame-level multiplexer
     pub transport: Hub,
 
@@ -132,13 +133,12 @@ impl Builder {
     }
 
     /// Activates console logging at the given level, optionally logging all sent and received frames to a file
-    pub fn with_logging<T, U>(mut self, level: u8, filename: T) -> Self
+    pub fn with_logging<T>(mut self, level: u8, filename: T) -> Self
     where
-        T: Into<Option<U>>,
-        U: Into<PathBuf>,
+        T: Into<Option<PathBuf>>,
     {
         self.options.log_console.replace(level);
-        self.options.log_filename = T::into(filename).map(U::into);
+        self.options.log_filename = T::into(filename);
         self
     }
 
@@ -158,7 +158,7 @@ impl Builder {
 
         // Attempt to instantiate every candidate device
         Box::pin(
-            futures::stream::iter(candidate_devices).then(move |(_, dev)| {
+            futures::stream::iter(candidate_devices).then(move |(key, dev)| {
                 let options = options.clone();
 
                 async move {
@@ -197,6 +197,7 @@ impl Builder {
                         decoder.set_name_map(device_spec.symbols.iter().copied());
                     }
                     Ok::<_, MiniDSPError>(DeviceHandle {
+                        url: key,
                         transport: hub,
                         device_info,
                         device_spec,
@@ -231,7 +232,7 @@ mod tests {
             // Connect to a specific device by url (hid,tcp,websocket,etc.)
             .with_url("ws://127.0.0.1:5380/devices/0")
             // Console transport logging
-            .with_logging(0, &PathBuf::from("file.log"))
+            .with_logging(0, PathBuf::from("file.log"))
             // Probing/device options
             .force_device_kind(DeviceKind::M2x4Hd)
             // Probe all matching devices

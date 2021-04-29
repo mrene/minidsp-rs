@@ -112,8 +112,6 @@ pub enum DebugCommands {
     Send {
         #[clap(parse(try_from_str = parse_hex))]
         value: Bytes,
-        // #[clap(long, short)]
-        // watch: bool,
     },
 
     /// Dumps memory starting at a given address
