@@ -89,6 +89,8 @@ impl Opts {
             } else if let Some((vid, pid)) = device.id {
                 builder = builder.with_usb_product_id(vid, pid)?;
             }
+        } else {
+            builder = builder.with_default_usb()?;
         }
 
         builder = builder.with_logging(self.verbose as u8, self.log.clone());
@@ -104,7 +106,10 @@ impl Opts {
 #[derive(Clone, Clap, Debug)]
 enum SubCommand {
     /// Try to find reachable devices
-    Probe,
+    Probe {
+        #[clap(short)]
+        net: bool,
+    },
 
     /// Prints the master status and current levels
     Status,
@@ -376,7 +381,7 @@ impl FromStr for ProductId {
     }
 }
 
-async fn run_probe(devices: Vec<DeviceHandle>) -> Result<()> {
+async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
     for dev in &devices {
         println!(
             "Found {} with serial {} at {} [hw_id: {}, dsp_version: {}]",
@@ -388,13 +393,15 @@ async fn run_probe(devices: Vec<DeviceHandle>) -> Result<()> {
         );
     }
 
-    println!("Probing for network devices...");
-    let devices = net::discover_timeout(Duration::from_secs(8)).await?;
-    if devices.is_empty() {
-        println!("No network devices detected")
-    } else {
-        for device in &devices {
-            println!("Found: {}", device);
+    if net {
+        println!("Probing for network devices...");
+        let devices = net::discover_timeout(Duration::from_secs(8)).await?;
+        if devices.is_empty() {
+            println!("No network devices detected")
+        } else {
+            for device in &devices {
+                println!("Found: {}", device);
+            }
         }
     }
 
@@ -414,8 +421,8 @@ async fn main() -> Result<()> {
         .collect()
         .await;
 
-    if let Some(SubCommand::Probe) = opts.subcmd {
-        run_probe(devices).await?;
+    if let Some(SubCommand::Probe { net }) = opts.subcmd {
+        run_probe(devices, net).await?;
         return Ok(());
     }
 

@@ -66,7 +66,7 @@ pub(crate) async fn run_command(
 
         // Handled earlier
         Some(&SubCommand::Server { .. }) => {}
-        Some(&SubCommand::Probe) => return Ok(()),
+        Some(&SubCommand::Probe { .. }) => return Ok(()),
 
         Some(&SubCommand::Status) | None => {
             // Always output the current master status and input/output levels
