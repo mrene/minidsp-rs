@@ -61,9 +61,17 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
-    #[clap(name = "force-kind", long)]
     /// Force the device to a specific product instead of probing its hardware id. May break things, use at your own risk.
+    #[clap(name = "force-kind", long)]
     force_kind: Option<DeviceKind>,
+
+    /// Directly connect to this transport url
+    #[clap(long, env = "MINIDSP_URL")]
+    url: Option<String>,
+
+    /// Directly connect to this transport url
+    #[clap(long, env = "MINIDSPD_URL")]
+    daemon_url: Option<String>,
 
     #[clap(short = 'f')]
     /// Read commands to run from the given filename (use - for stdin)
@@ -75,7 +83,7 @@ struct Opts {
 
 impl Opts {
     // Applies transport and logging options to this builder
-    fn apply_builder(&self, mut builder: Builder) -> Result<Builder, MiniDSPError> {
+    async fn apply_builder(&self, mut builder: Builder) -> Result<Builder, MiniDSPError> {
         if let Some(tcp) = &self.tcp_option {
             let tcp = if tcp.contains(':') {
                 tcp.to_string()
@@ -83,6 +91,12 @@ impl Opts {
                 format!("{}:5333", tcp)
             };
             builder = builder.with_tcp(tcp).unwrap();
+        } else if let Some(url) = &self.url {
+            builder = builder
+                .with_url(url)
+                .map_err(|_| MiniDSPError::InvalidURL)?;
+        } else if let Some(url) = &self.daemon_url {
+            builder = builder.with_http(url).await.unwrap();
         } else if let Some(device) = self.hid_option.as_ref() {
             if let Some(ref path) = device.path {
                 builder = builder.with_usb_path(path);
@@ -413,7 +427,7 @@ async fn main() -> Result<()> {
     env_logger::init();
     let opts: Opts = Opts::parse();
 
-    let builder = opts.apply_builder(Builder::new())?;
+    let builder = opts.apply_builder(Builder::new()).await?;
 
     let mut devices: Vec<_> = builder
         .probe()

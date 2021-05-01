@@ -45,6 +45,7 @@ pub use multiplexer::Multiplexer;
 pub mod hub;
 pub use hub::Hub;
 pub mod net;
+pub mod ws;
 
 #[derive(Error, Debug)]
 pub enum MiniDSPError {
@@ -118,6 +119,7 @@ pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
                 .into_transport())
         }
         "tcp" => Ok(net::open_url(url).await?.into_transport()),
+        "ws"| "wss" => Ok(ws::open_url(url).await?),
         _ => Err(MiniDSPError::InvalidURL),
     }
 }

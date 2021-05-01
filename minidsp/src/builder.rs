@@ -13,7 +13,7 @@ use url2::Url2;
 use crate::{
     client::Client,
     device::DeviceKind,
-    transport::{hid, Hub, Multiplexer, Openable},
+    transport::{self, hid, Hub, Multiplexer, Openable},
     utils::decoder::Decoder,
     MiniDSP, MiniDSPError,
 };
@@ -83,6 +83,22 @@ impl Builder {
         self.candidate_devices.extend(devices);
     }
 
+    /// Uses devices managed by an instance of minidspd
+    pub async fn with_http(mut self, s: &str) -> Result<Self, url2::Url2Error> {
+        let url = Url2::try_parse(s)?;
+        self.candidate_devices.extend(
+            transport::ws::discover(&url)
+                .await
+                .unwrap()
+                .into_iter()
+                .map(|(url, _)| {
+                    let openable = Box::new(Url2::parse(&url)) as Box<dyn Openable>;
+                    (url, openable)
+                }),
+        );
+        Ok(self)
+    }
+
     /// Add all local devices matching known minidsp vendor and product ids
     pub fn with_default_usb(mut self) -> Result<Self, hid::HidError> {
         let api = hid::initialize_api()?;
@@ -125,11 +141,11 @@ impl Builder {
     }
 
     /// Adds a device by url
-    pub fn with_url(mut self, s: &str) -> Self {
-        let url2 = Url2::parse(s);
+    pub fn with_url(mut self, s: &str) -> Result<Self, url2::Url2Error> {
+        let url2 = Url2::try_parse(s)?;
         self.candidate_devices
             .insert(s.into(), Box::new(url2) as Box<dyn Openable>);
-        self
+        Ok(self)
     }
 
     /// Activates console logging at the given level, optionally logging all sent and received frames to a file
@@ -230,7 +246,8 @@ mod tests {
             .with_tcp("127.0.0.1:5333")
             .unwrap()
             // Connect to a specific device by url (hid,tcp,websocket,etc.)
-            .with_url("ws://127.0.0.1:5380/devices/0")
+            .with_url("ws://127.0.0.1:5380/devices/0/ws")
+            .unwrap()
             // Console transport logging
             .with_logging(0, PathBuf::from("file.log"))
             // Probing/device options

@@ -22,8 +22,11 @@ futures-sink = "0.3.14"
 futures-util = "0.3.14"
 hex = "0.4.3"
 hexplay = "0.2.1"
+hyper = "0.14.7"
+hyperlocal = "0.8.0"
 lazy_static = "1.4.0"
 log = "0.4.14"
+minidsp-protocol = {path = "../protocol", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.6"
 schemars = "0.8.0"
 serde = {version = "1.0.125", features = ["derive"]}
@@ -34,12 +37,11 @@ strum = {version = "0.20", features = ["derive"]}
 termcolor = "1.1.2"
 thiserror = "1.0.24"
 tokio-stream = {version = "0.1.5", features = ["sync"]}
+tokio-tungstenite = "0.14.0"
 tower = {version = "0.4.6", features = ["util"]}
 url2 = "0.0.6"
 urlencoding = "1.1.1"
 wav = "0.6.0"
-
-minidsp-protocol = { path="../protocol", default-features=false, features=["use_serde", "debug", "devices"] }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
@@ -61,15 +63,15 @@ version = "0.6.6"
 [features]
 debug = []
 default = ["hid", "devices"]
-hid = ["hidapi"]
 devices = [
-  "minidsp-protocol/devices", 
-  "minidsp-protocol/symbols", 
-  "minidsp-protocol/device_2x4hd", 
-  "minidsp-protocol/device_4x10hd", 
+  "minidsp-protocol/devices",
+  "minidsp-protocol/symbols",
+  "minidsp-protocol/device_2x4hd",
+  "minidsp-protocol/device_4x10hd",
   "minidsp-protocol/device_msharc4x8",
-  "minidsp-protocol/device_shd"
+  "minidsp-protocol/device_shd",
 ]
+hid = ["hidapi"]
 
 [package.metadata.deb]
 assets = [
