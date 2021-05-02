@@ -14,7 +14,10 @@
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
 //!     // Get a list of local devices
-//!     let mut devices: Vec<_> = Builder::new()
+//!     let mut builder = Builder::new();
+//!     builder.with_default_usb().unwrap();
+//!
+//!     let mut devices: Vec<_> = builder
 //!         // Probe each candidate device for its hardware id and serial number
 //!         .probe()
 //!         // Filter the list to keep the working devices

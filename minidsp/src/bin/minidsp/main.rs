@@ -61,9 +61,21 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
-    #[clap(name = "force-kind", long)]
     /// Force the device to a specific product instead of probing its hardware id. May break things, use at your own risk.
+    #[clap(name = "force-kind", long)]
     force_kind: Option<DeviceKind>,
+
+    /// Directly connect to this transport url
+    #[clap(long, env = "MINIDSP_URL")]
+    url: Option<String>,
+
+    /// Discover devices that are managed by the remote instance of minidspd
+    #[clap(long, env = "MINIDSPD_URL")]
+    daemon_url: Option<String>,
+
+    /// Discover devices that are managed by the local instance of minidspd
+    #[clap(long, env = "MINIDSP_SOCK")]
+    daemon_sock: Option<String>,
 
     #[clap(short = 'f')]
     /// Read commands to run from the given filename (use - for stdin)
@@ -75,31 +87,40 @@ struct Opts {
 
 impl Opts {
     // Applies transport and logging options to this builder
-    fn apply_builder(&self, mut builder: Builder) -> Result<Builder, MiniDSPError> {
+    async fn apply_builder(&self, builder: &mut Builder) -> Result<(), MiniDSPError> {
         if let Some(tcp) = &self.tcp_option {
             let tcp = if tcp.contains(':') {
                 tcp.to_string()
             } else {
                 format!("{}:5333", tcp)
             };
-            builder = builder.with_tcp(tcp).unwrap();
+            builder.with_tcp(tcp).unwrap();
+        } else if let Some(url) = &self.url {
+            builder
+                .with_url(url)
+                .map_err(|_| MiniDSPError::InvalidURL)?;
+        } else if let Some(url) = &self.daemon_url {
+            builder.with_http(url).await?;
+        } else if let Some(socket_path) = &self.daemon_sock {
+            builder.with_unix_socket(socket_path).await?;
         } else if let Some(device) = self.hid_option.as_ref() {
             if let Some(ref path) = device.path {
-                builder = builder.with_usb_path(path);
+                builder.with_usb_path(path);
             } else if let Some((vid, pid)) = device.id {
-                builder = builder.with_usb_product_id(vid, pid)?;
+                builder.with_usb_product_id(vid, pid)?;
             }
         } else {
-            builder = builder.with_default_usb()?;
+            let _ = builder.with_unix_socket("/tmp/minidsp.sock").await;
+            let _ = builder.with_default_usb();
         }
 
-        builder = builder.with_logging(self.verbose as u8, self.log.clone());
+        builder.with_logging(self.verbose as u8, self.log.clone());
 
         if let Some(force_kind) = self.force_kind {
-            builder = builder.force_device_kind(force_kind);
+            builder.force_device_kind(force_kind);
         }
 
-        Ok(builder)
+        Ok(())
     }
 }
 
@@ -412,8 +433,8 @@ async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
 async fn main() -> Result<()> {
     env_logger::init();
     let opts: Opts = Opts::parse();
-
-    let builder = opts.apply_builder(Builder::new())?;
+    let mut builder = Builder::new();
+    opts.apply_builder(&mut builder).await?;
 
     let mut devices: Vec<_> = builder
         .probe()

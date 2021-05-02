@@ -18,9 +18,9 @@ impl Registry {
     }
 
     /// Adds a device to the list of reachable devices if it doesn't exist.
-    pub fn register(&self, dev: &str) {
+    pub fn register(&self, dev: &str, static_device: bool) {
         let mut inner = self.inner.write().unwrap();
-        inner.register(dev)
+        inner.register(dev, static_device)
     }
 
     pub fn remove(&self, dev: &str) {
@@ -65,7 +65,7 @@ impl Inner {
     }
 
     /// Adds a device to the list of reachable devices if it doesn't exist.
-    fn register(&mut self, dev: &str) {
+    fn register(&mut self, dev: &str, static_device: bool) {
         let id = dev.to_string();
         let device = self.devices.get_mut(id.as_str());
 
@@ -74,7 +74,14 @@ impl Inner {
                 let _ = self
                     .sender
                     .unbounded_send(DiscoveryEvent::Added(id.clone()));
-                self.devices.insert(id, Device::new());
+                self.devices.insert(
+                    id,
+                    if static_device {
+                        Device::new_static()
+                    } else {
+                        Device::new()
+                    },
+                );
             }
             Some(device) => device.mark_seen(),
         }
@@ -92,7 +99,8 @@ impl Inner {
         let sender = &self.sender;
 
         hid_devices.retain(|id, dev| {
-            let keep = time::Instant::now().duration_since(dev.last_seen).as_secs() < 5 * 60;
+            let keep = dev.static_device
+                || time::Instant::now().duration_since(dev.last_seen).as_secs() < 5 * 60;
             if !keep {
                 let _ = sender.unbounded_send(DiscoveryEvent::Timeout {
                     id: id.to_string(),
@@ -107,12 +115,21 @@ impl Inner {
 #[derive(Debug)]
 pub struct Device {
     pub last_seen: time::Instant,
+    pub static_device: bool,
 }
 
 impl Device {
     pub fn new() -> Self {
         Self {
             last_seen: time::Instant::now(),
+            static_device: false,
+        }
+    }
+
+    pub fn new_static() -> Self {
+        Self {
+            last_seen: time::Instant::now(),
+            static_device: false,
         }
     }
 
@@ -140,7 +157,7 @@ mod test {
     #[tokio::test]
     pub async fn discovery() {
         let discovery = Registry::new();
-        discovery.register("mock:");
+        discovery.register("mock:", false);
         let inner = discovery.inner.read().unwrap();
         assert!(inner.devices.len() == 1);
     }

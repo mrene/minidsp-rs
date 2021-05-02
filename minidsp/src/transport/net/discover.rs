@@ -41,8 +41,8 @@ impl Openable for Device {
         )
     }
 
-    fn to_string(&self) -> String {
-        ToString::to_string(self)
+    fn to_url(&self) -> String {
+        self.to_string()
     }
 }
 

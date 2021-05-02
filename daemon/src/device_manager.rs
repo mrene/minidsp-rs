@@ -42,7 +42,7 @@ impl DeviceManager {
                 tokio::spawn(
                     super::discovery::tasks::hid_discovery_task(move |dev| {
                         let inner = inner.read().unwrap();
-                        inner.registry.register(dev);
+                        inner.registry.register(dev, false);
                     })
                     .err_into(),
                 )
@@ -55,7 +55,7 @@ impl DeviceManager {
                 tokio::spawn(super::discovery::tasks::net_discovery_task(
                     move |dev| {
                         let inner = inner.read().unwrap();
-                        inner.registry.register(dev);
+                        inner.registry.register(dev, false);
                     },
                     ignore_net_ip,
                 ))
@@ -75,6 +75,11 @@ impl DeviceManager {
         }
 
         DeviceManager { inner, handles }
+    }
+
+    pub fn register_static(&self, dev: &str) {
+        let inner = self.inner.write().unwrap();
+        inner.registry.register(dev, true);
     }
 
     pub fn devices(&self) -> Vec<Arc<Device>> {

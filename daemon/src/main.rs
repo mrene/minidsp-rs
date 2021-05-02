@@ -105,6 +105,10 @@ impl App {
             );
         }
 
+        for static_device in &self.config.static_devices {
+            device_mgr.register_static(&static_device.url);
+        }
+
         self.device_manager.replace(device_mgr);
     }
 
