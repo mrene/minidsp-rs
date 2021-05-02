@@ -953,7 +953,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_5_0_RATIO,
                 attack: COMP_5_0_ATIME,
                 release: COMP_5_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_0),
             }),
             fir: Some(Fir {
                 index: 0,
@@ -983,7 +983,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_6_0_RATIO,
                 attack: COMP_6_0_ATIME,
                 release: COMP_6_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_1),
             }),
             fir: Some(Fir {
                 index: 1,
@@ -1013,7 +1013,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_7_0_RATIO,
                 attack: COMP_7_0_ATIME,
                 release: COMP_7_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_2),
             }),
             fir: Some(Fir {
                 index: 2,
@@ -1043,7 +1043,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_8_0_RATIO,
                 attack: COMP_8_0_ATIME,
                 release: COMP_8_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_3),
             }),
             fir: Some(Fir {
                 index: 3,
@@ -1073,7 +1073,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_9_0_RATIO,
                 attack: COMP_9_0_ATIME,
                 release: COMP_9_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_4),
             }),
             fir: Some(Fir {
                 index: 4,
@@ -1103,7 +1103,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_10_0_RATIO,
                 attack: COMP_10_0_ATIME,
                 release: COMP_10_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_5),
             }),
             fir: Some(Fir {
                 index: 5,
@@ -1133,7 +1133,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_11_0_RATIO,
                 attack: COMP_11_0_ATIME,
                 release: COMP_11_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_6),
             }),
             fir: Some(Fir {
                 index: 6,
@@ -1163,7 +1163,7 @@ pub const DEVICE: Device = Device {
                 ratio: COMP_12_0_RATIO,
                 attack: COMP_12_0_ATIME,
                 release: COMP_12_0_RTIME,
-                meter: None,
+                meter: Some(METER_10_C1_7),
             }),
             fir: Some(Fir {
                 index: 7,

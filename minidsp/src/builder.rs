@@ -10,10 +10,12 @@ use minidsp_protocol::{
 use tokio::sync::Mutex;
 use url2::Url2;
 
+#[cfg(feature = "hid")]
+use crate::transport::hid;
 use crate::{
     client::Client,
     device::DeviceKind,
-    transport::{self, hid, Hub, Multiplexer, Openable},
+    transport::{self, Hub, Multiplexer, Openable},
     utils::decoder::Decoder,
     MiniDSP, MiniDSPError,
 };
@@ -72,14 +74,6 @@ impl Builder {
         Default::default()
     }
 
-    fn extend_hid_device(&mut self, devices: impl IntoIterator<Item = hid::Device>) {
-        let devices = devices
-            .into_iter()
-            .map(|dev| (Openable::to_url(&dev), Box::new(dev) as Box<dyn Openable>));
-
-        self.candidate_devices.extend(devices);
-    }
-
     /// Uses devices managed by a remote instance of minidspd
     pub async fn with_http(&mut self, s: &str) -> Result<&mut Self, transport::ws::Error> {
         let url = Url2::try_parse(s)?;
@@ -106,7 +100,17 @@ impl Builder {
         Ok(self)
     }
 
+    #[cfg(feature = "hid")]
+    fn extend_hid_device(&mut self, devices: impl IntoIterator<Item = hid::Device>) {
+        let devices = devices
+            .into_iter()
+            .map(|dev| (Openable::to_url(&dev), Box::new(dev) as Box<dyn Openable>));
+
+        self.candidate_devices.extend(devices);
+    }
+
     /// Add all local devices matching known minidsp vendor and product ids
+    #[cfg(feature = "hid")]
     pub fn with_default_usb(&mut self) -> Result<&mut Self, hid::HidError> {
         let api = hid::initialize_api()?;
         self.extend_hid_device(hid::discover(&api)?);
@@ -114,6 +118,7 @@ impl Builder {
     }
 
     /// Add all local devices matching `vid` and `pid`
+    #[cfg(feature = "hid")]
     pub fn with_usb_product_id<T: Into<Option<u16>>>(
         &mut self,
         vid: u16,
@@ -128,6 +133,7 @@ impl Builder {
     }
 
     /// Adds a single usb device by path
+    #[cfg(feature = "hid")]
     pub fn with_usb_path(&mut self, path: &str) -> &mut Self {
         self.extend_hid_device(Some(hid::Device {
             id: None,
@@ -215,6 +221,7 @@ impl Builder {
                         Some(k) => device::by_kind(k),
                     };
 
+                    #[cfg(feature = "symbols")]
                     if let Some(decoder) = decoder {
                         let mut decoder = decoder.lock().await;
                         decoder.set_name_map(device_spec.symbols.iter().copied());
