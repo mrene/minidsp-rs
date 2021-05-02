@@ -103,6 +103,9 @@ pub enum MiniDSPError {
 
     #[error("This device does not have this peripheral")]
     NoSuchPeripheral,
+
+    #[error("A device request timed out")]
+    Timeout,
 }
 
 #[async_trait]

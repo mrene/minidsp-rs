@@ -222,7 +222,7 @@ impl Builder {
                         Some(k) => device::by_kind(k),
                     };
 
-                    #[cfg(feature = "symbols")]
+                    #[cfg(feature = "devices")]
                     if let Some(decoder) = decoder {
                         let mut decoder = decoder.lock().await;
                         decoder.set_name_map(device_spec.symbols.iter().copied());

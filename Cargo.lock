@@ -1491,6 +1491,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "pin-project",
+ "tokio",
  "tower-layer",
  "tower-service",
  "tracing",
