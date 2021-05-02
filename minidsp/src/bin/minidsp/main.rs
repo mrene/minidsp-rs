@@ -75,6 +75,7 @@ struct Opts {
 
     /// Discover devices that are managed by the local instance of minidspd
     #[clap(long, env = "MINIDSP_SOCK")]
+    #[cfg(target_family = "unix")]
     daemon_sock: Option<String>,
 
     #[clap(short = 'f')]
@@ -88,7 +89,15 @@ struct Opts {
 impl Opts {
     // Applies transport and logging options to this builder
     async fn apply_builder(&self, builder: &mut Builder) -> Result<(), MiniDSPError> {
-        if let Some(tcp) = &self.tcp_option {
+        let mut bound = false;
+        #[cfg(target_family = "unix")]
+        if let Some(socket_path) = &self.daemon_sock {
+            builder.with_unix_socket(socket_path).await?;
+            bound = true;
+        }
+
+        if bound {
+        } else if let Some(tcp) = &self.tcp_option {
             let tcp = if tcp.contains(':') {
                 tcp.to_string()
             } else {
@@ -101,8 +110,6 @@ impl Opts {
                 .map_err(|_| MiniDSPError::InvalidURL)?;
         } else if let Some(url) = &self.daemon_url {
             builder.with_http(url).await?;
-        } else if let Some(socket_path) = &self.daemon_sock {
-            builder.with_unix_socket(socket_path).await?;
         } else if let Some(device) = self.hid_option.as_ref() {
             if let Some(ref path) = device.path {
                 builder.with_usb_path(path);

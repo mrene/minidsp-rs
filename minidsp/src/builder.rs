@@ -87,6 +87,7 @@ impl Builder {
     }
 
     /// Uses devices managed by a local instance of minidspd
+    #[cfg(target_family = "unix")]
     pub async fn with_unix_socket(
         &mut self,
         socket_path: &str,
