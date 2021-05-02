@@ -117,6 +117,7 @@ impl Opts {
                 builder.with_usb_product_id(vid, pid)?;
             }
         } else {
+            #[cfg(target_family = "unix")]
             let _ = builder.with_unix_socket("/tmp/minidsp.sock").await;
             let _ = builder.with_default_usb();
         }
