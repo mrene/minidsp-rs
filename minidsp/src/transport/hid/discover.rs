@@ -16,7 +16,7 @@ pub struct Device {
 
 impl Device {
     pub fn to_url(&self) -> String {
-        ToString::to_string(&self)
+        self.to_string()
     }
 }
 
@@ -82,7 +82,7 @@ impl Openable for Device {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn to_url(&self) -> String {
         ToString::to_string(self)
     }
 }

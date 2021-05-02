@@ -120,11 +120,11 @@ pub struct UnixDevice {
 #[async_trait]
 impl Openable for UnixDevice {
     async fn open(&self) -> anyhow::Result<Transport, MiniDSPError> {
-        let uri = self.to_string();
+        let uri = self.to_url();
         Ok(open_unix(&self.path, &uri).await?)
     }
 
-    fn to_string(&self) -> String {
+    fn to_url(&self) -> String {
         format!("ws://localhost/devices/{0}/ws", self.index)
     }
 }

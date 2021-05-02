@@ -73,45 +73,41 @@ impl Builder {
     }
 
     fn extend_hid_device(&mut self, devices: impl IntoIterator<Item = hid::Device>) {
-        let devices = devices.into_iter().map(|dev| {
-            (
-                Openable::to_string(&dev),
-                Box::new(dev) as Box<dyn Openable>,
-            )
-        });
+        let devices = devices
+            .into_iter()
+            .map(|dev| (Openable::to_url(&dev), Box::new(dev) as Box<dyn Openable>));
 
         self.candidate_devices.extend(devices);
     }
 
     /// Uses devices managed by a remote instance of minidspd
-    pub async fn with_http(mut self, s: &str) -> Result<Self, transport::ws::Error> {
+    pub async fn with_http(&mut self, s: &str) -> Result<&mut Self, transport::ws::Error> {
         let url = Url2::try_parse(s)?;
-        self.candidate_devices
-            .extend(transport::ws::discover(&url).await?.into_iter().map(|url| {
-                (
-                    ToString::to_string(&url),
-                    Box::new(url) as Box<dyn Openable>,
-                )
-            }));
+        self.candidate_devices.extend(
+            transport::ws::discover(&url)
+                .await?
+                .into_iter()
+                .map(|url| (url.to_url(), Box::new(url) as Box<dyn Openable>)),
+        );
         Ok(self)
     }
 
     /// Uses devices managed by a local instance of minidspd
     pub async fn with_unix_socket(
-        mut self,
+        &mut self,
         socket_path: &str,
-    ) -> Result<Self, transport::ws::Error> {
+    ) -> Result<&mut Self, transport::ws::Error> {
         self.candidate_devices.extend(
             transport::ws::discover_unix(socket_path)
                 .await?
                 .into_iter()
-                .map(|device| (device.to_string(), Box::new(device) as Box<dyn Openable>)),
+                .map(|device| (device.to_url(), Box::new(device) as Box<dyn Openable>)),
         );
         Ok(self)
     }
 
     /// Add all local devices matching known minidsp vendor and product ids
-    pub fn with_default_usb(mut self) -> Result<Self, hid::HidError> {
+    pub fn with_default_usb(&mut self) -> Result<&mut Self, hid::HidError> {
         let api = hid::initialize_api()?;
         self.extend_hid_device(hid::discover(&api)?);
         Ok(self)
@@ -119,10 +115,10 @@ impl Builder {
 
     /// Add all local devices matching `vid` and `pid`
     pub fn with_usb_product_id<T: Into<Option<u16>>>(
-        mut self,
+        &mut self,
         vid: u16,
         pid: T,
-    ) -> Result<Self, hid::HidError> {
+    ) -> Result<&mut Self, hid::HidError> {
         let api = hid::initialize_api()?;
         let pid = pid.into();
         self.extend_hid_device(hid::discover_with(&api, |dev| {
@@ -132,7 +128,7 @@ impl Builder {
     }
 
     /// Adds a single usb device by path
-    pub fn with_usb_path(mut self, path: &str) -> Self {
+    pub fn with_usb_path(&mut self, path: &str) -> &mut Self {
         self.extend_hid_device(Some(hid::Device {
             id: None,
             path: Some(path.into()),
@@ -141,7 +137,7 @@ impl Builder {
     }
 
     /// Adds a remote compat tcp server, or a wi-dg device
-    pub fn with_tcp<T: ToSocketAddrs>(mut self, sockaddr: T) -> std::io::Result<Self> {
+    pub fn with_tcp<T: ToSocketAddrs>(&mut self, sockaddr: T) -> std::io::Result<&mut Self> {
         self.candidate_devices
             .extend(sockaddr.to_socket_addrs()?.map(|sa| {
                 let url = format!("tcp://{}", sa);
@@ -152,7 +148,7 @@ impl Builder {
     }
 
     /// Adds a device by url
-    pub fn with_url(mut self, s: &str) -> Result<Self, url2::Url2Error> {
+    pub fn with_url(&mut self, s: &str) -> Result<&mut Self, url2::Url2Error> {
         let url2 = Url2::try_parse(s)?;
         self.candidate_devices
             .insert(s.into(), Box::new(url2) as Box<dyn Openable>);
@@ -160,7 +156,7 @@ impl Builder {
     }
 
     /// Activates console logging at the given level, optionally logging all sent and received frames to a file
-    pub fn with_logging<T>(mut self, level: u8, filename: T) -> Self
+    pub fn with_logging<T>(&mut self, level: u8, filename: T) -> &mut Self
     where
         T: Into<Option<PathBuf>>,
     {
@@ -170,7 +166,7 @@ impl Builder {
     }
 
     /// Do not probe the device to identify what hardware it is, and use the specified DeviceKind instead.
-    pub fn force_device_kind(mut self, kind: DeviceKind) -> Self {
+    pub fn force_device_kind(&mut self, kind: DeviceKind) -> &mut Self {
         self.options.kind.replace(kind);
         self
     }
@@ -244,7 +240,8 @@ mod tests {
     #[tokio::test]
     async fn test_builder() {
         // Device selection. Options are *additive*
-        let _b = Builder::new()
+        let mut b = Builder::new();
+        b
             // Discover any matching usb devices
             .with_default_usb()
             .unwrap()
@@ -262,11 +259,8 @@ mod tests {
             // Console transport logging
             .with_logging(0, PathBuf::from("file.log"))
             // Probing/device options
-            .force_device_kind(DeviceKind::M2x4Hd)
-            // Probe all matching devices
-            .probe()
-            .next()
-            .await
-            .unwrap();
+            .force_device_kind(DeviceKind::M2x4Hd);
+        // Probe all matching devices
+        let _ = b.probe().next().await.unwrap();
     }
 }

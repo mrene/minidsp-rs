@@ -108,7 +108,7 @@ pub enum MiniDSPError {
 #[async_trait]
 pub trait Openable {
     async fn open(&self) -> Result<Transport, MiniDSPError>;
-    fn to_string(&self) -> String;
+    fn to_url(&self) -> String;
 }
 
 pub trait IntoTransport {
@@ -136,7 +136,7 @@ impl Openable for Url2 {
         open_url(self).await
     }
 
-    fn to_string(&self) -> String {
-        ToString::to_string(&self)
+    fn to_url(&self) -> String {
+        self.to_string()
     }
 }
