@@ -83,18 +83,29 @@ impl Builder {
         self.candidate_devices.extend(devices);
     }
 
-    /// Uses devices managed by an instance of minidspd
-    pub async fn with_http(mut self, s: &str) -> Result<Self, url2::Url2Error> {
+    /// Uses devices managed by a remote instance of minidspd
+    pub async fn with_http(mut self, s: &str) -> Result<Self, transport::ws::Error> {
         let url = Url2::try_parse(s)?;
+        self.candidate_devices
+            .extend(transport::ws::discover(&url).await?.into_iter().map(|url| {
+                (
+                    ToString::to_string(&url),
+                    Box::new(url) as Box<dyn Openable>,
+                )
+            }));
+        Ok(self)
+    }
+
+    /// Uses devices managed by a local instance of minidspd
+    pub async fn with_unix_socket(
+        mut self,
+        socket_path: &str,
+    ) -> Result<Self, transport::ws::Error> {
         self.candidate_devices.extend(
-            transport::ws::discover(&url)
-                .await
-                .unwrap()
+            transport::ws::discover_unix(socket_path)
+                .await?
                 .into_iter()
-                .map(|(url, _)| {
-                    let openable = Box::new(Url2::parse(&url)) as Box<dyn Openable>;
-                    (url, openable)
-                }),
+                .map(|device| (device.to_string(), Box::new(device) as Box<dyn Openable>)),
         );
         Ok(self)
     }

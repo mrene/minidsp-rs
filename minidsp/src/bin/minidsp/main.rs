@@ -69,9 +69,13 @@ struct Opts {
     #[clap(long, env = "MINIDSP_URL")]
     url: Option<String>,
 
-    /// Directly connect to this transport url
+    /// Discover devices that are managed by the remote instance of minidspd
     #[clap(long, env = "MINIDSPD_URL")]
     daemon_url: Option<String>,
+
+    /// Discover devices that are managed by the local instance of minidspd
+    #[clap(long, env = "MINIDSP_SOCK")]
+    daemon_sock: Option<String>,
 
     #[clap(short = 'f')]
     /// Read commands to run from the given filename (use - for stdin)
@@ -96,7 +100,9 @@ impl Opts {
                 .with_url(url)
                 .map_err(|_| MiniDSPError::InvalidURL)?;
         } else if let Some(url) = &self.daemon_url {
-            builder = builder.with_http(url).await.unwrap();
+            builder = builder.with_http(url).await?;
+        } else if let Some(socket_path) = &self.daemon_sock {
+            builder = builder.with_unix_socket(socket_path).await?;
         } else if let Some(device) = self.hid_option.as_ref() {
             if let Some(ref path) = device.path {
                 builder = builder.with_usb_path(path);

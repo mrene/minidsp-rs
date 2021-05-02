@@ -80,6 +80,9 @@ pub enum MiniDSPError {
     #[error("Transport has closed")]
     TransportClosed,
 
+    #[error("WebSocket transport error: {0}")]
+    WebSocketError(#[from] ws::Error),
+
     #[error("Multiple concurrent commands were sent")]
     ConcurencyError,
 
@@ -94,6 +97,9 @@ pub enum MiniDSPError {
 
     #[error("Protocol error: {0}")]
     ProtocolError(#[from] ProtocolError),
+
+    #[error("Url error: {0}")]
+    Url2Error(#[from] url2::Url2Error),
 
     #[error("This device does not have this peripheral")]
     NoSuchPeripheral,
@@ -119,7 +125,7 @@ pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
                 .into_transport())
         }
         "tcp" => Ok(net::open_url(url).await?.into_transport()),
-        "ws"| "wss" => Ok(ws::open_url(url).await?),
+        "ws" | "wss" => Ok(ws::open_url(url).await?),
         _ => Err(MiniDSPError::InvalidURL),
     }
 }
