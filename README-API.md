@@ -7,6 +7,7 @@ This document is a summary of what the API can do, until there's a proper openap
 ## API Overview
 #### GET /devices
 JSON Schema URL: /devices/get.schema
+
 Gets the list of detected devices.
 
 ```json
@@ -25,6 +26,7 @@ Gets the list of detected devices.
 
 #### GET /devices/0
 JSON Schema URL: /devices/0/get.schema 
+
 Get details about the first device.
 ```json
 {
@@ -53,9 +55,12 @@ Get details about the first device.
 ```
 
 #### POST /devices/0
-JSON Schema URL: /devices/0/post.schema 
+JSON Schema URL: /devices/0/post.schema
+
 Changes master status (current preset, source, master volume/mute)
 
 #### POST /devices/0/config
+
 JSON Schema URL: /devices/0/config/post.schema 
+
 Changes *any* parameters, including master status.
