@@ -1,19 +1,24 @@
 //! Static device definitions
 //!
 //! This is where support for other devices should be added
-//!
+
+#[allow(unused_imports)]
 use super::Source::{self as Source, *};
 
 mod probe;
-pub use probe::probe;
+pub use probe::{by_kind, probe, DeviceKind};
 
 #[cfg(feature = "device_2x4hd")]
 pub mod m2x4hd;
 
+#[cfg(feature = "device_4x10hd")]
+pub mod m4x10hd;
+
 #[cfg(feature = "device_msharc4x8")]
 pub mod msharc4x8;
 
-
+#[cfg(feature = "device_shd")]
+pub mod shd;
 
 pub static GENERIC: Device = Device {
     product_name: "Generic",

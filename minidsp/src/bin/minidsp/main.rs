@@ -9,37 +9,29 @@ use std::{
     num::ParseIntError,
     path::PathBuf,
     str::FromStr,
-    sync::Arc,
 };
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use clap::Clap;
 use debug::DebugCommands;
-use futures::{pin_mut, stream::FuturesUnordered, StreamExt};
+use futures::{stream, StreamExt};
 use handlers::run_server;
 use minidsp::{
-    client::Client,
-    device::probe,
-    discovery, tcp_server,
-    transport::{
-        multiplexer::Multiplexer,
-        net::{self, StreamTransport},
-        IntoTransport, SharedService, Transport,
-    },
-    utils::{self, decoder::Decoder, logger, recorder::Recorder},
-    Gain, MiniDSP, Source,
+    builder::{Builder, DeviceHandle},
+    device::DeviceKind,
+    tcp_server,
+    transport::net::{self, discovery},
+    Gain, MiniDSP, MiniDSPError, Source,
 };
-use tokio::{net::TcpStream, sync::Mutex};
 
 mod debug;
 mod handlers;
 
-use std::{io::Read, ops::Deref, time::Duration};
+use std::{io::Read, time::Duration};
 
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
-use minidsp::transport::Openable;
 
 #[derive(Clone, Clap, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
@@ -69,6 +61,23 @@ struct Opts {
     /// The target address of the server component
     tcp_option: Option<String>,
 
+    /// Force the device to a specific product instead of probing its hardware id. May break things, use at your own risk.
+    #[clap(name = "force-kind", long)]
+    force_kind: Option<DeviceKind>,
+
+    /// Directly connect to this transport url
+    #[clap(long, env = "MINIDSP_URL")]
+    url: Option<String>,
+
+    /// Discover devices that are managed by the remote instance of minidspd
+    #[clap(long, env = "MINIDSPD_URL")]
+    daemon_url: Option<String>,
+
+    /// Discover devices that are managed by the local instance of minidspd
+    #[clap(long, env = "MINIDSP_SOCK")]
+    #[cfg(target_family = "unix")]
+    daemon_sock: Option<String>,
+
     #[clap(short = 'f')]
     /// Read commands to run from the given filename (use - for stdin)
     file: Option<PathBuf>,
@@ -77,10 +86,59 @@ struct Opts {
     subcmd: Option<SubCommand>,
 }
 
+impl Opts {
+    // Applies transport and logging options to this builder
+    async fn apply_builder(&self, builder: &mut Builder) -> Result<(), MiniDSPError> {
+        let mut bound = false;
+        #[cfg(target_family = "unix")]
+        if let Some(socket_path) = &self.daemon_sock {
+            builder.with_unix_socket(socket_path).await?;
+            bound = true;
+        }
+
+        if bound {
+        } else if let Some(tcp) = &self.tcp_option {
+            let tcp = if tcp.contains(':') {
+                tcp.to_string()
+            } else {
+                format!("{}:5333", tcp)
+            };
+            builder.with_tcp(tcp).unwrap();
+        } else if let Some(url) = &self.url {
+            builder
+                .with_url(url)
+                .map_err(|_| MiniDSPError::InvalidURL)?;
+        } else if let Some(url) = &self.daemon_url {
+            builder.with_http(url).await?;
+        } else if let Some(device) = self.hid_option.as_ref() {
+            if let Some(ref path) = device.path {
+                builder.with_usb_path(path);
+            } else if let Some((vid, pid)) = device.id {
+                builder.with_usb_product_id(vid, pid)?;
+            }
+        } else {
+            #[cfg(target_family = "unix")]
+            let _ = builder.with_unix_socket("/tmp/minidsp.sock").await;
+            let _ = builder.with_default_usb();
+        }
+
+        builder.with_logging(self.verbose as u8, self.log.clone());
+
+        if let Some(force_kind) = self.force_kind {
+            builder.force_device_kind(force_kind);
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Clone, Clap, Debug)]
 enum SubCommand {
     /// Try to find reachable devices
-    Probe,
+    Probe {
+        #[clap(short)]
+        net: bool,
+    },
 
     /// Prints the master status and current levels
     Status,
@@ -352,139 +410,27 @@ impl FromStr for ProductId {
     }
 }
 
-#[cfg(feature = "hid")]
-async fn get_local_raw_transports() -> Result<Vec<Transport>> {
-    let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
-    let transports: Vec<_> = hid_devices
-        .iter()
-        .map(|dev| dev.open())
-        .collect::<FuturesUnordered<_>>()
-        .filter_map(|dev| async move { dev.ok() })
-        .collect::<Vec<_>>()
-        .await;
-
-    Ok(transports)
-}
-
-async fn get_raw_transport(opts: &Opts) -> Result<Transport> {
-    if let Some(tcp) = &opts.tcp_option {
-        let tcp = if tcp.contains(':') {
-            tcp.to_string()
-        } else {
-            format!("{}:5333", tcp)
-        };
-        let stream = TcpStream::connect(tcp).await?;
-        return Ok(StreamTransport::new(stream).into_transport());
+async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
+    for dev in &devices {
+        println!(
+            "Found {} with serial {} at {} [hw_id: {}, dsp_version: {}]",
+            dev.device_spec.product_name,
+            dev.device_info.serial,
+            dev.url,
+            dev.device_info.hw_id,
+            dev.device_info.dsp_version
+        );
     }
 
-    #[cfg(feature = "hid")]
-    {
-        if let Some(device) = &opts.hid_option {
-            return Ok(device.open().await?);
-        }
-
-        // If no device was passed, do a best effort to figure out the right device to open
-        let hid_devices = hid::discover(hid::initialize_api()?.deref())?;
-        if hid_devices.len() == 1 {
-            return Ok(hid_devices[0].open().await?);
-        } else if !hid_devices.is_empty() {
-            eprintln!("There are multiple potential devices, use --usb path=... to disambiguate");
-            for device in &hid_devices {
-                eprintln!("{}", device)
-            }
-            return Err(anyhow!("Multiple candidate usb devices are detected."));
-        }
-    }
-
-    return Err(anyhow!("Couldn't find any MiniDSP devices"));
-}
-
-fn transport_logging(transport: Transport, opts: &Opts) -> Transport {
-    let (log_tx, log_rx) = futures::channel::mpsc::unbounded::<utils::Message<Bytes, Bytes>>();
-    let transport = logger(transport, log_tx);
-
-    let verbose = opts.verbose;
-    let log = opts.log.clone();
-
-    tokio::spawn(async move {
-        let result = async move {
-            let decoder = if verbose > 0 {
-                use termcolor::{ColorChoice, StandardStream};
-                let writer = StandardStream::stderr(ColorChoice::Auto);
-                Some(Arc::new(Mutex::new(Decoder::new(
-                    Box::new(writer),
-                    verbose == 1,
-                    None,
-                ))))
-            } else {
-                None
-            };
-
-            let mut recorder = match log {
-                Some(filename) => Some(Recorder::new(tokio::fs::File::create(filename).await?)),
-                _ => None,
-            };
-
-            pin_mut!(log_rx);
-
-            while let Some(msg) = log_rx.next().await {
-                match msg {
-                    utils::Message::Sent(msg) => {
-                        if let Some(decoder) = &decoder {
-                            decoder.lock().await.feed_sent(&msg);
-                        }
-                        if let Some(recorder) = recorder.as_mut() {
-                            recorder.feed_sent(&msg);
-                        }
-                    }
-                    utils::Message::Received(msg) => {
-                        if let Some(decoder) = &decoder {
-                            decoder.lock().await.feed_recv(&msg);
-                        }
-                        if let Some(recorder) = recorder.as_mut() {
-                            recorder.feed_recv(&msg);
-                        }
-                    }
-                }
-            }
-
-            Ok::<(), anyhow::Error>(())
-        };
-
-        if let Err(e) = result.await {
-            log::error!("transport logging exiting: {}", e);
-        }
-    });
-
-    Box::pin(transport)
-}
-
-fn get_service(transport: Transport) -> SharedService {
-    let mplex = Multiplexer::from_transport(transport);
-    Arc::new(Mutex::new(mplex.to_service()))
-}
-
-async fn run_probe() -> Result<()> {
-    #[cfg(feature = "hid")]
-    {
-        // Probe for local usb devices
-        let devices = hid::discover(hid::initialize_api()?.deref())?;
+    if net {
+        println!("Probing for network devices...");
+        let devices = net::discover_timeout(Duration::from_secs(8)).await?;
         if devices.is_empty() {
-            println!("No matching local USB devices detected.")
+            println!("No network devices detected")
         } else {
             for device in &devices {
                 println!("Found: {}", device);
             }
-        }
-    }
-
-    println!("Probing for network devices...");
-    let devices = net::discover_timeout(Duration::from_secs(2)).await?;
-    if devices.is_empty() {
-        println!("No network devices detected")
-    } else {
-        for device in &devices {
-            println!("Found: {}", device);
         }
     }
 
@@ -495,45 +441,46 @@ async fn run_probe() -> Result<()> {
 async fn main() -> Result<()> {
     env_logger::init();
     let opts: Opts = Opts::parse();
+    let mut builder = Builder::new();
+    opts.apply_builder(&mut builder).await?;
 
-    if let Some(SubCommand::Probe) = opts.subcmd {
-        run_probe().await?;
+    let mut devices: Vec<_> = builder
+        .probe()
+        .filter_map(|x| async move { x.ok() })
+        .collect()
+        .await;
+
+    if let Some(SubCommand::Probe { net }) = opts.subcmd {
+        run_probe(devices, net).await?;
         return Ok(());
+    }
+
+    if !opts.all_local_devices {
+        devices.truncate(1);
     }
 
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
-        let transport = get_raw_transport(&opts).await?;
-        let transport = transport_logging(transport, &opts);
-        run_server(opts.subcmd.unwrap(), transport).await?;
+
+        let transport = devices
+            .first()
+            .ok_or_else(|| anyhow!("No devices found"))?
+            .transport
+            .try_clone()
+            .expect("device has disappeared");
+
+        run_server(opts.subcmd.unwrap(), Box::pin(transport)).await?;
         return Ok(());
     }
 
-    let devices: Vec<_> = {
-        if opts.all_local_devices {
-            let transports = get_local_raw_transports().await?;
-            futures::stream::iter(transports.into_iter().map(get_service))
-                .filter_map(|service| async move {
-                    let client = Client::new(service);
-                    let device_info = client.get_device_info().await.ok()?;
-                    let spec = probe(&device_info)?; //("this device is not supported");
-                    Some(MiniDSP::from_client(client, spec, Some(device_info)))
-                })
-                .collect()
-                .await
-        } else {
-            let transport = get_raw_transport(&opts).await?;
-            let transport = transport_logging(transport, &opts);
+    let devices: Vec<_> = devices
+        .into_iter()
+        .map(|dev| dev.to_minidsp().expect("device has disappeared"))
+        .collect();
 
-            let service: SharedService = get_service(transport);
-            let client = Client::new(service);
-            let device_info = client.get_device_info().await?;
-            let spec =
-                probe(&device_info).ok_or_else(|| anyhow!("this device is not recognized"))?;
-
-            vec![MiniDSP::from_client(client, spec, Some(device_info))]
-        }
-    };
+    if devices.is_empty() {
+        return Err(anyhow!("No devices found"));
+    }
 
     match &opts.file {
         Some(filename) => {
@@ -568,19 +515,15 @@ async fn main() -> Result<()> {
                 };
 
                 // Run this command on all devices in parallel
-                devices
-                    .iter()
-                    .map(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
-                    .collect::<FuturesUnordered<_>>()
+                stream::iter(&devices)
+                    .then(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
                     .collect::<Vec<_>>()
                     .await;
             }
         }
         None => {
-            devices
-                .iter()
-                .map(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
-                .collect::<FuturesUnordered<_>>()
+            stream::iter(&devices)
+                .then(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
                 .collect::<Vec<_>>()
                 .await;
         }

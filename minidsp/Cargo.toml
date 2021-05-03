@@ -7,7 +7,7 @@ keywords = ["minidsp", "audio", "dsp"]
 license = "MIT"
 name = "minidsp"
 repository = "https://github.com/mrene/minidsp-rs"
-version = "0.1.0"
+version = "0.1.0-dev"
 
 [dependencies]
 anyhow = "1.0.40"
@@ -22,8 +22,10 @@ futures-sink = "0.3.14"
 futures-util = "0.3.14"
 hex = "0.4.3"
 hexplay = "0.2.1"
+hyper = "0.14.7"
 lazy_static = "1.4.0"
 log = "0.4.14"
+minidsp-protocol = {path = "../protocol", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.6"
 schemars = "0.8.0"
 serde = {version = "1.0.125", features = ["derive"]}
@@ -34,12 +36,11 @@ strum = {version = "0.20", features = ["derive"]}
 termcolor = "1.1.2"
 thiserror = "1.0.24"
 tokio-stream = {version = "0.1.5", features = ["sync"]}
-tower = {version = "0.4.6", features = ["util"]}
+tokio-tungstenite = "0.14.0"
+tower = {version = "0.4.6", features = ["util", "timeout"]}
 url2 = "0.0.6"
 urlencoding = "1.1.1"
 wav = "0.6.0"
-
-minidsp-protocol = { path="../protocol", default-features=false, features=["use_serde", "debug", "devices"] }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
@@ -58,18 +59,30 @@ version = "1.5.0"
 features = ["net", "codec", "io"]
 version = "0.6.6"
 
+[target.'cfg(target_family="unix")'.dependencies]
+hyperlocal = "0.8.0"
+
 [features]
 debug = []
-default = ["hid"]
+default = ["hid", "devices"]
+devices = [
+  "minidsp-protocol/devices",
+  "minidsp-protocol/symbols",
+  "minidsp-protocol/device_2x4hd",
+  "minidsp-protocol/device_4x10hd",
+  "minidsp-protocol/device_msharc4x8",
+  "minidsp-protocol/device_shd",
+]
 hid = ["hidapi"]
-devices = ["minidsp-protocol/devices", "minidsp-protocol/device_2x4hd"]
 
 [package.metadata.deb]
 assets = [
   ["target/release/minidsp", "usr/bin/", "755"],
-  ["README.md", "usr/share/doc/minidsp/README", "644"],
-  ["debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
-  ["debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
+  ["target/release/minidspd", "usr/bin/", "755"],
+  ["../config.example.toml", "etc/minidsp/config.toml", "644"],
+  ["../README.md", "usr/share/doc/minidsp/README", "644"],
+  ["../debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
+  ["../debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
 ]
 copyright = "2021, Mathieu Rene <mathieu.rene@gmail.com>"
 depends = "libusb-1.0-0 (>= 2:1.0.22), libc6 (>= 2.17), libudev1 (>= 183)"
@@ -80,4 +93,4 @@ maintainer = "Mathieu Rene <mathieu.rene@gmail.com>"
 maintainer-scripts = "debian/"
 priority = "optional"
 section = "utility"
-systemd-units = {enable = false}
+systemd-units = {enable = true, start = true }

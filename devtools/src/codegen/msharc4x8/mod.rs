@@ -63,7 +63,7 @@ pub(crate) fn output(output: usize) -> Output {
             ratio: format!("COMP_{}_0_ratio", channel_index),
             attack: format!("COMP_{}_0_atime", channel_index),
             release: format!("COMP_{}_0_rtime", channel_index),
-            meter: None,
+            meter: Some(format!("Meter10_C1_{}", output)),
         }),
         fir: Some(Fir {
             index: output as u8,

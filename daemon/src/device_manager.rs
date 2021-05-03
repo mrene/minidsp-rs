@@ -1,5 +1,6 @@
 ///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
 use std::{
+    collections::HashSet,
     net::IpAddr,
     sync::{Arc, RwLock, Weak},
 };
@@ -8,7 +9,7 @@ use anyhow::{anyhow, Result};
 use futures::{StreamExt, TryFutureExt};
 use minidsp::{
     client::Client,
-    device,
+    device, logging,
     transport::{self, SharedService},
     utils::OwnedJoinHandle,
     DeviceInfo, MiniDSP,
@@ -16,10 +17,7 @@ use minidsp::{
 use tokio::sync::Mutex;
 use url2::Url2;
 
-use super::{
-    discovery::{DiscoveryEvent, Registry},
-    logging,
-};
+use super::discovery::{DiscoveryEvent, Registry};
 
 pub struct DeviceManager {
     #[allow(dead_code)]
@@ -29,7 +27,7 @@ pub struct DeviceManager {
 }
 
 impl DeviceManager {
-    pub fn new(registry: Registry, ignore_net_ip: Option<IpAddr>) -> Self {
+    pub fn new(registry: Registry, ignore_net_ip: HashSet<IpAddr>) -> Self {
         let inner = DeviceManagerInner {
             registry,
             ..Default::default()
@@ -45,7 +43,7 @@ impl DeviceManager {
                 tokio::spawn(
                     super::discovery::tasks::hid_discovery_task(move |dev| {
                         let inner = inner.read().unwrap();
-                        inner.registry.register(dev);
+                        inner.registry.register(dev, false);
                     })
                     .err_into(),
                 )
@@ -58,7 +56,7 @@ impl DeviceManager {
                 tokio::spawn(super::discovery::tasks::net_discovery_task(
                     move |dev| {
                         let inner = inner.read().unwrap();
-                        inner.registry.register(dev);
+                        inner.registry.register(dev, false);
                     },
                     ignore_net_ip,
                 ))
@@ -78,6 +76,11 @@ impl DeviceManager {
         }
 
         DeviceManager { inner, handles }
+    }
+
+    pub fn register_static(&self, dev: &str) {
+        let inner = self.inner.write().unwrap();
+        inner.registry.register(dev, true);
     }
 
     pub fn devices(&self) -> Vec<Arc<Device>> {
@@ -195,12 +198,13 @@ impl Device {
         // Connect to the device by url, and get a frame-level transport
         let mut transport = {
             let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
-            let stream = transport::open_url(url).await?;
+            let stream = transport::open_url(&url).await?;
 
             // If we have any logging options, log this stream
             let app = super::APP.get().unwrap();
             let app = app.read().await;
-            let stream = logging::transport_logging(stream, app.opts.verbose, app.opts.log.clone());
+            let (_, stream) =
+                logging::transport_logging(stream, app.opts.verbose as u8, app.opts.log.clone());
 
             transport::Hub::new(stream)
         };
@@ -208,7 +212,7 @@ impl Device {
         // Wrap the transport into a multiplexed service for command-level multiplexing
         let service = {
             let transport = transport
-                .duplicate()
+                .try_clone()
                 .ok_or_else(|| anyhow!("transport closed prematurely"))?;
             let mplex = transport::Multiplexer::from_transport(transport);
             Arc::new(Mutex::new(mplex.to_service()))
@@ -220,12 +224,12 @@ impl Device {
         // knowing the device-specific memory layout.
         let client = Client::new(service.clone());
         let device_info = client.get_device_info().await.ok();
-        let device_spec = device_info.and_then(|dev| device::probe(&dev));
+        let device_spec = device_info.map(|dev| device::probe(&dev));
 
         let handle = DeviceHandle {
             service,
             transport: transport
-                .duplicate()
+                .try_clone()
                 .ok_or_else(|| anyhow!("transport closed prematurely"))?,
             device_spec,
             device_info,
@@ -311,6 +315,6 @@ impl DeviceHandle {
     }
 
     pub fn to_hub(&self) -> Option<transport::Hub> {
-        self.transport.duplicate()
+        self.transport.try_clone()
     }
 }

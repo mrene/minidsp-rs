@@ -1,3 +1,8 @@
+use std::{error::Error, time::Duration};
+
+use anyhow::anyhow;
+use tower::{Service, ServiceBuilder};
+
 use crate::{
     commands::{self, Commands, FloatView, MemoryView, Value},
     transport::{MiniDSPError, SharedService},
@@ -18,7 +23,26 @@ impl Client {
         &self,
         cmd: commands::Commands,
     ) -> Result<commands::Responses, MiniDSPError> {
-        self.transport.lock().await.call(cmd).await
+        let mut svc = self.transport.lock().await;
+        let mut svc = ServiceBuilder::new()
+            .timeout(Duration::from_secs(10))
+            .service_fn(move |req| svc.call(req));
+
+        svc.call(cmd)
+            .await
+            .map_err(|e: Box<dyn Error + Send + Sync>| -> MiniDSPError {
+                let e = match e.downcast::<MiniDSPError>() {
+                    Ok(e) => return *e,
+                    Err(x) => x,
+                };
+
+                let e = match e.downcast::<tower::timeout::error::Elapsed>() {
+                    Ok(_) => return MiniDSPError::Timeout,
+                    Err(x) => x,
+                };
+
+                MiniDSPError::InternalError(anyhow!(e))
+            })
     }
 
     /// Gets the hardware id and dsp firmware version

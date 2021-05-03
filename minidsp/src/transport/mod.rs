@@ -45,6 +45,7 @@ pub use multiplexer::Multiplexer;
 pub mod hub;
 pub use hub::Hub;
 pub mod net;
+pub mod ws;
 
 #[derive(Error, Debug)]
 pub enum MiniDSPError {
@@ -79,6 +80,9 @@ pub enum MiniDSPError {
     #[error("Transport has closed")]
     TransportClosed,
 
+    #[error("WebSocket transport error: {0}")]
+    WebSocketError(#[from] ws::Error),
+
     #[error("Multiple concurrent commands were sent")]
     ConcurencyError,
 
@@ -94,21 +98,27 @@ pub enum MiniDSPError {
     #[error("Protocol error: {0}")]
     ProtocolError(#[from] ProtocolError),
 
+    #[error("Url error: {0}")]
+    Url2Error(#[from] url2::Url2Error),
+
     #[error("This device does not have this peripheral")]
     NoSuchPeripheral,
+
+    #[error("A device request timed out")]
+    Timeout,
 }
 
 #[async_trait]
 pub trait Openable {
     async fn open(&self) -> Result<Transport, MiniDSPError>;
-    fn to_string(&self) -> String;
+    fn to_url(&self) -> String;
 }
 
 pub trait IntoTransport {
     fn into_transport(self) -> Transport;
 }
 
-pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
+pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
     match url.scheme() {
         #[cfg(feature = "hid")]
         "usb" => {
@@ -118,6 +128,18 @@ pub async fn open_url(url: Url2) -> Result<Transport, MiniDSPError> {
                 .into_transport())
         }
         "tcp" => Ok(net::open_url(url).await?.into_transport()),
+        "ws" | "wss" => Ok(ws::open_url(url).await?),
         _ => Err(MiniDSPError::InvalidURL),
+    }
+}
+
+#[async_trait]
+impl Openable for Url2 {
+    async fn open(&self) -> Result<Transport, MiniDSPError> {
+        open_url(self).await
+    }
+
+    fn to_url(&self) -> String {
+        self.to_string()
     }
 }

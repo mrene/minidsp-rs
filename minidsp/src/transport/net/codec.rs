@@ -10,7 +10,6 @@
 //! There is a major difference on the client and server side.
 //! On the server side, the length prefix doesn't count as part of the frame size (either that, or the trailing crc doesn't count, either way, there's an extra byte).
 //! On the client side, the length prefix includes itself, and there is no CRC byte. [01] is a valid zero-length response used for acknowledgments.
-//!
 
 use std::io;
 

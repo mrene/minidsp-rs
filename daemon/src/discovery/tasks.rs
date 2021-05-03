@@ -1,4 +1,4 @@
-use std::{net::IpAddr, time};
+use std::{collections::HashSet, net::IpAddr, time};
 
 use anyhow::Result;
 use futures::{pin_mut, StreamExt};
@@ -23,17 +23,19 @@ pub async fn hid_discovery_task(register: impl Fn(&str)) -> Result<()> {
     }
 }
 
-pub async fn net_discovery_task(register: impl Fn(&str), this_ip: Option<IpAddr>) -> Result<()> {
+pub async fn net_discovery_task(
+    register: impl Fn(&str),
+    ignore_net_ip: HashSet<IpAddr>,
+) -> Result<()> {
     let stream = transport::net::discover().await?;
     pin_mut!(stream);
 
     while let Some(device) = stream.next().await {
-        if let Some(this_ip) = this_ip {
-            if device.ip.ip() == this_ip {
-                // Don't register ourselves if we're advertising
-                continue;
-            }
+        if ignore_net_ip.contains(&device.ip.ip()) {
+            // Don't register ourselves if we're advertising
+            continue;
         }
+
         let url = device.to_url();
         register(url.as_str());
     }

@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use hidapi::{HidApi, HidError};
 
-use super::{initialize_api, HidTransport, VID_MINIDSP};
+use super::{initialize_api, HidTransport, OLD_MINIDSP_PID, VID_MINIDSP};
 use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,7 +16,7 @@ pub struct Device {
 
 impl Device {
     pub fn to_url(&self) -> String {
-        ToString::to_string(&self)
+        self.to_string()
     }
 }
 
@@ -82,7 +82,7 @@ impl Openable for Device {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn to_url(&self) -> String {
         ToString::to_string(self)
     }
 }
@@ -90,7 +90,23 @@ impl Openable for Device {
 pub fn discover(hid: &HidApi) -> Result<Vec<Device>, HidError> {
     Ok(hid
         .device_list()
-        .filter(|di| di.vendor_id() == VID_MINIDSP)
+        .filter(|di| {
+            di.vendor_id() == VID_MINIDSP || (di.vendor_id(), di.product_id()) == OLD_MINIDSP_PID
+        })
+        .map(|di| Device {
+            id: Some((di.vendor_id(), di.product_id())),
+            path: Some(di.path().to_string_lossy().to_string()),
+        })
+        .collect())
+}
+
+pub fn discover_with<F: Fn(&hidapi::DeviceInfo) -> bool>(
+    hid: &HidApi,
+    func: F,
+) -> Result<Vec<Device>, HidError> {
+    Ok(hid
+        .device_list()
+        .filter(|di| func(di))
         .map(|di| Device {
             id: Some((di.vendor_id(), di.product_id())),
             path: Some(di.path().to_string_lossy().to_string()),

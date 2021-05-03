@@ -60,7 +60,7 @@ impl Multiplexer {
         let transport = Arc::new(Self {
             pending_command: Arc::new(Mutex::new(VecDeque::new())),
             event_tx: Arc::new(Mutex::new(Some(recv_send.clone()))),
-            write: tokio::sync::Mutex::new(Box::pin(tx)),
+            write: tokio::sync::Mutex::new(tx),
         });
 
         // Spawn the receive task
@@ -109,7 +109,7 @@ impl Multiplexer {
     }
 
     /// Receives responses from the transport, dispatches responses to the first pending command if it matches, else
-    /// pushed it to the events broadcast.
+    /// pushes it to the events broadcast channel.
     async fn recv_loop(
         self: Arc<Self>,
         sender: broadcast::Sender<Responses>,

@@ -5,7 +5,8 @@ use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
 use frame_codec::FrameCodec;
 use futures::{SinkExt, TryStreamExt};
-use hidapi::{HidApi, HidDevice, HidError, HidResult};
+pub use hidapi::HidError;
+use hidapi::{HidApi, HidDevice, HidResult};
 use stream::HidStream;
 use url2::Url2;
 
@@ -17,6 +18,7 @@ pub use discover::*;
 use super::{frame_codec, multiplexer::Multiplexer, IntoTransport};
 
 pub const VID_MINIDSP: u16 = 0x2752;
+pub const OLD_MINIDSP_PID: (u16, u16) = (0x04d8, 0x003f);
 
 static HIDAPI_INSTANCE: AtomicRefCell<Option<Arc<HidApi>>> = AtomicRefCell::new(None);
 
@@ -42,7 +44,7 @@ impl HidTransport {
         }
     }
 
-    pub fn with_url(hid: &HidApi, url: Url2) -> Result<HidTransport, HidError> {
+    pub fn with_url(hid: &HidApi, url: &Url2) -> Result<HidTransport, HidError> {
         // If we have a path, decode it.
         let path = url.path();
         if !path.is_empty() {

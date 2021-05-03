@@ -101,7 +101,7 @@ mod test {
     use anyhow::Result;
     use bytes::Bytes;
 
-    use crate::discovery::DiscoveryPacket;
+    use super::*;
 
     #[test]
     fn test_bytes_parse() -> Result<()> {

@@ -9,7 +9,7 @@ use std::{
 use anyhow::Result;
 use bimap::BiMap;
 use clap::{self as clap, Clap};
-use codegen::{generate_static_config, m2x4hd, msharc4x8, spec::Device};
+use codegen::{generate_static_config, m2x4hd, m4x10hd, msharc4x8, shd, spec::Device};
 use futures::{Stream, StreamExt};
 use minidsp::{
     commands::Commands,
@@ -165,5 +165,8 @@ fn gen_write<T: Target>(output: &Path) -> Result<()> {
 fn codegen_main(output: PathBuf) -> Result<()> {
     gen_write::<m2x4hd::Target>(&output)?;
     gen_write::<msharc4x8::Target>(&output)?;
+    gen_write::<m4x10hd::Target>(&output)?;
+    gen_write::<shd::Target>(&output)?;
+
     Ok(())
 }

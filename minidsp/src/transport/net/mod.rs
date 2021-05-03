@@ -1,6 +1,7 @@
 //! Allows talking with the [crate::server] component
 mod codec;
 mod discover;
+pub mod discovery;
 
 use std::sync::Arc;
 
@@ -51,7 +52,7 @@ where
     }
 }
 
-pub async fn open_url(url: Url2) -> Result<StreamTransport<TcpStream>, MiniDSPError> {
+pub async fn open_url(url: &Url2) -> Result<StreamTransport<TcpStream>, MiniDSPError> {
     let host = url.host().ok_or(MiniDSPError::InvalidURL)?;
     let port = url.port().unwrap_or(5333);
 

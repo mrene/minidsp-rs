@@ -33,21 +33,9 @@ impl Default for Config {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
-pub enum StaticDevice {
-    /// Connect to a local USB device
-    Usb {
-        // USB Vendor ID
-        vid: Option<u16>,
-
-        // USB Product ID
-        pid: Option<u16>,
-
-        // If set, use this device path directly, and ignore the `vid` and `pid` attribute.
-        path: Option<String>,
-    },
-
-    /// Connect to a WI-DG, or to a server served with `compat_server`
-    Tcp { address: String },
+pub struct StaticDevice {
+    /// URL to use when connecting to this device. Use `minidsp probe` to generate it.
+    pub url: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -61,7 +49,7 @@ pub struct HttpServer {
 #[serde(default)]
 pub struct TcpServer {
     /// If set, matches the given device serial number
-    pub device_serial: Option<String>,
+    pub device_serial: Option<u32>,
 
     // If set, uses the specified device index when accepting connections
     // If none of `device_serial` or `device_index` are set, the first usb

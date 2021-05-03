@@ -6,11 +6,8 @@ use async_trait::async_trait;
 use futures::{Stream, StreamExt};
 use tokio::net::TcpStream;
 
-use super::StreamTransport;
-use crate::{
-    discovery,
-    transport::{IntoTransport, MiniDSPError, Openable, Transport},
-};
+use super::{discovery, StreamTransport};
+use crate::transport::{IntoTransport, MiniDSPError, Openable, Transport};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Device {
@@ -44,8 +41,8 @@ impl Openable for Device {
         )
     }
 
-    fn to_string(&self) -> String {
-        ToString::to_string(self)
+    fn to_url(&self) -> String {
+        self.to_string()
     }
 }
 

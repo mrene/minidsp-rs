@@ -58,7 +58,7 @@ impl fmt::Display for StatusSummary {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 /// Settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
@@ -72,6 +72,18 @@ pub struct MasterStatus {
 
     /// Mute status
     pub mute: Option<bool>,
+}
+
+impl fmt::Debug for MasterStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Maintain structure format since ezbeq depends on verbatim stdout output (hasn't migrated to -o json yet)
+        f.debug_struct("MasterStatus")
+            .field("preset", &self.preset.unwrap_or_default())
+            .field("source", &self.source.unwrap_or(Source::NotInstalled))
+            .field("volume", &self.volume.unwrap_or_default())
+            .field("mute", &self.mute.unwrap_or_default())
+            .finish()
+    }
 }
 
 impl From<minidsp_protocol::MasterStatus> for MasterStatus {

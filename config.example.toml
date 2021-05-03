@@ -1,19 +1,27 @@
 #
 # A configuration file can define many components that share the same underlying devices
 #
-# A default HTTP server is exposed via a unix socket at /var/run/minidsp.sock
+# A default HTTP server is exposed via a unix socket at /tmp/minidsp.sock
 
 # If desired, an api can be exposed over the local network
 [http_server]
-bind_address = "0.0.0.0:5380"
-# TODO: CORS example, security token
+bind_address = "127.0.0.1:5380"
+# Replace the previous line by this one in order to allow connections from other hosts
+# bind_address = "0.0.0.0:5380"
 
 # TCP servers can be setup to support using the native "plugin" apps to manage the device
 [[tcp_server]]
-bind_address = "0.0.0.0:5333"
-# Optionally match on a serial number
-#device_serial = "965535"
-advertise = { ip = "192.168.1.242", name="Living Room Pi" }
+bind_address = "127.0.0.1:5333"
+# Replace the previous line by this one in order to use the plugin app from another machine
+# bind_address = "0.0.0.0:5333"
+
+# If multiple minidsp devices are used, the following options can be used to expose multiple 
+# plugin-compatible servers for each devices.
+# device_index = 0 # Use the first device available
+# device_serial = 912345 # Use the device with this serial number
+
+# Advertise the following address for the official minidsp mobile app
+# advertise = { ip = "192.168.1.100", name="Living Room Pi" }
 
 # More servers can be declared with different bind addresses and device bindings
 # Since the official apps don't support setting the port number, different addresses must be used
@@ -22,8 +30,9 @@ advertise = { ip = "192.168.1.242", name="Living Room Pi" }
 #bind_address = "192.168.1.128:5333"
 
 # Devices can be added statically instead of being automatically discovered 
+# Use `minidsp probe` to find the correct URL
 # [[static_device]]
-# type = "usb"
-# vid = 1234
-# pid = 5678
-# path = ""
+# url = "usb:0001%3A0005%3A04?vid=2752&pid=0011"
+
+# If a wi-dg isn't auto-discovered, it can be added with
+# url = "tcp://192.168.1.2:5333"

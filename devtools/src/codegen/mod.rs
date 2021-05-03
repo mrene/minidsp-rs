@@ -1,7 +1,10 @@
 //! Code to generate device definitions
 
 pub mod m2x4hd;
+pub mod m4x10hd;
 pub mod msharc4x8;
+pub mod shd;
+
 pub mod spec;
 pub mod spec_to_tokens;
 
@@ -40,6 +43,7 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
             #[cfg(feature="symbols")]
             pub const SYMBOLS: &[(&str, u16)] = &[#(#mapped),*];
         }
+        #[allow(unused_imports)]
         use sym::*;
     }
 }

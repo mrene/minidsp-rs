@@ -669,7 +669,7 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
 name = "minidsp"
-version = "0.1.0"
+version = "0.1.0-dev"
 dependencies = [
  "anyhow",
  "assert_approx_eq",
@@ -685,6 +685,8 @@ dependencies = [
  "hex",
  "hexplay",
  "hidapi",
+ "hyper",
+ "hyperlocal",
  "lazy_static",
  "log",
  "minidsp-protocol",
@@ -699,6 +701,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+ "tokio-tungstenite",
  "tokio-util",
  "tower",
  "url2",
@@ -1488,6 +1491,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "pin-project",
+ "tokio",
  "tower-layer",
  "tower-service",
  "tracing",

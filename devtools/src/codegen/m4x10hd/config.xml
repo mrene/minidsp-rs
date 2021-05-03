@@ -1,5 +1,6 @@
 <setting version="1.13">
   <timestamp>0</timestamp>
+  <master_mute>0</master_mute>
   <dspversion>50</dspversion>
   <button>
     <dec>0</dec>
@@ -1460,5 +1461,4 @@
     <dec>0</dec>
     <hex>00000000</hex>
   </item>
-  <link/>
 </setting>
