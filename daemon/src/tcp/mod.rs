@@ -17,7 +17,7 @@ use tokio::{
 };
 use tokio_util::codec::Framed;
 
-use super::{config, Opts};
+use super::config;
 
 /// This lets multiple users talk to the same device simultaneously, which depending on the
 /// user could be problematic.
@@ -68,21 +68,20 @@ where
     }
 }
 
-pub fn start_advertise(opts: &Opts) -> Result<(), anyhow::Error> {
-    if let Some(ref hostname) = opts.advertise {
-        let mut packet = discovery::DiscoveryPacket {
-            mac_address: [10, 20, 30, 40, 50, 60],
-            ip_address: Ipv4Addr::UNSPECIFIED,
-            hwid: 10,
-            typ: 0,
-            sn: 65535,
-            hostname: hostname.to_string(),
-        };
-        if let Some(ref ip) = opts.ip {
-            packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
+pub fn start_advertise(config: &config::Config) -> Result<(), anyhow::Error> {
+    for srv in &config.tcp_servers {
+        if let Some(ref advertise) = srv.advertise {
+            let packet = discovery::DiscoveryPacket {
+                mac_address: [10, 20, 30, 40, 50, 60],
+                ip_address: Ipv4Addr::from_str(&advertise.ip)?,
+                hwid: 10,
+                typ: 0,
+                sn: 65535,
+                hostname: advertise.name.to_string(),
+            };
+            let interval = Duration::from_secs(1);
+            tokio::spawn(discovery::server::advertise_packet(packet, interval));
         }
-        let interval = Duration::from_secs(1);
-        tokio::spawn(discovery::server::advertise_packet(packet, interval));
     }
     Ok(())
 }
@@ -91,7 +90,7 @@ pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
     let app = super::APP.get().unwrap();
     let app = app.read().await;
 
-    if let Err(adv_err) = start_advertise(&app.opts) {
+    if let Err(adv_err) = start_advertise(&app.config) {
         log::error!("error launching advertisement task: {:?}", adv_err);
     }
 

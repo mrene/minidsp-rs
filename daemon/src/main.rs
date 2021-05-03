@@ -1,6 +1,8 @@
 ///! Main entrypoint
 /// Launches the application by instantiating all components
 use std::{
+    collections::HashSet,
+    net::IpAddr,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -41,10 +43,6 @@ pub struct Opts {
     #[clap(default_value = "0.0.0.0:5333")]
     bind_address: String,
 
-    /// Bind address for the HTTP server
-    #[clap(long)]
-    http: Option<String>,
-
     /// If set, advertises the TCP component so it's discoverable from minidsp apps, using the given device name
     #[clap(long)]
     advertise: Option<String>,
@@ -77,13 +75,18 @@ impl App {
         let registry = Registry::new();
 
         // If we're advertising a device, make sure to avoid discovering ourselves
-        let this_ip = self
-            .opts
-            .ip
-            .as_ref()
-            .and_then(|ip| std::net::IpAddr::from_str(ip.as_str()).ok());
+        let our_ips: HashSet<IpAddr> = self
+            .config
+            .tcp_servers
+            .iter()
+            .filter_map(|s| {
+                s.advertise
+                    .as_ref()
+                    .and_then(|a| IpAddr::from_str(&a.ip).ok())
+            })
+            .collect();
 
-        let device_mgr = DeviceManager::new(registry, this_ip);
+        let device_mgr = DeviceManager::new(registry, our_ips);
 
         let http_server = self.config.http_server.clone();
         self.handles.push(

@@ -1,5 +1,6 @@
 ///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
 use std::{
+    collections::HashSet,
     net::IpAddr,
     sync::{Arc, RwLock, Weak},
 };
@@ -26,7 +27,7 @@ pub struct DeviceManager {
 }
 
 impl DeviceManager {
-    pub fn new(registry: Registry, ignore_net_ip: Option<IpAddr>) -> Self {
+    pub fn new(registry: Registry, ignore_net_ip: HashSet<IpAddr>) -> Self {
         let inner = DeviceManagerInner {
             registry,
             ..Default::default()
