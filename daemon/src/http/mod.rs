@@ -9,6 +9,7 @@ use minidsp::{
     MiniDSP,
 };
 use routerify::{Router, RouterService};
+use schemars::JsonSchema;
 use serde::Serialize;
 use websocket::websocket_transport_bridge;
 
@@ -22,7 +23,7 @@ use helpers::{parse_body, parse_param, serialize_response};
 
 mod websocket;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
 pub struct Device {
     pub url: String,
     pub version: Option<minidsp::DeviceInfo>,
@@ -160,6 +161,11 @@ async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     Ok(Response::new(Body::default()))
 }
 
+async fn schema_fn<T: JsonSchema>(req: Request<Body>) -> Result<Response<Body>, Error> {
+    use schemars::schema_for;
+    Ok(serialize_response(&req, schema_for!(T))?)
+}
+
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError) -> Response<Body> {
@@ -184,9 +190,22 @@ fn router() -> Router<Body, Error> {
     Router::builder()
         // .middleware(Middleware::pre(logger))
         .get("/devices", get_devices)
+        .get("/devices/get.schema", schema_fn::<Vec<Device>>)
         .get("/devices/:deviceIndex", get_master_status)
         .post("/devices/:deviceIndex", post_master_status)
+        .get(
+            "/devices/:deviceIndex/get.schema",
+            schema_fn::<StatusSummary>,
+        )
+        .get(
+            "/devices/:deviceIndex/post.schema",
+            schema_fn::<MasterStatus>,
+        )
         .post("/devices/:deviceIndex/config", post_config)
+        .get(
+            "/devices/:deviceIndex/config/post.schema",
+            schema_fn::<Config>,
+        )
         .any_method("/devices/:deviceIndex/ws", device_bridge)
         .err_handler(error_handler)
         .build()

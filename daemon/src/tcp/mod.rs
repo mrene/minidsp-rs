@@ -114,8 +114,15 @@ pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
                         .as_ref()
                         .ok_or(MiniDSPError::TransportClosed)?
                         .devices();
-                    devices.sort_by_key(|dev| !dev.is_local());
-                    devices.first().cloned()
+
+                    if let Some(serial) = cfg.device_serial {
+                        devices.into_iter().find(|dev| dev.device_info().map(|di| di.serial == serial).unwrap_or(false))
+                    } else if let Some(device_index) = cfg.device_index {
+                        devices.into_iter().nth(device_index)
+                    } else {
+                        devices.sort_by_key(|dev| !dev.is_local());
+                        devices.into_iter().next()
+                    }
                 };
 
                 log::info!("[{:?}] New connection assiged to {}",

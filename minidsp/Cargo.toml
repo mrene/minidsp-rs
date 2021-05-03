@@ -79,6 +79,7 @@ hid = ["hidapi"]
 assets = [
   ["target/release/minidsp", "usr/bin/", "755"],
   ["target/release/minidspd", "usr/bin/", "755"],
+  ["../config.example.toml", "etc/minidsp/config.toml", "644"],
   ["../README.md", "usr/share/doc/minidsp/README", "644"],
   ["../debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
   ["../debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
@@ -92,4 +93,4 @@ maintainer = "Mathieu Rene <mathieu.rene@gmail.com>"
 maintainer-scripts = "debian/"
 priority = "optional"
 section = "utility"
-systemd-units = {enable = false}
+systemd-units = {enable = true, start = true }

@@ -49,7 +49,7 @@ pub struct HttpServer {
 #[serde(default)]
 pub struct TcpServer {
     /// If set, matches the given device serial number
-    pub device_serial: Option<String>,
+    pub device_serial: Option<u32>,
 
     // If set, uses the specified device index when accepting connections
     // If none of `device_serial` or `device_index` are set, the first usb
