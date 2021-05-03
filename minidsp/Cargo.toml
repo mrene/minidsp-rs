@@ -7,7 +7,7 @@ keywords = ["minidsp", "audio", "dsp"]
 license = "MIT"
 name = "minidsp"
 repository = "https://github.com/mrene/minidsp-rs"
-version = "0.1.0-dev"
+version = "0.1.0-pre1"
 
 [dependencies]
 anyhow = "1.0.40"

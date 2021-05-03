@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 name = "minidsp-daemon"
-version = "0.1.0"
+version = "0.1.0-pre1"
 
 [[bin]]
 name="minidspd"
