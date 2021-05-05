@@ -727,6 +727,7 @@ dependencies = [
  "lazy_static",
  "log",
  "minidsp",
+ "okapi",
  "once_cell",
  "routerify",
  "routerify-unixsocket",
@@ -832,6 +833,17 @@ checksum = "05499f3756671c15885fee9034446956fff3f243d6077b91e5767df161f766b3"
 dependencies = [
  "hermit-abi",
  "libc",
+]
+
+[[package]]
+name = "okapi"
+version = "0.5.0-alpha-1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0c717e6b7107b15386337c53a90582d13224fafdf17149a0ff42e5aa8be0a1e"
+dependencies = [
+ "schemars",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

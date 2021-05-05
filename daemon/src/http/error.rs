@@ -3,7 +3,7 @@ use std::sync::Arc;
 use minidsp::MiniDSPError;
 use thiserror::Error;
 
-#[derive(Clone, Debug, serde::Serialize, Error)]
+#[derive(Clone, Debug, serde::Serialize, Error, schemars::JsonSchema)]
 #[serde(tag = "type")]
 pub enum Error {
     #[error("the application is still being initialized")]
@@ -18,13 +18,14 @@ pub enum Error {
     ParameterError { name: String, error: String },
 
     #[error("the request could not be parsed")]
-    ParseError(String),
+    ParseError { reason: String },
 
     #[error("the specified device is not ready to accept requests")]
     DeviceNotReady,
 
     #[error(transparent)]
     #[serde(serialize_with = "ser_to_string")]
+    #[schemars(with = "String")]
     InternalError(#[from] Arc<anyhow::Error>),
 }
 
@@ -65,7 +66,7 @@ impl From<MiniDSPError> for Error {
     }
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, schemars::JsonSchema)]
 pub struct FormattedError {
     message: String,
     error: Error,

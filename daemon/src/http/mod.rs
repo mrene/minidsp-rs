@@ -21,6 +21,7 @@ pub use error::{Error, FormattedError};
 mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
+mod openapi;
 mod websocket;
 
 #[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
@@ -166,13 +167,23 @@ async fn schema_fn<T: JsonSchema>(req: Request<Body>) -> Result<Response<Body>, 
     Ok(serialize_response(&req, schema_for!(T))?)
 }
 
+async fn redoc(_: Request<Body>) -> Result<Response<Body>, Error> {
+    Ok(Response::new(Body::from(include_str!(
+        "openapi/redoc.html"
+    ))))
+}
+
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError) -> Response<Body> {
     let error = if let Some(err) = err.downcast_ref::<Error>() {
         let err: FormattedError = err.clone().into();
-        serde_json::to_string_pretty(&err)
-            .unwrap_or_else(|_| "unable to serialize error message".to_string())
+        serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
+            format!(
+                "the error: '{:?}' couldn't be serialized as json: {:?}",
+                err, e
+            )
+        })
     } else {
         format!("Something went wrong: {}", err)
     };
@@ -189,6 +200,9 @@ fn router() -> Router<Body, Error> {
     // before any route handlers.
     Router::builder()
         // .middleware(Middleware::pre(logger))
+        .get("/openapi.json", |req| async move {
+            Ok(serialize_response(&req, openapi::schema())?)
+        })
         .get("/devices", get_devices)
         .get("/devices/get.schema", schema_fn::<Vec<Device>>)
         .get("/devices/:deviceIndex", get_master_status)
@@ -206,6 +220,7 @@ fn router() -> Router<Body, Error> {
             "/devices/:deviceIndex/config/post.schema",
             schema_fn::<Config>,
         )
+        .get("/api", redoc)
         .any_method("/devices/:deviceIndex/ws", device_bridge)
         .err_handler(error_handler)
         .build()
@@ -213,7 +228,9 @@ fn router() -> Router<Body, Error> {
 }
 
 pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
-    let service = RouterService::new(router()).expect("while building router service");
+    let rt = router();
+    println!("Router: {:#?}", rt);
+    let service = RouterService::new(rt).expect("while building router service");
 
     // The address on which the server will be listening.
     let addr = SocketAddr::from_str(&bind_address)?;
@@ -232,7 +249,7 @@ pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
 
 #[cfg(target_family = "unix")]
 pub async fn unix_main() -> Result<(), anyhow::Error> {
-    use std::path::Path;
+    use std::{fs, os::unix::fs::PermissionsExt, path::Path};
 
     use hyperlocal::UnixServerExt;
     use routerify_unixsocket::UnixRouterService;
@@ -248,6 +265,12 @@ pub async fn unix_main() -> Result<(), anyhow::Error> {
     let server = Server::bind_unix(path)
         .context("couldn't bind unix socket")?
         .serve(service);
+
+    // Change the socket's permissions so other users can connect
+    let m = fs::metadata(path).context("cannot get unix socket file metadata")?;
+    let mut perms = m.permissions();
+    perms.set_mode(0o766);
+    fs::set_permissions(path, perms).context("couldn't set unix socket file permissions")?;
 
     println!("App is listening on: {}", path.to_string_lossy());
     if let Err(err) = server.await {
