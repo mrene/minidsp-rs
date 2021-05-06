@@ -58,7 +58,7 @@ impl fmt::Display for StatusSummary {
     }
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 /// Settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
@@ -211,7 +211,7 @@ pub struct Output {
     /// Parametric equalizers
     pub peq: Vec<Peq>,
 
-    /// Phrase inversion
+    /// Phase inversion
     pub invert: Option<bool>,
 
     /// Time delay

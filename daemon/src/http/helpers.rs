@@ -20,9 +20,15 @@ where
 pub async fn parse_body<'de, T: DeserializeOwned>(req: &mut Request<Body>) -> Result<T, Error> {
     let data = body::to_bytes(req.body_mut())
         .await
-        .map_err(|e| Error::ParseError(e.to_string()))?;
+        .map_err(|e| Error::ParseError {
+            reason: e.to_string(),
+        })?;
 
-    Ok(serde_json::from_slice(data.as_ref()).map_err(|e| Error::ParseError(e.to_string()))?)
+    Ok(
+        serde_json::from_slice(data.as_ref()).map_err(|e| Error::ParseError {
+            reason: e.to_string(),
+        })?,
+    )
 }
 
 pub fn serialize_response<T: serde::Serialize>(
