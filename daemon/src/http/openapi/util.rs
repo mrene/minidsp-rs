@@ -1,9 +1,8 @@
-//! Utils verbatim from https://github.com/GREsau/okapi 
+//! Utils verbatim from https://github.com/GREsau/okapi
 
 #![allow(dead_code)]
 use anyhow::{anyhow, Result};
-use okapi::openapi3::*;
-use okapi::Map;
+use okapi::{openapi3::*, Map};
 use serde_json::Value;
 
 // FIXME this whole file is a huge mess...
