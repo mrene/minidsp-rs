@@ -35,6 +35,15 @@ pub struct DeviceInfo {
     pub serial: u32,
 }
 
+impl DeviceInfo {
+    pub fn supports_dirac(&self) -> bool {
+        match self.dsp_version {
+            61 | 94 | 95 | 101 | 105 => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(
@@ -54,4 +63,7 @@ pub struct MasterStatus {
 
     /// Mute status
     pub mute: Option<bool>,
+
+    /// Dirac Live status
+    pub dirac: Option<bool>,
 }

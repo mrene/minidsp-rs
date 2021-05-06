@@ -9,7 +9,8 @@ use anyhow::{anyhow, Result};
 use futures::{StreamExt, TryFutureExt};
 use minidsp::{
     client::Client,
-    device, logging,
+    device::{self, probe},
+    logging,
     transport::{self, SharedService},
     utils::OwnedJoinHandle,
     DeviceInfo, MiniDSP,
@@ -307,10 +308,15 @@ pub struct DeviceHandle {
 
 impl DeviceHandle {
     pub fn to_minidsp(&self) -> Option<MiniDSP<'static>> {
-        let mut dsp = MiniDSP::new(self.service.clone(), self.device_spec?);
-        if let Some(device_info) = self.device_info {
-            dsp.set_device_info(device_info);
-        }
+        let client = Client::new(self.service.clone());
+
+        let device_info = match self.device_info {
+            Some(x) => x,
+            None => futures::executor::block_on(client.get_device_info()).ok()?,
+        };
+
+        let spec = self.device_spec.unwrap_or_else(|| probe(&device_info));
+        let dsp = MiniDSP::from_client(client, spec, device_info);
         Some(dsp)
     }
 

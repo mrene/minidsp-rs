@@ -72,6 +72,9 @@ pub struct MasterStatus {
 
     /// Mute status
     pub mute: Option<bool>,
+
+    /// Dirac Live status
+    pub dirac: Option<bool>,
 }
 
 impl fmt::Debug for MasterStatus {
@@ -82,6 +85,7 @@ impl fmt::Debug for MasterStatus {
             .field("source", &self.source.unwrap_or(Source::NotInstalled))
             .field("volume", &self.volume.unwrap_or_default())
             .field("mute", &self.mute.unwrap_or_default())
+            .field("dirac", &self.dirac.unwrap_or_default())
             .finish()
     }
 }
@@ -93,6 +97,7 @@ impl From<minidsp_protocol::MasterStatus> for MasterStatus {
             source: s.source,
             volume: s.volume,
             mute: s.mute,
+            dirac: s.dirac,
         }
     }
 }
@@ -113,6 +118,10 @@ impl MasterStatus {
 
         if let Some(value) = self.mute {
             dsp.set_master_mute(value).await?;
+        }
+
+        if let Some(value) = self.dirac {
+            dsp.set_dirac(value).await?;
         }
 
         Ok(())

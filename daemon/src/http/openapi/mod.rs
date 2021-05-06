@@ -222,6 +222,7 @@ pub fn schema() -> OpenApi {
                 source: Some(Source::Toslink),
                 volume: Some(Gain(-5f32)),
                 mute: Some(false),
+                dirac: Some(false),
             },
             available_sources: ["toslink", "analog", "usb"]
                 .iter()
