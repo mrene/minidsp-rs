@@ -162,7 +162,7 @@ impl Multiplexer {
 
 // Arc<T> is not marked as #[fundamental], therefore we cannot directly implement Service on Arc<Multiplexer>
 /// Wraps a Multiplexer object in a cloneable struct implementing tower::Service
-pub struct MultiplexerService(Arc<Multiplexer>);
+pub struct MultiplexerService(pub Arc<Multiplexer>);
 
 impl Service<Commands> for MultiplexerService {
     type Response = Responses;
@@ -176,6 +176,14 @@ impl Service<Commands> for MultiplexerService {
     fn call(&mut self, req: Commands) -> Self::Future {
         let this = self.0.clone();
         Box::pin(this.roundtrip(req))
+    }
+}
+
+impl std::ops::Deref for MultiplexerService {
+    type Target = Arc<Multiplexer>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

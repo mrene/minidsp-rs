@@ -1,7 +1,7 @@
 use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
 
 use anyhow::Context;
-use futures::future::join_all;
+use futures::{future::join_all, SinkExt, StreamExt};
 use hyper::{Body, Request, Response, Server, StatusCode};
 use minidsp::{
     model::{Config, MasterStatus, StatusSummary},
@@ -11,6 +11,7 @@ use minidsp::{
 use routerify::{Router, RouterService};
 use schemars::JsonSchema;
 use serde::Serialize;
+use tungstenite::Message;
 use websocket::websocket_transport_bridge;
 
 use super::{config::HttpServer, device_manager, App};
@@ -126,7 +127,44 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
     let device = get_device_instance(&app, device_index)?;
     let status = StatusSummary::fetch(&device).await?;
 
-    Ok(serialize_response(&req, status)?)
+    if hyper_tungstenite::is_upgrade_request(&req) {
+        let (response, websocket) =
+            hyper_tungstenite::upgrade(req, None).context("upgrade failed")?;
+
+        tokio::spawn(async move {
+            let mut websocket = websocket.await.context("ws await failed")?;
+
+            // Send the initial status right away, then watch for updates
+            websocket
+                .send(Message::Text(serde_json::to_string(&status).unwrap()))
+                .await?;
+
+            device
+                .subscribe_master_status()
+                .await?
+                .filter_map(|master| async move {
+                    if master.eq(&minidsp::MasterStatus::default()) {
+                        None
+                    } else {
+                        let summary = StatusSummary {
+                            master: minidsp::model::MasterStatus::from(master),
+                            ..Default::default()
+                        };
+
+                        let s = serde_json::to_string(&summary).unwrap();
+                        Some(Ok(Message::Text(s)))
+                    }
+                })
+                .forward(websocket)
+                .await?;
+
+            Ok::<(), anyhow::Error>(())
+        });
+
+        Ok(response)
+    } else {
+        Ok(serialize_response(&req, status)?)
+    }
 }
 
 /// Updates the device's master status directly

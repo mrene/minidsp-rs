@@ -720,19 +720,29 @@ pub struct MemoryView {
 }
 
 impl MemoryView {
-    pub fn read_at(&self, addr: u16, len: u8) -> &'_ [u8] {
+    pub fn read_at(&self, addr: u16, len: u8) -> Option<&'_ [u8]> {
+        if addr < self.base || addr > self.base + self.data.len() as u16 {
+            return None;
+        }
+
         let start = (addr - self.base) as usize;
         let end = start + len as usize;
 
-        &self.data[start..end]
+        if self.data.len() < end {
+            return None;
+        }
+
+        Some(&self.data[start..end])
     }
 
-    pub fn read_u8(&self, addr: u16) -> u8 {
-        self.read_at(addr, 1)[0]
+    pub fn read_u8(&self, addr: u16) -> Option<u8> {
+        Some(self.read_at(addr, 1)?[0])
     }
 
-    pub fn read_u16(&self, addr: u16) -> u16 {
-        u16::from_be_bytes(self.read_at(addr, 2).try_into().unwrap())
+    pub fn read_u16(&self, addr: u16) -> Option<u16> {
+        Some(u16::from_be_bytes(
+            self.read_at(addr, 2)?.try_into().unwrap(),
+        ))
     }
 }
 
@@ -803,11 +813,17 @@ where
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
         Ok(Self {
-            preset: Some(view.read_u8(0xffd8)),
-            source: Some(super::Source::from_id(view.read_u8(0xffd9), device_info)),
-            volume: Some(view.read_u8(0xffda).into()),
-            mute: Some(view.read_u8(0xffdb) == 1),
-            dirac: Some(view.read_u8(0xffe0) == 0),
+            preset: view.read_u8(0xffd8),
+            source: view
+                .read_u8(0xffd9)
+                .map(|id| super::Source::from_id(id, device_info)),
+            volume: view.read_u8(0xffda).map(Into::into),
+            mute: view.read_u8(0xffdb).map(|x| x == 1),
+            dirac: if device_info.supports_dirac() {
+                view.read_u8(0xffe0).map(|x| x == 0)
+            } else {
+                None
+            },
         })
     }
 }
@@ -838,8 +854,8 @@ mod test {
             .unwrap();
         let data = memory.read_at(0xffda, 4);
 
-        assert_eq!(data, &[0x1, 0x2, 0x3, 0x4]);
-        assert_eq!(memory.read_u16(0xFFDA), 0x0102);
+        assert_eq!(data.unwrap(), &[0x1, 0x2, 0x3, 0x4]);
+        assert_eq!(memory.read_u16(0xFFDA), Some(0x0102));
     }
 
     #[test]
@@ -876,7 +892,7 @@ mod test {
             source: Some(crate::Source::Toslink),
             volume: Some(Gain(-39.5)),
             mute: Some(false),
-            dirac: Some(true),
+            dirac: None,
         }));
     }
 

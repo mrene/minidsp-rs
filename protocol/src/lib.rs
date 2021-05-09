@@ -14,6 +14,7 @@ pub mod commands;
 pub use commands::{Commands, FromMemory};
 
 pub mod packet;
+use device::{probe_kind, DeviceKind};
 pub use packet::ParseError;
 
 pub mod source;
@@ -36,15 +37,16 @@ pub struct DeviceInfo {
 }
 
 impl DeviceInfo {
+    pub fn device_kind(&self) -> DeviceKind {
+        probe_kind(self)
+    }
+
     pub fn supports_dirac(&self) -> bool {
-        match self.dsp_version {
-            61 | 94 | 95 | 101 | 105 => true,
-            _ => false,
-        }
+        matches!(self.dsp_version, 61 | 94 | 95 | 101 | 105)
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(
     feature = "use_serde",

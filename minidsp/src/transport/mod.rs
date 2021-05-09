@@ -6,24 +6,14 @@ use std::{pin::Pin, sync::Arc};
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
-use commands::Commands;
-use futures::future::BoxFuture;
+
 use minidsp_protocol::commands::ProtocolError;
 use thiserror::Error;
 use tokio::sync::{broadcast, Mutex};
-use tower::Service;
+
 use url2::Url2;
 
-pub type SharedService = Arc<
-    Mutex<
-        dyn Service<
-                Commands,
-                Response = Responses,
-                Error = MiniDSPError,
-                Future = BoxFuture<'static, Result<Responses, MiniDSPError>>,
-            > + Send,
-    >,
->;
+pub type SharedService = Arc<Mutex<MultiplexerService>>;
 
 pub type Transport =
     Pin<Box<dyn StreamSink<'static, Result<Bytes, MiniDSPError>, Bytes, MiniDSPError> + Send>>;
@@ -34,16 +24,15 @@ pub mod hid;
 #[cfg(feature = "hid")]
 use hidapi::HidError;
 
-use crate::{
-    commands::{self, Responses},
-    utils::StreamSink,
-};
+use crate::utils::StreamSink;
 
 pub mod frame_codec;
 pub mod multiplexer;
 pub use multiplexer::Multiplexer;
 pub mod hub;
 pub use hub::Hub;
+
+use self::multiplexer::MultiplexerService;
 pub mod net;
 pub mod ws;
 

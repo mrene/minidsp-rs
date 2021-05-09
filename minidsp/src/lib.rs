@@ -56,6 +56,7 @@ use std::convert::TryInto;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
+use futures::{Stream, StreamExt};
 pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
@@ -107,15 +108,29 @@ impl MiniDSP<'_> {
         let device_info = self.device_info;
         let memory = self.client.read_memory(0xffd8, 9).await?;
 
-        let mut status = MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
-            MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
-        })?;
+        Ok(
+            MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
+                MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+            })?,
+        )
+    }
 
-        if !self.device_info.supports_dirac() {
-            status.dirac = None
-        }
-
-        Ok(status)
+    pub async fn subscribe_master_status(
+        &self,
+    ) -> Result<impl Stream<Item = MasterStatus> + 'static, MiniDSPError> {
+        let device_info = self.device_info;
+        let stream = self
+            .client
+            .subscribe()
+            .await?
+            .filter_map(move |item| async move {
+                if let commands::Responses::MemoryData(memory) = item.ok()? {
+                    Some(MasterStatus::from_memory(&device_info, &memory).ok()?)
+                } else {
+                    None
+                }
+            });
+        Ok(Box::pin(stream))
     }
 
     /// Gets the current input levels

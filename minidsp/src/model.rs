@@ -9,11 +9,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct StatusSummary {
     pub master: MasterStatus,
-    pub available_sources: Vec<String>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub input_levels: Vec<f32>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub output_levels: Vec<f32>,
 }
 
@@ -23,14 +26,8 @@ impl StatusSummary {
         let input_levels = dsp.get_input_levels().await?;
         let output_levels = dsp.get_output_levels().await?;
 
-        let available_sources: Vec<_> = Source::mapping(&dsp.get_device_info().await?)
-            .iter()
-            .map(|(source, _)| source.to_string())
-            .collect();
-
         Ok(StatusSummary {
             master: master.into(),
-            available_sources,
             input_levels,
             output_levels,
         })
@@ -62,18 +59,23 @@ impl fmt::Display for StatusSummary {
 /// Settings applying to all outputs
 pub struct MasterStatus {
     /// Active configuration preset
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub preset: Option<u8>,
 
     /// Active source
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<Source>,
 
     /// Volume in dB [-127, 0]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub volume: Option<Gain>,
 
     /// Mute status
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mute: Option<bool>,
 
     /// Dirac Live status
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub dirac: Option<bool>,
 }
 

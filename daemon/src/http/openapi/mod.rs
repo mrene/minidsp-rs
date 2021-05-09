@@ -224,10 +224,6 @@ pub fn schema() -> OpenApi {
                 mute: Some(false),
                 dirac: Some(false),
             },
-            available_sources: ["toslink", "analog", "usb"]
-                .iter()
-                .map(ToString::to_string)
-                .collect(),
             input_levels: [-51f32, -50f32].into(),
             output_levels: [-51f32, -50f32, -127f32, -127f32].into(),
         }));
