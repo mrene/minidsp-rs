@@ -14,6 +14,7 @@ pub mod commands;
 pub use commands::{Commands, FromMemory};
 
 pub mod packet;
+use device::{probe_kind, DeviceKind};
 pub use packet::ParseError;
 
 pub mod source;
@@ -35,7 +36,17 @@ pub struct DeviceInfo {
     pub serial: u32,
 }
 
-#[derive(Clone, PartialEq)]
+impl DeviceInfo {
+    pub fn device_kind(&self) -> DeviceKind {
+        probe_kind(self)
+    }
+
+    pub fn supports_dirac(&self) -> bool {
+        matches!(self.dsp_version, 61 | 94 | 95 | 101 | 105)
+    }
+}
+
+#[derive(Default, Clone, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(
     feature = "use_serde",
@@ -54,4 +65,7 @@ pub struct MasterStatus {
 
     /// Mute status
     pub mute: Option<bool>,
+
+    /// Dirac Live status
+    pub dirac: Option<bool>,
 }

@@ -157,6 +157,12 @@ enum SubCommand {
     /// Set the current active configuration,
     Config { value: u8 },
 
+    /// Sets whether Dirac Live is enabled
+    Dirac {
+        #[clap(parse(try_from_str = on_or_off))]
+        value: bool,
+    },
+
     /// Control settings regarding input channels
     Input {
         /// Index of the input channel, starting at 0

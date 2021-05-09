@@ -198,6 +198,11 @@ pub enum Commands {
     /// 0x3b: FIR Data Completed
     FirLoadEnd,
 
+    // 0x3f: DIRAC bypass
+    DiracBypass {
+        value: u8,
+    },
+
     // Speculative commands
     /// 0x12: Seen when restoring a configuration
     BulkLoad {
@@ -387,6 +392,10 @@ impl Commands {
                 f.put_u8(0x06);
                 f.put(payload.0.clone());
             }
+            &Commands::DiracBypass { value } => {
+                f.put_u8(0x3f);
+                f.put_u8(value);
+            }
             &Commands::Unknown {
                 cmd_id,
                 ref payload,
@@ -427,7 +436,8 @@ impl Commands {
             | Commands::FirLoadData { .. }
             | Commands::FirLoadEnd
             | Commands::BulkLoad { .. }
-            | Commands::BulkLoadFilterData { .. } => matches!(response, Responses::Ack),
+            | Commands::BulkLoadFilterData { .. }
+            | Commands::DiracBypass { .. } => matches!(response, Responses::Ack),
             Commands::Unknown { .. } => true,
         }
     }
@@ -700,7 +710,7 @@ impl UnaryResponse for FloatView {
 // 0xFFD9 (1) Source ("Digital IO")
 // 0xFFDA (1) Master Volume "Codec mute?"
 // 0xFFDB (1) Mute
-// 0xFFE0 (1) Master FIR bypass
+// 0xFFE0 (1) Master FIR bypass (Dirac Live bypass)
 // 0xFFE5 (1) "Channel mode"
 // 0xFFFC (2) Serial (+ 900000) ("board id")
 #[derive(Clone, Default)]
@@ -710,19 +720,29 @@ pub struct MemoryView {
 }
 
 impl MemoryView {
-    pub fn read_at(&self, addr: u16, len: u8) -> &'_ [u8] {
+    pub fn read_at(&self, addr: u16, len: u8) -> Option<&'_ [u8]> {
+        if addr < self.base || addr > self.base + self.data.len() as u16 {
+            return None;
+        }
+
         let start = (addr - self.base) as usize;
         let end = start + len as usize;
 
-        &self.data[start..end]
+        if self.data.len() < end {
+            return None;
+        }
+
+        Some(&self.data[start..end])
     }
 
-    pub fn read_u8(&self, addr: u16) -> u8 {
-        self.read_at(addr, 1)[0]
+    pub fn read_u8(&self, addr: u16) -> Option<u8> {
+        Some(self.read_at(addr, 1)?[0])
     }
 
-    pub fn read_u16(&self, addr: u16) -> u16 {
-        u16::from_be_bytes(self.read_at(addr, 2).try_into().unwrap())
+    pub fn read_u16(&self, addr: u16) -> Option<u16> {
+        Some(u16::from_be_bytes(
+            self.read_at(addr, 2)?.try_into().unwrap(),
+        ))
     }
 }
 
@@ -793,10 +813,17 @@ where
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
         Ok(Self {
-            preset: Some(view.read_u8(0xffd8)),
-            source: Some(super::Source::from_id(view.read_u8(0xffd9), device_info)),
-            volume: Some(view.read_u8(0xffda).into()),
-            mute: Some(view.read_u8(0xffdb) == 1),
+            preset: view.read_u8(0xffd8),
+            source: view
+                .read_u8(0xffd9)
+                .map(|id| super::Source::from_id(id, device_info)),
+            volume: view.read_u8(0xffda).map(Into::into),
+            mute: view.read_u8(0xffdb).map(|x| x == 1),
+            dirac: if device_info.supports_dirac() {
+                view.read_u8(0xffe0).map(|x| x == 0)
+            } else {
+                None
+            },
         })
     }
 }
@@ -827,24 +854,26 @@ mod test {
             .unwrap();
         let data = memory.read_at(0xffda, 4);
 
-        assert_eq!(data, &[0x1, 0x2, 0x3, 0x4]);
-        assert_eq!(memory.read_u16(0xFFDA), 0x0102);
+        assert_eq!(data.unwrap(), &[0x1, 0x2, 0x3, 0x4]);
+        assert_eq!(memory.read_u16(0xFFDA), Some(0x0102));
     }
 
     #[test]
     fn test_master_status() {
         let cmd = Commands::ReadMemory {
             addr: 0xffd8,
-            size: 4,
+            size: 9,
         };
 
         let mut req_packet = cmd.to_bytes();
         assert_eq!(req_packet.get_u8(), 0x05);
         assert_eq!(req_packet.get_u16(), 0xffd8);
-        assert_eq!(req_packet.get_u8(), 4);
+        assert_eq!(req_packet.get_u8(), 9);
         assert_eq!(req_packet.remaining(), 0);
 
-        let response = Bytes::from_static(&[0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0]);
+        let response = Bytes::from_static(&[
+            0x5, 0xff, 0xd8, 0x0, 0x1, 0x4f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        ]);
         let memory = Responses::from_bytes(response)
             .ok()
             .unwrap()
@@ -863,6 +892,7 @@ mod test {
             source: Some(crate::Source::Toslink),
             volume: Some(Gain(-39.5)),
             mute: Some(false),
+            dirac: None,
         }));
     }
 

@@ -1,6 +1,7 @@
 use std::{error::Error, time::Duration};
 
 use anyhow::anyhow;
+use tokio_stream::wrappers::BroadcastStream;
 use tower::{Service, ServiceBuilder};
 
 use crate::{
@@ -45,6 +46,12 @@ impl Client {
             })
     }
 
+    pub async fn subscribe(&self) -> Result<BroadcastStream<commands::Responses>, MiniDSPError> {
+        let transport = self.transport.lock().await;
+        let receiver = transport.subscribe()?;
+        Ok(BroadcastStream::new(receiver))
+    }
+
     /// Gets the hardware id and dsp firmware version
     pub async fn get_device_info(&self) -> Result<DeviceInfo, MiniDSPError> {
         let hw_id = self
@@ -56,8 +63,8 @@ impl Client {
         let serial_view = self.read_memory(0xfffc, 2).await?;
         let info = DeviceInfo {
             hw_id,
-            dsp_version: dsp_version_view.read_u8(0xffa1),
-            serial: 900000 + (serial_view.read_u16(0xfffc) as u32),
+            dsp_version: dsp_version_view.read_u8(0xffa1).unwrap(),
+            serial: 900000 + (serial_view.read_u16(0xfffc).unwrap() as u32),
         };
         Ok(info)
     }

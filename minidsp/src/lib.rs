@@ -56,10 +56,10 @@ use std::convert::TryInto;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
+use futures::{Stream, StreamExt};
 pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
-use tokio::{sync::Mutex, time::Duration};
+use tokio::time::Duration;
 pub use transport::MiniDSPError;
-use transport::SharedService;
 use utils::ErrInto;
 
 pub use crate::commands::Gain;
@@ -85,49 +85,52 @@ pub struct MiniDSP<'a> {
     pub client: Client,
     pub device: &'a device::Device,
 
-    device_info: Mutex<Option<DeviceInfo>>,
+    device_info: DeviceInfo,
 }
 
 impl<'a> MiniDSP<'a> {
-    pub fn new(service: SharedService, device: &'a device::Device) -> Self {
-        MiniDSP {
-            client: Client::new(service),
-            device,
-            device_info: Mutex::new(None),
-        }
-    }
-
     pub fn from_client(
         client: Client,
         device: &'a device::Device,
-        device_info: impl Into<Option<DeviceInfo>>,
+        device_info: DeviceInfo,
     ) -> Self {
         MiniDSP {
             client,
             device,
-            device_info: Mutex::new(device_info.into()),
+            device_info,
         }
     }
 }
 
 impl MiniDSP<'_> {
-    pub fn set_device_info(&mut self, dev: DeviceInfo) {
-        // Since we have a &mut self, the lock is guaranteed to not be locked and try_lock will always succeed
-        self.device_info
-            .try_lock()
-            .expect("unable to lock device_info mutex")
-            .replace(dev);
-    }
-
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
-        let device_info = self.get_device_info().await?;
-        let memory = self.client.read_memory(0xffd8, 8).await?;
+        let device_info = self.device_info;
+        let memory = self.client.read_memory(0xffd8, 9).await?;
+
         Ok(
             MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
                 MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
             })?,
         )
+    }
+
+    pub async fn subscribe_master_status(
+        &self,
+    ) -> Result<impl Stream<Item = MasterStatus> + 'static, MiniDSPError> {
+        let device_info = self.device_info;
+        let stream = self
+            .client
+            .subscribe()
+            .await?
+            .filter_map(move |item| async move {
+                if let commands::Responses::MemoryData(memory) = item.ok()? {
+                    Some(MasterStatus::from_memory(&device_info, &memory).ok()?)
+                } else {
+                    None
+                }
+            });
+        Ok(Box::pin(stream))
     }
 
     /// Gets the current input levels
@@ -187,6 +190,17 @@ impl MiniDSP<'_> {
             .err_into()
     }
 
+    /// Enables or disables Dirac Live
+    pub async fn set_dirac(&self, enabled: bool) -> Result<()> {
+        self.client
+            .roundtrip(Commands::DiracBypass {
+                value: if enabled { 0 } else { 1 },
+            })
+            .await?
+            .into_ack()
+            .err_into()
+    }
+
     /// Gets an object wrapping an input channel
     pub fn input(&self, index: usize) -> Result<Input> {
         if index >= self.device.inputs.len() {
@@ -213,14 +227,7 @@ impl MiniDSP<'_> {
 
     /// Gets the hardware id and dsp version, used internally to determine per-device configuration
     pub async fn get_device_info(&self) -> Result<DeviceInfo> {
-        let mut self_device_info = self.device_info.lock().await;
-        if let Some(info) = *self_device_info {
-            return Ok(info);
-        }
-
-        let info = self.client.get_device_info().await?;
-        *self_device_info = Some(info);
-        Ok(info)
+        Ok(self.device_info)
     }
 }
 

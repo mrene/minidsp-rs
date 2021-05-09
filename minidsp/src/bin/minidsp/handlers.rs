@@ -52,6 +52,7 @@ pub(crate) async fn run_command(
         Some(&SubCommand::Mute { value }) => device.set_master_mute(value).await?,
         Some(&SubCommand::Source { value }) => device.set_source(value).await?,
         Some(&SubCommand::Config { value }) => device.set_config(value).await?,
+        Some(&SubCommand::Dirac { value }) => device.set_dirac(value).await?,
         Some(&SubCommand::Input {
             input_index,
             ref cmd,
