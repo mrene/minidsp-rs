@@ -48,16 +48,19 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             bin: minidsp
+            svc_bin: minidspd
             cross: false
             archive: tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
             bin: minidsp
+            svc_bin: minidspd
             cross: false
             archive: tar.gz
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             bin: minidsp.exe
+            svc_bin: minidspd.exe
             cross: false
             archive: zip
 
@@ -99,7 +102,7 @@ jobs:
         with:
           use-cross: ${{ matrix.pair.cross }}
           command: build
-          args: --bin minidsp --release --target ${{ matrix.pair.target }}
+          args: --bin minidsp --bin minidspd --release --target ${{ matrix.pair.target }}
 
       - name: Create debian package
         if: runner.os == 'Linux'
@@ -120,6 +123,7 @@ jobs:
         run: |
           mkdir archive
           cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
+          cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.svc_bin }} archive
           cd archive/
           tar -czf ../minidsp.${{ matrix.pair.target }}.tar.gz *
 
@@ -129,7 +133,7 @@ jobs:
           mkdir archive
           cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
           cd archive/
-          compress-archive ${{ matrix.pair.bin }} ../minidsp.${{ matrix.pair.target }}.zip
+          compress-archive ${{ matrix.pair.bin }} ${{ matrix.pair.svc_bin }} ../minidsp.${{ matrix.pair.target }}.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.1
