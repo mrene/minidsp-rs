@@ -197,17 +197,17 @@ impl Device {
         log::info!("Connecting to {}", url.as_str());
 
         // Connect to the device by url, and get a frame-level transport
-        let mut transport = {
+        let (mut transport, decoder) = {
             let url = Url2::try_parse(url.as_str()).expect("Device::run had invalid url");
             let stream = transport::open_url(&url).await?;
 
             // If we have any logging options, log this stream
             let app = super::APP.get().unwrap();
             let app = app.read().await;
-            let (_, stream) =
+            let (decoder, stream) =
                 logging::transport_logging(stream, app.opts.verbose as u8, app.opts.log.clone());
 
-            transport::Hub::new(stream)
+            (transport::Hub::new(stream), decoder)
         };
 
         // Wrap the transport into a multiplexed service for command-level multiplexing
@@ -247,6 +247,11 @@ impl Device {
                 .unwrap_or_else(|| "unknown".to_string())
         );
 
+        if let (Some(decoder), Some(device_spec)) = (decoder, device_spec) {
+            let mut decoder = decoder.lock().await;
+            decoder.set_name_map(device_spec.symbols.iter().copied());
+        }
+
         {
             let mut inner = inner.write().unwrap();
             inner.handle.replace(handle);
@@ -255,7 +260,7 @@ impl Device {
         // Keep reading messages until the device returns an error/eof
         while let Some(frame) = transport.next().await {
             if let Err(e) = frame {
-                log::warn!("Device at {} closing to to an error: {}", &url, &e);
+                log::warn!("Device at {} closing due to an error: {}", &url, &e);
                 break;
             }
         }

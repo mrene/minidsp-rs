@@ -133,6 +133,25 @@ impl MiniDSP<'_> {
         Ok(Box::pin(stream))
     }
 
+    // Gets the current input and output level using a single command
+    pub async fn get_input_output_levels(&self) -> Result<(Vec<f32>, Vec<f32>)> {
+        let mut levels = self
+            .client
+            .read_floats_multi(
+                self.device
+                    .inputs
+                    .iter()
+                    .map(|idx| idx.meter)
+                    .chain(self.device.outputs.iter().map(|idx| idx.meter)),
+            )
+            .await?;
+
+        let outputs = Vec::from(&levels[self.device.inputs.len()..levels.len()]);
+        levels.truncate(self.device.inputs.len());
+
+        Ok((levels, outputs))
+    }
+
     /// Gets the current input levels
     pub async fn get_input_levels(&self) -> Result<Vec<f32>> {
         self.client

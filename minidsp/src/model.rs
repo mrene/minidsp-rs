@@ -23,8 +23,7 @@ pub struct StatusSummary {
 impl StatusSummary {
     pub async fn fetch(dsp: &MiniDSP<'_>) -> Result<Self, MiniDSPError> {
         let master = dsp.get_master_status().await?;
-        let input_levels = dsp.get_input_levels().await?;
-        let output_levels = dsp.get_output_levels().await?;
+        let (input_levels, output_levels) = dsp.get_input_output_levels().await?;
 
         Ok(StatusSummary {
             master: master.into(),
