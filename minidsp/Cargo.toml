@@ -26,18 +26,18 @@ hyper = "0.14.7"
 lazy_static = "1.4.0"
 log = "0.4.14"
 minidsp-protocol = {path = "../protocol", default-features = false, features = ["use_serde", "debug", "devices"]}
-pin-project = "1.0.6"
-schemars = "0.8.0"
+pin-project = "1.0.7"
+schemars = "0.8.3"
 serde = {version = "1.0.125", features = ["derive"]}
 serde_json = "1.0.64"
 shellwords = "1.1.0"
-strong-xml = "0.6.1"
-strum = {version = "0.20", features = ["derive"]}
+strong-xml = "0.6.2"
+strum = {version = "0.20.0", features = ["derive"]}
 termcolor = "1.1.2"
 thiserror = "1.0.24"
 tokio-stream = {version = "0.1.5", features = ["sync"]}
 tokio-tungstenite = "0.14.0"
-tower = {version = "0.4.6", features = ["util", "timeout"]}
+tower = {version = "0.4.7", features = ["util", "timeout"]}
 url2 = "0.0.6"
 urlencoding = "1.1.1"
 wav = "0.6.0"
@@ -49,7 +49,7 @@ assert_approx_eq = "1.1.0"
 default_features = false
 features = ["linux-static-libusb"]
 optional = true
-version = "1.2.5"
+version = "1.2.6"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
