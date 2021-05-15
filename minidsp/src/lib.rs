@@ -81,6 +81,7 @@ pub mod logging;
 pub mod model;
 
 /// High-level MiniDSP Control API
+#[derive(Clone)]
 pub struct MiniDSP<'a> {
     pub client: Client,
     pub device: &'a device::Device,
@@ -125,10 +126,12 @@ impl MiniDSP<'_> {
             .await?
             .filter_map(move |item| async move {
                 if let commands::Responses::MemoryData(memory) = item.ok()? {
-                    Some(MasterStatus::from_memory(&device_info, &memory).ok()?)
-                } else {
-                    None
+                    let status = MasterStatus::from_memory(&device_info, &memory).ok()?;
+                    if !status.eq(&MasterStatus::default()) {
+                        return Some(status);
+                    }
                 }
+                return None;
             });
         Ok(Box::pin(stream))
     }

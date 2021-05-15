@@ -1,6 +1,6 @@
 use anyhow::Context;
 use bytes::Bytes;
-use futures::StreamExt;
+use futures::{Sink, SinkExt, StreamExt};
 use hyper_tungstenite::HyperWebsocket;
 use minidsp::{transport::Hub, MiniDSPError};
 use tungstenite::Message;

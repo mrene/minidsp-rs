@@ -11,6 +11,7 @@ use crate::{
     DeviceInfo,
 };
 
+#[derive(Clone)]
 pub struct Client {
     transport: SharedService,
 }
