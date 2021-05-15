@@ -1101,9 +1101,9 @@ checksum = "b9b1a3d5f46d53f4a3478e2be4a5a5ce5108ea58b100dcd139830eae7f79a3a1"
 
 [[package]]
 name = "routerify"
-version = "2.0.1"
+version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fd40d4248cbd553e1bf8294986d31c80a2d75e4d699a0df664dc208485f1466"
+checksum = "c1c0ae7480c22f815cdb04fd0a32cd13a675c4fbca6e50e651c896bb1f6eb0bb"
 dependencies = [
  "http",
  "hyper",
