@@ -133,7 +133,7 @@ jobs:
           mkdir archive
           cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
           cd archive/
-          compress-archive ${{ matrix.pair.bin }} ${{ matrix.pair.svc_bin }} ../minidsp.${{ matrix.pair.target }}.zip
+          compress-archive -Path *.exe -DestinationPath ../minidsp.${{ matrix.pair.target }}.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.1
