@@ -1,21 +1,24 @@
-use std::{
-    future,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+#[cfg(target_family = "unix")]
+use std::path::{Path, PathBuf};
+use std::{future, str::FromStr};
 
+#[cfg(target_family = "unix")]
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
 use hyper::Uri;
 use tokio::io::{AsyncRead, AsyncWrite};
+#[cfg(target_family = "unix")]
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::{
-    tungstenite::{self, client::IntoClientRequest, Message},
+    tungstenite::{self, Message},
     WebSocketStream,
 };
 use url2::{Url2, Url2Error};
 
-use super::{Openable, Transport};
+#[cfg(target_family = "unix")]
+use super::Openable;
+use super::Transport;
 use crate::MiniDSPError;
 
 #[derive(Debug, thiserror::Error)]

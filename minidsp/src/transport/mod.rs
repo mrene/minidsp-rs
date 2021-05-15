@@ -6,11 +6,9 @@ use std::{pin::Pin, sync::Arc};
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
-
 use minidsp_protocol::commands::ProtocolError;
 use thiserror::Error;
 use tokio::sync::{broadcast, Mutex};
-
 use url2::Url2;
 
 pub type SharedService = Arc<Mutex<MultiplexerService>>;

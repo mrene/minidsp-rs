@@ -267,7 +267,6 @@ fn router() -> Router<Body, Error> {
 
 pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
     let rt = router();
-    println!("Router: {:#?}", rt);
     let service = RouterService::new(rt).expect("while building router service");
 
     // The address on which the server will be listening.
