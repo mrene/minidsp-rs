@@ -1,4 +1,4 @@
-use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc};
+use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use futures::{future::join_all, SinkExt, StreamExt};
@@ -9,8 +9,10 @@ use minidsp::{
     MiniDSP,
 };
 use routerify::{Router, RouterService};
+use routerify_query::{query_parser, RequestQueryExt};
 use schemars::JsonSchema;
 use serde::Serialize;
+use tokio_stream::wrappers::IntervalStream;
 use tungstenite::Message;
 use websocket::websocket_transport_bridge;
 
@@ -126,6 +128,7 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
     let status = StatusSummary::fetch(&device).await?;
+    let query_levels = req.query("levels").map(Clone::clone);
 
     if hyper_tungstenite::is_upgrade_request(&req) {
         let (response, websocket) =
@@ -139,22 +142,49 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
                 .send(Message::Text(serde_json::to_string(&status).unwrap()))
                 .await?;
 
-            device
+            let status_stream = device
                 .subscribe_master_status()
                 .await?
                 .filter_map(|master| async move {
-                    if master.eq(&minidsp::MasterStatus::default()) {
-                        None
-                    } else {
-                        let summary = StatusSummary {
-                            master: minidsp::model::MasterStatus::from(master),
-                            ..Default::default()
-                        };
+                    let summary = StatusSummary {
+                        master: minidsp::model::MasterStatus::from(master),
+                        ..Default::default()
+                    };
 
-                        let s = serde_json::to_string(&summary).unwrap();
-                        Some(Ok(Message::Text(s)))
-                    }
+                    let s = serde_json::to_string(&summary).unwrap();
+                    Some(Ok(Message::Text(s)))
                 })
+                .boxed();
+
+            let levels = {
+                if query_levels.is_some() {
+                    // Use a single shared device instance in order to avoid multiple level queries from being done simultaneously
+                    let levels_device = Arc::new(tokio::sync::Mutex::new(device));
+                    IntervalStream::new(tokio::time::interval(Duration::from_millis(250)))
+                        .filter_map(move |_| {
+                            let device = levels_device.clone();
+                            async move {
+                                // If we are already querying for levels, skip this interval.
+                                let device = device.try_lock().ok()?;
+
+                                let (input_levels, output_levels) =
+                                    device.get_input_output_levels().await.ok()?;
+                                let summary = StatusSummary {
+                                    input_levels,
+                                    output_levels,
+                                    ..Default::default()
+                                };
+                                let s = serde_json::to_string(&summary).unwrap();
+                                Some(Ok::<_, tungstenite::Error>(Message::Text(s)))
+                            }
+                        })
+                        .boxed()
+                } else {
+                    futures::stream::empty().boxed()
+                }
+            };
+
+            futures::stream::select_all(std::array::IntoIter::new([status_stream, levels]))
                 .forward(websocket)
                 .await?;
 
@@ -187,8 +217,6 @@ async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Er
 /// Updates the device's configuration based on the defined elements. Anything set will be changed and anything else will be ignored.
 /// If a `master_status` object is passed, and the active configuration is changed, it will be applied before anything else. it is therefore
 /// safe to change config and apply other changes to the target config using a single call.
-// #[post("/<index>/config", data = "<data>")]
-// async fn post_config(index: usize, data: Json<Config>) -> Result<(), Json<FormattedError>> {
 async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let app = super::APP.get().unwrap();
@@ -237,6 +265,7 @@ fn router() -> Router<Body, Error> {
     // Here, "Middleware::pre" means we're adding a pre middleware which will be executed
     // before any route handlers.
     Router::builder()
+        .middleware(query_parser())
         // .middleware(Middleware::pre(logger))
         .get("/openapi.json", |req| async move {
             Ok(serialize_response(&req, openapi::schema())?)

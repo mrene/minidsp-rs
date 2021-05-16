@@ -732,6 +732,7 @@ dependencies = [
  "okapi",
  "once_cell",
  "routerify",
+ "routerify-query",
  "routerify-unixsocket",
  "schemars",
  "serde",
@@ -740,6 +741,7 @@ dependencies = [
  "termcolor 1.1.2",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "tokio-util",
  "tungstenite",
  "url2",
@@ -1112,6 +1114,16 @@ dependencies = [
  "lazy_static",
  "percent-encoding",
  "regex",
+]
+
+[[package]]
+name = "routerify-query"
+version = "2.0.0"
+source = "git+https://github.com/routerify/routerify-query?branch=master#e1057f5dc3def1c0eba46f9a4b70607b252124c1"
+dependencies = [
+ "hyper",
+ "routerify",
+ "url",
 ]
 
 [[package]]
