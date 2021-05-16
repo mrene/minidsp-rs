@@ -136,7 +136,8 @@ impl Opts {
 enum SubCommand {
     /// Try to find reachable devices
     Probe {
-        #[clap(short)]
+        #[clap(long, short)]
+        /// Listen for advertisement broadcasts from WI-DGs
         net: bool,
     },
 
