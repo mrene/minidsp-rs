@@ -144,22 +144,34 @@ enum SubCommand {
     Status,
 
     /// Set the master output gain [-127, 0]
-    Gain { value: Gain },
+    Gain { 
+        /// Gain in decibels, between -127 and 0 inclusively
+        value: Gain 
+    },
 
     /// Set the master mute status
     Mute {
         #[clap(parse(try_from_str = on_or_off))]
+        /// on | off
         value: bool,
     },
     /// Set the active input source
-    Source { value: Source },
+    Source { 
+        /// The source to use:
+        /// analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s
+        value: Source 
+    },
 
     /// Set the current active configuration,
-    Config { value: u8 },
+    Config { 
+        /// 0-indexed configuation preset value (0, 1, 2, 3)
+        value: u8 
+    },
 
     /// Sets whether Dirac Live is enabled
     Dirac {
         #[clap(parse(try_from_str = on_or_off))]
+        /// on | off
         value: bool,
     },
 
@@ -181,7 +193,7 @@ enum SubCommand {
         cmd: OutputCommand,
     },
 
-    /// Launch a server usable with `--tcp`, the mobile application, and the official client
+    /// (deprecated) Launch a server usable with `--tcp`, the mobile application, and the official client
     Server {
         #[clap(default_value = "0.0.0.0:5333")]
         bind_address: String,
@@ -209,6 +221,7 @@ enum InputCommand {
     /// Set the master mute status
     Mute {
         #[clap(parse(try_from_str = on_or_off))]
+        /// on | off
         value: bool,
     },
 
@@ -255,6 +268,7 @@ enum OutputCommand {
 
     /// Set the master mute status
     Mute {
+        /// on | off
         #[clap(parse(try_from_str = on_or_off))]
         value: bool,
     },
@@ -268,6 +282,7 @@ enum OutputCommand {
     /// Set phase inversion on this channel
     Invert {
         #[clap(parse(try_from_str = on_or_off))]
+        /// on | off
         value: bool,
     },
 
@@ -351,6 +366,7 @@ enum FilterCommand {
     /// Sets the bypass toggle
     Bypass {
         #[clap(parse(try_from_str = on_or_off))]
+        /// on | off
         value: bool,
     },
 
