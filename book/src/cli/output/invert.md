@@ -14,5 +14,5 @@ minidsp output 0 invert off
 
 ## Usage
 ```
-{{#include ../outputs.txt:output_invert_help}}
+{{#include ../../outputs.txt:output_invert_help}}
 ```

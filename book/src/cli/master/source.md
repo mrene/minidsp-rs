@@ -10,5 +10,5 @@ minidsp source usb
 
 ## Usage
 ```
-{{#include ../outputs.txt:source_help}}
+{{#include ../../outputs.txt:source_help}}
 ```

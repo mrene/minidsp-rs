@@ -14,5 +14,5 @@ minidsp input 0 mute off
 
 ## Usage
 ```
-{{#include ../outputs.txt:input_mute_help}}
+{{#include ../../outputs.txt:input_mute_help}}
 ```

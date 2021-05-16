@@ -12,5 +12,5 @@ minidsp input 0 routing 0 gain 6
 
 ## Usage
 ```
-{{#include ../outputs.txt:input_routing_help}}
+{{#include ../../outputs.txt:input_routing_help}}
 ```

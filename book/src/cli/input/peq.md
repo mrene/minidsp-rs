@@ -21,5 +21,5 @@ minidsp input 0 peq all import ./file.txt
 
 ## Usage
 ```
-{{#include ../outputs.txt:input_peq_help}}
+{{#include ../../outputs.txt:input_peq_help}}
 ```

@@ -15,5 +15,5 @@ minidsp output 0 crossover 1 all import ./file2.txt
 
 ## Usage
 ```
-{{#include ../outputs.txt:output_crossover_help}}
+{{#include ../../outputs.txt:output_crossover_help}}
 ```

@@ -14,5 +14,5 @@ minidsp dirac off
 
 ## Usage
 ```
-{{#include ../outputs.txt:dirac_help}}
+{{#include ../../outputs.txt:dirac_help}}
 ```

@@ -9,5 +9,5 @@ minidsp config 0
 
 ## Usage
 ```
-{{#include ../outputs.txt:config_help}}
+{{#include ../../outputs.txt:config_help}}
 ```

@@ -12,5 +12,5 @@ minidsp input 0 gain -- -10
 
 ## Usage
 ```nocopy
-{{#include ../outputs.txt:input_gain_help}}
+{{#include ../../outputs.txt:input_gain_help}}
 ```

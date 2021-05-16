@@ -22,5 +22,5 @@ Warning: Some filters were not imported because they didn't fit (try using `all`
 
 ## Usage
 ```
-{{#include ../outputs.txt:output_peq_help}}
+{{#include ../../outputs.txt:output_peq_help}}
 ```

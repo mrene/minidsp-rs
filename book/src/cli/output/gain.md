@@ -11,5 +11,5 @@ Note: `--` is used to distinguish negative values from another option
 
 ## Usage
 ```
-{{#include ../outputs.txt:output_delay_help}}
+{{#include ../../outputs.txt:output_delay_help}}
 ```

@@ -14,5 +14,5 @@ minidsp output 0 fir bypass off
 
 ## Usage
 ```
-{{#include ../outputs.txt:output_fir_help}}
+{{#include ../../outputs.txt:output_fir_help}}
 ```

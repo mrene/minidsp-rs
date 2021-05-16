@@ -11,5 +11,5 @@ minidsp gain -- -20
 
 ## Usage
 ```
-{{#include ../outputs.txt:gain_help}}
+{{#include ../../outputs.txt:gain_help}}
 ```
