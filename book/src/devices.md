@@ -1,5 +1,5 @@
 # Supported devices
-`Full support` devices can configure all settings, whereas `Basic Support` devices can only change global settings such as:
+Depending on the device, two levels of support are available. `Basic Support` devices support a limited subset of features that are common across devices, whereas `Full Support` devices can be completely controlled.
 
 This software can also control these devices if they are connected to a `WI-DG`.
 

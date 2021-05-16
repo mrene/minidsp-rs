@@ -2,9 +2,9 @@
 
 - [Getting Started](./getting-started.md)
 - [Supported devices](./devices.md)
-- [Integrations]()
-  - [EZBEQ]()
-  - [Roomie Remote]()
+- [Integrations](./integrations/index.md)
+  - [Bass EQ](./integrations/beq.md)
+  - [Roomie Remote](./integrations/roomie_remote.md)
 - [Command Line Interface](./cli/index.md)
   - [Master Settings](./cli/master/index.md)
     - [Config](./cli/master/config.md)
