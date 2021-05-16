@@ -131,7 +131,7 @@ impl MiniDSP<'_> {
                         return Some(status);
                     }
                 }
-                return None;
+                None
             });
         Ok(Box::pin(stream))
     }

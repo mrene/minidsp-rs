@@ -6,7 +6,7 @@ use hyper::{Body, Request, Response, Server, StatusCode};
 use minidsp::{
     model::{Config, MasterStatus, StatusSummary},
     utils::{ErrInto, OwnedJoinHandle},
-    MiniDSP, MiniDSPError,
+    MiniDSP
 };
 use routerify::{Router, RouterService};
 use routerify_query::{query_parser, RequestQueryExt};
