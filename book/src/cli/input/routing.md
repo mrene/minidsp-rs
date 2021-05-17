@@ -1,4 +1,4 @@
-# Routing
+# inputs [channel] routing [output channel]
 Each output matrix entry has to be enabled in order for audio to be routed. The gain can then be set (in dB) for each entry.
 
 Input and output indices always start at 0.

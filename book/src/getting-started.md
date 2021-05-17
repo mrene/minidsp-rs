@@ -29,7 +29,6 @@ cargo deb
 
 
 ## Useful commands
-
 ```
 # Set input source to toslink
 minidsp source toslink

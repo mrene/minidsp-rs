@@ -145,9 +145,9 @@ enum SubCommand {
     Status,
 
     /// Set the master output gain [-127, 0]
-    Gain { 
+    Gain {
         /// Gain in decibels, between -127 and 0 inclusively
-        value: Gain 
+        value: Gain,
     },
 
     /// Set the master mute status
@@ -157,16 +157,16 @@ enum SubCommand {
         value: bool,
     },
     /// Set the active input source
-    Source { 
+    Source {
         /// The source to use:
         /// analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s
-        value: Source 
+        value: Source,
     },
 
     /// Set the current active configuration,
-    Config { 
+    Config {
         /// 0-indexed configuation preset value (0, 1, 2, 3)
-        value: u8 
+        value: u8,
     },
 
     /// Sets whether Dirac Live is enabled

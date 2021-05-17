@@ -27,8 +27,8 @@
     - [FIR](./cli/output/fir.md)
     - [Phase inversion](./cli/output/invert.md)
   
-- [minidspd]()
-  - [Architecture]()
-  - [Applications]()
-    - [HTTP API]()
-    - [Compat TCP Server]()
+- [Daemon](./daemon/index.md)
+  - [Applications](./daemon/apps.md)
+    - [HTTP API](./daemon/http.md)
+    - [Compat TCP Server](./daemon/tcp.md) 
+
