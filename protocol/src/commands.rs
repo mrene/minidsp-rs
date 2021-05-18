@@ -816,6 +816,7 @@ where
             preset: view.read_u8(0xffd8),
             source: view
                 .read_u8(0xffd9)
+                .or_else(|| view.read_u8(0xffa9))
                 .map(|id| super::Source::from_id(id, device_info)),
             volume: view.read_u8(0xffda).map(Into::into),
             mute: view.read_u8(0xffdb).map(|x| x == 1),
