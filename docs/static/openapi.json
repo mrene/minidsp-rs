@@ -1,0 +1,743 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "minidsp-rs",
+    "description": "A control interface to MiniDSPs",
+    "version": "0.1.0-pre2"
+  },
+  "paths": {
+    "/devices": {
+      "get": {
+        "summary": "List available devices",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                },
+                "example": [
+                  {
+                    "product_name": "2x4 HD",
+                    "url": "tcp://1.2.3.4:5333",
+                    "version": {
+                      "dsp_version": 100,
+                      "hw_id": 10,
+                      "serial": 91234
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormattedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{deviceIndex}": {
+      "get": {
+        "summary": "Status summary",
+        "parameters": [
+          {
+            "name": "deviceIndex",
+            "in": "path",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusSummary"
+                },
+                "example": {
+                  "input_levels": [
+                    -51.0,
+                    -50.0
+                  ],
+                  "master": {
+                    "dirac": false,
+                    "mute": false,
+                    "preset": 0,
+                    "source": "Toslink",
+                    "volume": -5.0
+                  },
+                  "output_levels": [
+                    -51.0,
+                    -50.0,
+                    -127.0,
+                    -127.0
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormattedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{deviceIndex}/config": {
+      "post": {
+        "summary": "Apply configuration changes",
+        "parameters": [
+          {
+            "name": "deviceIndex",
+            "in": "path",
+            "required": true,
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Config"
+              },
+              "example": {
+                "inputs": [
+                  {
+                    "gain": 0.0,
+                    "index": 0,
+                    "mute": false,
+                    "peq": [
+                      {
+                        "bypass": false,
+                        "coeff": {
+                          "a1": 0.0,
+                          "a2": 0.0,
+                          "b0": 1.0,
+                          "b1": 0.0,
+                          "b2": 0.0,
+                          "index": null
+                        },
+                        "index": 0
+                      }
+                    ]
+                  }
+                ],
+                "master_status": {
+                  "preset": 1
+                },
+                "outputs": []
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {}
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormattedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Biquad": {
+        "type": "object",
+        "properties": {
+          "a1": {
+            "default": 0.0,
+            "type": "number",
+            "format": "float"
+          },
+          "a2": {
+            "default": 0.0,
+            "type": "number",
+            "format": "float"
+          },
+          "b0": {
+            "default": 1.0,
+            "type": "number",
+            "format": "float"
+          },
+          "b1": {
+            "default": 0.0,
+            "type": "number",
+            "format": "float"
+          },
+          "b2": {
+            "default": 0.0,
+            "type": "number",
+            "format": "float"
+          },
+          "index": {
+            "default": null,
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "Compressor": {
+        "type": "object",
+        "properties": {
+          "attack": {
+            "default": null,
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "bypass": {
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "ratio": {
+            "default": null,
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "release": {
+            "default": null,
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "threshold": {
+            "default": null,
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          }
+        }
+      },
+      "Config": {
+        "description": "Top-level configuration object that can be applied to a device",
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "description": "Input channels, only the relevant inputs need to be included",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Input"
+            }
+          },
+          "master_status": {
+            "description": "Global settings not affected by config presets",
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MasterStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "outputs": {
+            "description": "Output channels, only the relevant outputs need to be included",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Output"
+            }
+          }
+        }
+      },
+      "Crossover": {
+        "type": "object",
+        "properties": {
+          "bypass": {
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "coeff": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Biquad"
+            }
+          },
+          "index": {
+            "default": null,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "product_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string"
+          },
+          "version": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceInfo"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "DeviceInfo": {
+        "description": "Hardware id and dsp version",
+        "type": "object",
+        "required": [
+          "dsp_version",
+          "hw_id",
+          "serial"
+        ],
+        "properties": {
+          "dsp_version": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "hw_id": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "serial": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "Duration": {
+        "type": "object",
+        "required": [
+          "nanos",
+          "secs"
+        ],
+        "properties": {
+          "nanos": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "secs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
+      },
+      "Error": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ApplicationStillInitializing"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "actual",
+              "provided",
+              "type"
+            ],
+            "properties": {
+              "actual": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "provided": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "DeviceIndexOutOfRange"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "error",
+              "name",
+              "type"
+            ],
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ParameterError"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "reason",
+              "type"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ParseError"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "DeviceNotReady"
+                ]
+              }
+            }
+          },
+          {
+            "type": [
+              "object",
+              "string"
+            ],
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "InternalError"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "Fir": {
+        "type": "object",
+        "properties": {
+          "bypass": {
+            "description": "If set, bypasses the FIR filter",
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "coefficients": {
+            "description": "Filter coefficients Automatically sets the number of active taps and re-enables audio after setting the filter's coefficients. An empty array will clear the filter and reset its coefficients.",
+            "default": null,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "FormattedError": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Gain": {
+        "description": "A gain between the minimum and maximum allowed values",
+        "type": "number",
+        "format": "float"
+      },
+      "Input": {
+        "type": "object",
+        "properties": {
+          "gain": {
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Gain"
+              }
+            ],
+            "nullable": true
+          },
+          "index": {
+            "description": "The 0-based index of this input (required)",
+            "default": null,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0,
+            "nullable": true
+          },
+          "mute": {
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "peq": {
+            "description": "Parametric equalizers",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Peq"
+            }
+          }
+        }
+      },
+      "MasterStatus": {
+        "description": "Settings applying to all outputs",
+        "type": "object",
+        "properties": {
+          "dirac": {
+            "description": "Dirac Live status",
+            "type": "boolean",
+            "nullable": true
+          },
+          "mute": {
+            "description": "Mute status",
+            "type": "boolean",
+            "nullable": true
+          },
+          "preset": {
+            "description": "Active configuration preset",
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0,
+            "nullable": true
+          },
+          "source": {
+            "description": "Active source",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Source"
+              }
+            ],
+            "nullable": true
+          },
+          "volume": {
+            "description": "Volume in dB [-127, 0]",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Gain"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "Output": {
+        "type": "object",
+        "properties": {
+          "compressor": {
+            "description": "Compressor settings",
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Compressor"
+              }
+            ],
+            "nullable": true
+          },
+          "crossover": {
+            "description": "Crossover (cascading biquads)",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Crossover"
+            }
+          },
+          "delay": {
+            "description": "Time delay",
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Duration"
+              }
+            ],
+            "nullable": true
+          },
+          "fir": {
+            "description": "Finite Impulse Response filter",
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Fir"
+              }
+            ],
+            "nullable": true
+          },
+          "gain": {
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Gain"
+              }
+            ],
+            "nullable": true
+          },
+          "invert": {
+            "description": "Phase inversion",
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "mute": {
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "peq": {
+            "description": "Parametric equalizers",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Peq"
+            }
+          }
+        }
+      },
+      "Peq": {
+        "type": "object",
+        "properties": {
+          "bypass": {
+            "default": null,
+            "type": "boolean",
+            "nullable": true
+          },
+          "coeff": {
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Biquad"
+              }
+            ],
+            "nullable": true
+          },
+          "index": {
+            "default": null,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "Source": {
+        "type": "string",
+        "enum": [
+          "NotInstalled",
+          "Analog",
+          "Toslink",
+          "Spdif",
+          "Usb",
+          "Aesebu",
+          "Rca",
+          "Xlr",
+          "Lan",
+          "I2S"
+        ]
+      },
+      "StatusSummary": {
+        "type": "object",
+        "required": [
+          "input_levels",
+          "master",
+          "output_levels"
+        ],
+        "properties": {
+          "input_levels": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          "master": {
+            "$ref": "#/components/schemas/MasterStatus"
+          },
+          "output_levels": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        }
+      }
+    }
+  }
+}
