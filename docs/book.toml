@@ -1,0 +1,6 @@
+[book]
+authors = ["Mathieu Rene"]
+language = "en"
+multilingual = false
+src = "src"
+title = "minidsp-rs"

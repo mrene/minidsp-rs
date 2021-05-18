@@ -26,7 +26,11 @@
 //!         .await;
 //!
 //!     // Use the first device for further commands
-//!     let dsp = devices.first().unwrap().to_minidsp().unwrap();
+//!     let dsp = devices
+//!         .first()
+//!         .expect("no devices found")
+//!         .to_minidsp()
+//!         .expect("unable to open device");
 //!
 //!     let status = dsp.get_master_status().await?;
 //!     println!("Master volume: {:.1}", status.volume.unwrap().0);
