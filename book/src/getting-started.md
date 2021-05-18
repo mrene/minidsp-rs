@@ -1,31 +1,17 @@
 # Getting Started
-minidsp-rs can run on a variety of systems. To get started, the easiest is to download a package for your distribution, or a precompiled binary for your operating system.
+minidsp-rs is an alternative control software for certain MiniDSP products. It exposes most/all of the available configuration parameters in a command line package, with an optional HTTP API in order to integrate with custom DIY audio projects. It can run on a variety of systems with a minimal memory footprint.
 
 ## Installation
-### From packages
-[In the releases section](https://github.com/mrene/minidsp-rs/releases), pre-built packages are available for different platforms.
+Pre-built packages and binaries are available [in the project's releases section](https://github.com/mrene/minidsp-rs/releases). 
 
-Debian packages are available for:
+Debian (`.deb`) packages are available for:
 - armhf: Tested on raspbian (Raspberry PI, including the rpi0)
 - x86_64 Debian / Ubuntu variants
 
-Single binary distribution are also provided for common operating systems:
+Single binary builds are also provided for common operating systems:
 - Linux: minidsp.x86_64-unknown-linux-gnu.tar.gz
 - MacOS: minidsp.x86_64-apple-darwin.tar.gz
 - Windows: minidsp.x86_64-pc-windows-msvc.zip
-
-### From source
-If you don't have rust setup, the quickest way to get started is with [rustup](https://rustup.rs/). This is preferred over install rust via your distro's package manager because these are often out of date and will have issues compiling recent code.
-
-```bash
-cargo build --release --bin minidsp
-# The binary will then available as target/release/minidsp
-
-# If you want to build a debian package
-cargo install cargo-deb
-cargo deb
-# Then look under target/debian/
-```
 
 
 ## Useful commands
@@ -38,4 +24,17 @@ minidsp gain -- -30
 
 # Activate the 2nd configuration setting (indexing starts at 0)
 minidsp config 1
+```
+
+## Building from source
+If you don't have rust setup, the quickest way to get started is with [rustup](https://rustup.rs/). This is preferred over install rust via your distro's package manager because these are often out of date and will have issues compiling recent code.
+
+```bash
+cargo build --release --bin minidsp
+# The binary will then available as target/release/minidsp
+
+# If you want to build a debian package
+cargo install cargo-deb
+cargo deb
+# Then look under target/debian/
 ```

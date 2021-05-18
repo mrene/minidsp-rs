@@ -26,9 +26,7 @@
     - [Delay](./cli/output/delay.md)
     - [FIR](./cli/output/fir.md)
     - [Phase inversion](./cli/output/invert.md)
-  
 - [Daemon](./daemon/index.md)
-  - [Applications](./daemon/apps.md)
-    - [HTTP API](./daemon/http.md)
-    - [Compat TCP Server](./daemon/tcp.md) 
+  - [HTTP API](./daemon/http.md)
+  - [Compat TCP Server](./daemon/tcp.md) 
 
