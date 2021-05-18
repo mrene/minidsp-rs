@@ -1,7 +1,7 @@
 # HTTP API
 On unix platform, the service exposes this though `/tmp/minidsp.sock` automatically. Accessing through the network must be enabled through the configuration file.
 
-The [full OpenAPI specification](/api) is available online, and from the service's `/api` endpoint, loading the spec from `/openapi.json`.
+The [full OpenAPI specification](/api.html) is available online, and from the service's `/api` endpoint, loading the spec from `/openapi.json`.
 
 ## Configuration
 A single bind address can be set, note that there is currently no authentication mechanisms in place.
