@@ -114,7 +114,8 @@ impl Builder {
     #[cfg(feature = "hid")]
     pub fn with_default_usb(&mut self) -> Result<&mut Self, hid::HidError> {
         let api = hid::initialize_api()?;
-        self.extend_hid_device(hid::discover(&api)?);
+        let mut api = api.lock().unwrap();
+        self.extend_hid_device(hid::discover(&mut api)?);
         Ok(self)
     }
 
@@ -126,8 +127,9 @@ impl Builder {
         pid: T,
     ) -> Result<&mut Self, hid::HidError> {
         let api = hid::initialize_api()?;
+        let mut api = api.lock().unwrap();
         let pid = pid.into();
-        self.extend_hid_device(hid::discover_with(&api, |dev| {
+        self.extend_hid_device(hid::discover_with(&mut api, |dev| {
             vid == dev.vendor_id() && (pid.is_none() || pid == Some(dev.product_id()))
         })?);
         Ok(self)

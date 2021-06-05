@@ -1,5 +1,9 @@
 //! HID transport for local USB devices
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{
+    collections::HashMap,
+    ops::Deref,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Result;
 use atomic_refcell::AtomicRefCell;
@@ -20,15 +24,15 @@ use super::{frame_codec, multiplexer::Multiplexer, IntoTransport};
 pub const VID_MINIDSP: u16 = 0x2752;
 pub const OLD_MINIDSP_PID: (u16, u16) = (0x04d8, 0x003f);
 
-static HIDAPI_INSTANCE: AtomicRefCell<Option<Arc<HidApi>>> = AtomicRefCell::new(None);
+static HIDAPI_INSTANCE: AtomicRefCell<Option<Arc<Mutex<HidApi>>>> = AtomicRefCell::new(None);
 
 /// Initializes a global instance of HidApi
-pub fn initialize_api() -> HidResult<Arc<HidApi>> {
+pub fn initialize_api() -> HidResult<Arc<Mutex<HidApi>>> {
     if let Some(x) = HIDAPI_INSTANCE.borrow().deref() {
         return Ok(x.clone());
     }
 
-    let api = Arc::new(HidApi::new()?);
+    let api = Arc::new(Mutex::new(HidApi::new()?));
     HIDAPI_INSTANCE.borrow_mut().replace(api.clone());
     Ok(api)
 }

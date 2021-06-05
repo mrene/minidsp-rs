@@ -1,5 +1,4 @@
 //! This contain command line utilities for debugging and inspecting lower level protocol commands
-use std::ops::Deref;
 
 use anyhow::Result;
 use bytes::Bytes;
@@ -50,7 +49,9 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
                 use minidsp::transport::hid;
                 // Probe for local usb devices
                 println!("Probing local hid devices:");
-                let devices = hid::discover(hid::initialize_api()?.deref())?;
+                let api = hid::initialize_api()?;
+                let mut api = api.lock().unwrap();
+                let devices = hid::discover(&mut api)?;
                 if devices.is_empty() {
                     println!("No matching local USB devices detected.")
                 } else {

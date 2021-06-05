@@ -1,5 +1,5 @@
 //! Discovery of local devices
-use std::{fmt, fmt::Formatter, ops::Deref, str::FromStr};
+use std::{fmt, fmt::Formatter, str::FromStr};
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -65,16 +65,13 @@ impl fmt::Display for Device {
 #[async_trait]
 impl Openable for Device {
     async fn open(&self) -> Result<Transport, MiniDSPError> {
+        let hid = initialize_api()?;
+        let hid = hid.lock().unwrap();
+
         if let Some(path) = &self.path {
-            Ok(
-                HidTransport::with_path(initialize_api()?.deref(), path.to_string())?
-                    .into_transport(),
-            )
+            Ok(HidTransport::with_path(&hid, path.to_string())?.into_transport())
         } else if let Some((vid, pid)) = &self.id {
-            Ok(
-                HidTransport::with_product_id(initialize_api()?.deref(), *vid, *pid)?
-                    .into_transport(),
-            )
+            Ok(HidTransport::with_product_id(&hid, *vid, *pid)?.into_transport())
         } else {
             Err(MiniDSPError::InternalError(anyhow!(
                 "invalid device, no path or id"
@@ -87,7 +84,9 @@ impl Openable for Device {
     }
 }
 
-pub fn discover(hid: &HidApi) -> Result<Vec<Device>, HidError> {
+pub fn discover(hid: &mut HidApi) -> Result<Vec<Device>, HidError> {
+    hid.refresh_devices()?;
+
     Ok(hid
         .device_list()
         .filter(|di| {
@@ -101,9 +100,10 @@ pub fn discover(hid: &HidApi) -> Result<Vec<Device>, HidError> {
 }
 
 pub fn discover_with<F: Fn(&hidapi::DeviceInfo) -> bool>(
-    hid: &HidApi,
+    hid: &mut HidApi,
     func: F,
 ) -> Result<Vec<Device>, HidError> {
+    hid.refresh_devices()?;
     Ok(hid
         .device_list()
         .filter(|di| func(di))

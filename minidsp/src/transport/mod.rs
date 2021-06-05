@@ -71,7 +71,7 @@ pub enum MiniDSPError {
     WebSocketError(#[from] ws::Error),
 
     #[error("Multiple concurrent commands were sent")]
-    ConcurencyError,
+    ConcurrencyError,
 
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
@@ -110,6 +110,7 @@ pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
         #[cfg(feature = "hid")]
         "usb" => {
             let api = hid::initialize_api()?;
+            let api = api.lock().unwrap();
             Ok(hid::HidTransport::with_url(&api, url)
                 .map_err(MiniDSPError::HIDError)?
                 .into_transport())
