@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, PartialEq, Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct StatusSummary {
     pub master: MasterStatus,
 
@@ -157,6 +157,14 @@ impl Config {
             input.apply(&dsp.input(input_index)?).await?;
         }
 
+        for output in &self.outputs {
+            let output_index = output.index.ok_or_else(|| {
+                MiniDSPError::InternalError(anyhow!("missing output index field"))
+            })?;
+
+            output.apply(&dsp.output(output_index)?).await?;
+        }
+
         Ok(())
     }
 }
@@ -195,6 +203,9 @@ pub struct Input {
 
     /// Parametric equalizers
     pub peq: Vec<Peq>,
+
+    /// Routing matrix
+    pub routing: Vec<RoutingEntry>,
 }
 
 impl Input {
@@ -208,13 +219,43 @@ impl Input {
 
             peq.apply(&input.peq(peq_index)?).await?;
         }
+
+        for routing_entry in &self.routing {
+            let index = routing_entry.index.ok_or_else(|| {
+                MiniDSPError::InternalError(anyhow!(
+                    "missing output channel index inside routing entry"
+                ))
+            })?;
+
+            if let Some(gain) = routing_entry.gate.gain {
+                input.set_output_gain(index, gain).await?;
+            }
+
+            if let Some(mute) = routing_entry.gate.mute {
+                input.set_output_enable(index, !mute).await?;
+            }
+        }
+
         Ok(())
     }
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
+pub struct RoutingEntry {
+    /// The 0-based index of the output channel (required)
+    pub index: Option<usize>,
+
+    #[serde(flatten)]
+    pub gate: Gate,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
 pub struct Output {
+    /// The 0-based index of this output (required)
+    pub index: Option<usize>,
+
     #[serde(flatten)]
     pub gate: Gate,
 

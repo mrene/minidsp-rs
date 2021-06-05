@@ -69,7 +69,7 @@ curl http://localhost:5380/devices/0/config \
 
 
 ## WebSocket Streaming
-Asynchronous updates to the master status are provided through websocket. Upon upgrading, the full current status is provided, followed by updates to properties that have changes.
+Asynchronous updates to the master status are provided through websocket. Upon upgrading, the full current status is provided, followed by updates to properties that have changes. Note that this currently only returns changes done through the IR remote, in order to get more regular updates it's possible to poll the device for changes by passing `poll=true` in the query string. This requests updates every 2 seconds and sends a message if the status summary has changed. 
 
 Here is an example of the master volume being changed via the IR remote:
 
@@ -87,10 +87,23 @@ $ websocat ws://127.0.0.1:5380/devices/0
 {"master":{"volume":-18.0,"mute":false}}
 ```
 
+Here is example which polls the device for changes, in order to reflect changes done through the plugin, or other applications.
+```
+$ websocat 'ws://127.0.0.1:5380/devices/0?poll=true'
+```
+```json
+{
+    "master":{"preset":0,"source":"Toslink","volume":-19.5,"mute":false},
+    "input_levels":[-44.400307,-42.08899],
+    "output_levels":[-54.93488,-56.41222,-120.0,-120.0]
+}
+{"master":{"preset":0,"source":"Toslink","volume":-19.5,"mute":true}}
+```
+
 #### Streaming input and output levels
 If the `levels` query string param is set, the current input and output levels will be polled from the device at most every 250ms. 
 ```bash
-$ websocat ws://127.0.0.1:5380/devices/0?levels=true | jq
+$ websocat 'ws://127.0.0.1:5380/devices/0?levels=true' | jq
 ```
 
 ```json
