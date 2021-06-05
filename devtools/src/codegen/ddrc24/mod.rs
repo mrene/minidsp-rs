@@ -69,7 +69,7 @@ pub fn device() -> Device {
     Device {
         product_name: "DDRC-24".into(),
         sources: vec!["Analog".into(), "Toslink".into(), "Usb".into()],
-        inputs: vec![],
+        inputs: (0..2).map(input).collect(),
         outputs: (0..4).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 96000,
