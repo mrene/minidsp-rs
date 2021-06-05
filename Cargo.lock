@@ -671,7 +671,7 @@ checksum = "b16bd47d9e329435e309c58469fe0791c2d0d1ba96ec0954152a5ae2b04387dc"
 
 [[package]]
 name = "minidsp"
-version = "0.1.0-pre3"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_approx_eq",
@@ -713,7 +713,7 @@ dependencies = [
 
 [[package]]
 name = "minidsp-daemon"
-version = "0.1.0-pre3"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytes",
