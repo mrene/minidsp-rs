@@ -20,6 +20,8 @@ pub mod msharc4x8;
 #[cfg(feature = "device_shd")]
 pub mod shd;
 
+pub mod ddrc24;
+
 pub static GENERIC: Device = Device {
     product_name: "Generic",
     sources: &[],
