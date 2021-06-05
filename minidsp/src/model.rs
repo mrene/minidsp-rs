@@ -253,7 +253,7 @@ pub struct RoutingEntry {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Output {
-    /// The 0-based index of this input (required)
+    /// The 0-based index of this output (required)
     pub index: Option<usize>,
 
     #[serde(flatten)]
