@@ -4,3 +4,8 @@ language = "en"
 multilingual = false
 src = "src"
 title = "minidsp-rs"
+
+[output.html]
+git-repository-url = "https://github.com/mrene/minidsp-rs"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/mrene/minidsp-rs/edit/dev/docs/{path}"
