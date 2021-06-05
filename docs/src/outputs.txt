@@ -1,6 +1,6 @@
 # ANCHOR: help
 $ minidsp --help
-minidsp 0.1.0-pre2
+minidsp 0.1.0-pre3
 Mathieu Rene <mathieu.rene@gmail.com>
 
 USAGE:
