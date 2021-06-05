@@ -285,7 +285,54 @@ use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "DDRC-24",
     sources: &[Analog, Toslink, Usb],
-    inputs: &[],
+    inputs: &[
+        Input {
+            gate: None,
+            meter: Some(METER_D_IN_1),
+            routing: &[
+                Gate {
+                    enable: MIXER_0_0_STATUS,
+                    gain: MIXER_0_0,
+                },
+                Gate {
+                    enable: MIXER_0_1_STATUS,
+                    gain: MIXER_0_1,
+                },
+                Gate {
+                    enable: MIXER_0_2_STATUS,
+                    gain: MIXER_0_2,
+                },
+                Gate {
+                    enable: MIXER_0_3_STATUS,
+                    gain: MIXER_0_3,
+                },
+            ],
+            peq: &[],
+        },
+        Input {
+            gate: None,
+            meter: Some(METER_D_IN_2),
+            routing: &[
+                Gate {
+                    enable: MIXER_1_0_STATUS,
+                    gain: MIXER_1_0,
+                },
+                Gate {
+                    enable: MIXER_1_1_STATUS,
+                    gain: MIXER_1_1,
+                },
+                Gate {
+                    enable: MIXER_1_2_STATUS,
+                    gain: MIXER_1_2,
+                },
+                Gate {
+                    enable: MIXER_1_3_STATUS,
+                    gain: MIXER_1_3,
+                },
+            ],
+            peq: &[],
+        },
+    ],
     outputs: &[
         Output {
             gate: Gate {

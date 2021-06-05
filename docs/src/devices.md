@@ -10,6 +10,7 @@ These devices support the full feature set (input, output, routing, peqs, etc.)
 - miniDSP 2x4HD
 - miniSHARC series
 - DDRC-24 (experimental)
+- SHD series (experimental)
 
 ## Basic support
 For these devices, only the following settings can be changed:
@@ -28,7 +29,6 @@ For these devices, only the following settings can be changed:
 - OpenDRC series
 - DDRC-88A/D 
 - nanoAVR HD/HDA
-- SHD series
 
 # Adding support for new devices
 If you have a device that is on the `Basic Support` tier, you can help adding support by inspecting the commands sent by the plugin application.
