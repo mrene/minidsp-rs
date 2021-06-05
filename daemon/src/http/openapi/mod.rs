@@ -280,6 +280,7 @@ pub fn schema() -> OpenApi {
                     };
                     vec![eq]
                 },
+                ..Default::default()
             }],
             ..Default::default()
         }));
