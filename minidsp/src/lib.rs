@@ -148,7 +148,7 @@ impl MiniDSP<'_> {
                 self.device
                     .inputs
                     .iter()
-                    .map(|idx| idx.meter)
+                    .filter_map(|idx| idx.meter)
                     .chain(self.device.outputs.iter().map(|idx| idx.meter)),
             )
             .await?;
@@ -162,7 +162,7 @@ impl MiniDSP<'_> {
     /// Gets the current input levels
     pub async fn get_input_levels(&self) -> Result<Vec<f32>> {
         self.client
-            .read_floats_multi(self.device.inputs.iter().map(|idx| idx.meter))
+            .read_floats_multi(self.device.inputs.iter().filter_map(|idx| idx.meter))
             .await
     }
 
@@ -261,11 +261,13 @@ impl MiniDSP<'_> {
 pub trait Channel {
     /// internal: Returns the address for this channel to include mute/gain functions
     #[doc(hidden)]
-    fn _channel(&self) -> (&MiniDSP, &device::Gate, &'static [u16]);
+    fn _channel(&self) -> (&MiniDSP, Option<&device::Gate>, &'static [u16]);
 
     /// Sets the current mute setting
     async fn set_mute(&self, value: bool) -> Result<()> {
         let (dsp, gate, _) = self._channel();
+        let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
+
         dsp.client
             .roundtrip(Commands::mute(gate.enable, value))
             .await?
@@ -276,6 +278,7 @@ pub trait Channel {
     /// Sets the current gain setting
     async fn set_gain(&self, value: Gain) -> Result<()> {
         let (dsp, gate, _) = self._channel();
+        let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
         dsp.client.write_dsp(gate.gain, value.0).await
     }
 
@@ -328,8 +331,8 @@ impl<'a> Input<'a> {
 }
 
 impl Channel for Input<'_> {
-    fn _channel(&self) -> (&MiniDSP, &Gate, &'static [u16]) {
-        (self.dsp, &self.spec.gate, &self.spec.peq)
+    fn _channel(&self) -> (&MiniDSP, Option<&Gate>, &'static [u16]) {
+        (self.dsp, self.spec.gate.as_ref(), &self.spec.peq)
     }
 }
 
@@ -381,8 +384,8 @@ impl<'a> Output<'a> {
 }
 
 impl Channel for Output<'_> {
-    fn _channel(&self) -> (&MiniDSP, &Gate, &'static [u16]) {
-        (self.dsp, &self.spec.gate, &self.spec.peq)
+    fn _channel(&self) -> (&MiniDSP, Option<&Gate>, &'static [u16]) {
+        (self.dsp, Some(&self.spec.gate), &self.spec.peq)
     }
 }
 

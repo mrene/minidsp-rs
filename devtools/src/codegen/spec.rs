@@ -19,9 +19,9 @@ pub struct Device {
 #[derive(Debug)]
 pub struct Input {
     /// Mute and Gain
-    pub gate: Gate,
+    pub gate: Option<Gate>,
     /// Volume Meter
-    pub meter: String,
+    pub meter: Option<String>,
     /// Parametric Equalizers
     pub peq: Vec<String>,
     /// Routing matrix, one entry per output channel connected to this input

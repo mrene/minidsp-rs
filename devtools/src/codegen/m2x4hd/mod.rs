@@ -21,11 +21,11 @@ impl crate::Target for Target {
 
 pub(crate) fn input(input: usize) -> Input {
     Input {
-        gate: Gate {
+        gate: Some(Gate {
             enable: format!("DGain_{}_0_status", input + 1),
             gain: format!("DGain_{}_0", input + 1),
-        },
-        meter: format!("Meter02_C1_{}", input),
+        }),
+        meter: Some(format!("Meter02_C1_{}", input)),
         peq: (0..10usize)
             .map(|index| format!("PEQ_{}_{}", input + 1, 10 - index))
             .collect(),
