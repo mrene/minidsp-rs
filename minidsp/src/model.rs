@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Biquad, BiquadFilter, Channel, Gain, MiniDSP, MiniDSPError, Source};
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, PartialEq, Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct StatusSummary {
     pub master: MasterStatus,
 

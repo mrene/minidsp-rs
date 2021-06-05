@@ -127,8 +127,9 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
     let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index)?;
-    let status = StatusSummary::fetch(&device).await?;
+    let mut status = StatusSummary::fetch(&device).await?;
     let query_levels = req.query("levels").map(Clone::clone);
+    let query_poll = req.query("poll").map(Clone::clone);
 
     if hyper_tungstenite::is_upgrade_request(&req) {
         let (response, websocket) =
@@ -157,6 +158,7 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
                 .boxed();
 
             let levels = {
+                let device = device.clone();
                 if query_levels.is_some() {
                     // Use a single shared device instance in order to avoid multiple level queries from being done simultaneously
                     let levels_device = Arc::new(tokio::sync::Mutex::new(device));
@@ -184,9 +186,52 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
                 }
             };
 
-            futures::stream::select_all(std::array::IntoIter::new([status_stream, levels]))
-                .forward(websocket)
-                .await?;
+            let polled_status = {
+                if query_poll.is_some() {
+                    // Use a single shared device instance in order to avoid multiple level queries from being done simultaneously
+                    let polled_status_device = Arc::new(tokio::sync::Mutex::new(device));
+                    status.input_levels.clear();
+                    status.output_levels.clear();
+                    let last_status = Arc::new(std::sync::Mutex::new(status));
+                    IntervalStream::new(tokio::time::interval(Duration::from_secs(2)))
+                        .filter_map(move |_| {
+                            let device = polled_status_device.clone();
+                            let last_status = last_status.clone();
+                            async move {
+                                // If we are already waiting for a response, skip this interval.
+                                let device = device.try_lock().ok()?;
+                                let status = device.get_master_status().await.ok()?;
+                                let summary = StatusSummary {
+                                    master: status.into(),
+                                    ..Default::default()
+                                };
+
+                                {
+                                    let mut last_status = last_status.lock().unwrap();
+                                    if last_status.eq(&summary) {
+                                        return None;
+                                    } else {
+                                        let mut new_status = summary.clone();
+                                        std::mem::swap(&mut *last_status, &mut new_status);
+                                    }
+                                }
+                                let s = serde_json::to_string(&summary).unwrap();
+                                Some(Ok::<_, tungstenite::Error>(Message::Text(s)))
+                            }
+                        })
+                        .boxed()
+                } else {
+                    futures::stream::empty().boxed()
+                }
+            };
+
+            futures::stream::select_all(std::array::IntoIter::new([
+                status_stream,
+                levels,
+                polled_status,
+            ]))
+            .forward(websocket)
+            .await?;
 
             Ok::<(), anyhow::Error>(())
         });
