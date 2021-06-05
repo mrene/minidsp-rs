@@ -3,6 +3,7 @@ authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2018"
 name = "minidsp-daemon"
 version = "0.1.0"
+license = "Apache-2.0"
 
 [[bin]]
 name = "minidspd"
