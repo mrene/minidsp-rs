@@ -16,7 +16,7 @@ futures = "0.3.14"
 futures-sink = "0.3.14"
 futures-util = "0.3.14"
 minidsp = {path = "../minidsp", default-features = false, features = []}
-strong-xml = "0.6.1"
+strong-xml = "0.6.3"
 termcolor = "1.1.2"
 
 # Codegen
