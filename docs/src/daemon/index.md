@@ -19,5 +19,5 @@ url = "tcp://192.168.1.2:5333"
 ## Configuration
 The following default configuration file is installed in `/etc/minidsp/config.toml`:
 ```toml
-{{#include ../../../config.example.toml}}
+{{#include ../../config.example.toml}}
 ```
