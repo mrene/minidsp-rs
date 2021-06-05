@@ -3,7 +3,7 @@
   "info": {
     "title": "minidsp-rs",
     "description": "A control interface to MiniDSPs",
-    "version": "0.1.0-pre2"
+    "version": "0.1.0"
   },
   "paths": {
     "/devices": {
@@ -137,7 +137,8 @@
                         },
                         "index": 0
                       }
-                    ]
+                    ],
+                    "routing": []
                   }
                 ],
                 "master_status": {
@@ -555,6 +556,14 @@
             "items": {
               "$ref": "#/components/schemas/Peq"
             }
+          },
+          "routing": {
+            "description": "Routing matrix",
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutingEntry"
+            }
           }
         }
       },
@@ -649,6 +658,14 @@
             ],
             "nullable": true
           },
+          "index": {
+            "description": "The 0-based index of this output (required)",
+            "default": null,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0,
+            "nullable": true
+          },
           "invert": {
             "description": "Phase inversion",
             "default": null,
@@ -692,6 +709,33 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "RoutingEntry": {
+        "type": "object",
+        "properties": {
+          "gain": {
+            "default": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Gain"
+              }
+            ],
+            "nullable": true
+          },
+          "index": {
+            "description": "The 0-based index of the output channel (required)",
+            "default": null,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0,
+            "nullable": true
+          },
+          "mute": {
+            "default": null,
+            "type": "boolean",
             "nullable": true
           }
         }

@@ -42,3 +42,5 @@ These device support the full feature set. See the [documentation](https://minid
 
 - miniDSP 2x4HD
 - miniSHARC series
+- DDRC-24 (experimental)
+- SHD series (experimental)
