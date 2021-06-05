@@ -284,11 +284,159 @@ pub mod sym {
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "MiniDSP SHD",
-    sources: &[],
-    inputs: &[],
-    outputs: &[],
+    sources: &[Analog, Toslink, Usb],
+    inputs: &[
+        Input {
+            gate: None,
+            meter: Some(METER_D_IN_1),
+            routing: &[
+                Gate {
+                    enable: MIXER_0_0_STATUS,
+                    gain: MIXER_0_0,
+                },
+                Gate {
+                    enable: MIXER_0_1_STATUS,
+                    gain: MIXER_0_1,
+                },
+                Gate {
+                    enable: MIXER_0_2_STATUS,
+                    gain: MIXER_0_2,
+                },
+                Gate {
+                    enable: MIXER_0_3_STATUS,
+                    gain: MIXER_0_3,
+                },
+            ],
+            peq: &[],
+        },
+        Input {
+            gate: None,
+            meter: Some(METER_D_IN_2),
+            routing: &[
+                Gate {
+                    enable: MIXER_1_0_STATUS,
+                    gain: MIXER_1_0,
+                },
+                Gate {
+                    enable: MIXER_1_1_STATUS,
+                    gain: MIXER_1_1,
+                },
+                Gate {
+                    enable: MIXER_1_2_STATUS,
+                    gain: MIXER_1_2,
+                },
+                Gate {
+                    enable: MIXER_1_3_STATUS,
+                    gain: MIXER_1_3,
+                },
+            ],
+            peq: &[],
+        },
+    ],
+    outputs: &[
+        Output {
+            gate: Gate {
+                enable: D_GAIN_1_0_STATUS,
+                gain: D_GAIN_1_0,
+            },
+            meter: METER_OUT_1,
+            delay_addr: DELAY_1_0,
+            invert_addr: POLARITY_OUT_1_0,
+            peq: &[
+                PEQ_1_10, PEQ_1_9, PEQ_1_8, PEQ_1_7, PEQ_1_6, PEQ_1_5, PEQ_1_4, PEQ_1_3, PEQ_1_2,
+                PEQ_1_1,
+            ],
+            xover: Some(Crossover {
+                peqs: &[BPF_1_1, BPF_1_5],
+            }),
+            compressor: Some(Compressor {
+                bypass: COMP_1_0_STATUS,
+                threshold: COMP_1_0_THRESHOLD,
+                ratio: COMP_1_0_RATIO,
+                attack: COMP_1_0_ATIME,
+                release: COMP_1_0_RTIME,
+                meter: Some(METER_COMP_1),
+            }),
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: D_GAIN_2_0_STATUS,
+                gain: D_GAIN_2_0,
+            },
+            meter: METER_OUT_2,
+            delay_addr: DELAY_2_0,
+            invert_addr: POLARITY_OUT_2_0,
+            peq: &[
+                PEQ_2_10, PEQ_2_9, PEQ_2_8, PEQ_2_7, PEQ_2_6, PEQ_2_5, PEQ_2_4, PEQ_2_3, PEQ_2_2,
+                PEQ_2_1,
+            ],
+            xover: Some(Crossover {
+                peqs: &[BPF_2_1, BPF_2_5],
+            }),
+            compressor: Some(Compressor {
+                bypass: COMP_2_0_STATUS,
+                threshold: COMP_2_0_THRESHOLD,
+                ratio: COMP_2_0_RATIO,
+                attack: COMP_2_0_ATIME,
+                release: COMP_2_0_RTIME,
+                meter: Some(METER_COMP_2),
+            }),
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: D_GAIN_3_0_STATUS,
+                gain: D_GAIN_3_0,
+            },
+            meter: METER_OUT_3,
+            delay_addr: DELAY_3_0,
+            invert_addr: POLARITY_OUT_3_0,
+            peq: &[
+                PEQ_3_10, PEQ_3_9, PEQ_3_8, PEQ_3_7, PEQ_3_6, PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2,
+                PEQ_3_1,
+            ],
+            xover: Some(Crossover {
+                peqs: &[BPF_3_1, BPF_3_5],
+            }),
+            compressor: Some(Compressor {
+                bypass: COMP_3_0_STATUS,
+                threshold: COMP_3_0_THRESHOLD,
+                ratio: COMP_3_0_RATIO,
+                attack: COMP_3_0_ATIME,
+                release: COMP_3_0_RTIME,
+                meter: Some(METER_COMP_3),
+            }),
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: D_GAIN_4_0_STATUS,
+                gain: D_GAIN_4_0,
+            },
+            meter: METER_OUT_4,
+            delay_addr: DELAY_4_0,
+            invert_addr: POLARITY_OUT_4_0,
+            peq: &[
+                PEQ_4_10, PEQ_4_9, PEQ_4_8, PEQ_4_7, PEQ_4_6, PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2,
+                PEQ_4_1,
+            ],
+            xover: Some(Crossover {
+                peqs: &[BPF_4_1, BPF_4_5],
+            }),
+            compressor: Some(Compressor {
+                bypass: COMP_4_0_STATUS,
+                threshold: COMP_4_0_THRESHOLD,
+                ratio: COMP_4_0_RATIO,
+                attack: COMP_4_0_ATIME,
+                release: COMP_4_0_RTIME,
+                meter: Some(METER_COMP_4),
+            }),
+            fir: None,
+        },
+    ],
     fir_max_taps: 0,
-    internal_sampling_rate: 0,
+    internal_sampling_rate: 96000,
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };
