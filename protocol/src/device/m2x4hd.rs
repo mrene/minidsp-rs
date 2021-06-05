@@ -359,11 +359,11 @@ pub const DEVICE: Device = Device {
     sources: &[Analog, Toslink, Usb],
     inputs: &[
         Input {
-            gate: Gate {
+            gate: Some(Gate {
                 enable: D_GAIN_1_0_STATUS,
                 gain: D_GAIN_1_0,
-            },
-            meter: METER_02_C1_0,
+            }),
+            meter: Some(METER_02_C1_0),
             routing: &[
                 Gate {
                     enable: MIXER_NX_M_SMOOTHED_1_0_0_STATUS,
@@ -388,11 +388,11 @@ pub const DEVICE: Device = Device {
             ],
         },
         Input {
-            gate: Gate {
+            gate: Some(Gate {
                 enable: D_GAIN_2_0_STATUS,
                 gain: D_GAIN_2_0,
-            },
-            meter: METER_02_C1_1,
+            }),
+            meter: Some(METER_02_C1_1),
             routing: &[
                 Gate {
                     enable: MIXER_NX_M_SMOOTHED_1_1_0_STATUS,

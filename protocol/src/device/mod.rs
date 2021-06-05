@@ -20,6 +20,7 @@ pub mod msharc4x8;
 #[cfg(feature = "device_shd")]
 pub mod shd;
 
+#[cfg(feature = "device_ddrc24")]
 pub mod ddrc24;
 
 pub static GENERIC: Device = Device {
@@ -57,9 +58,9 @@ pub struct Device {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Input {
     /// Mute and Gain
-    pub gate: Gate,
+    pub gate: Option<Gate>,
     /// Volume Meter
-    pub meter: u16,
+    pub meter: Option<u16>,
     /// Parametric Equalizers
     pub peq: &'static [u16],
     /// Routing matrix, one entry per output channel connected to this input
