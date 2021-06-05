@@ -167,6 +167,7 @@ mod test {
     #[ignore]
     async fn test_hid() {
         let api = initialize_api().unwrap();
+        let api = api.lock().unwrap();
         let device = api.open(0x2752, 0x0011).unwrap();
         let mut device = Box::pin(HidStream::new(device));
         device
@@ -181,6 +182,7 @@ mod test {
     #[ignore]
     async fn test_multi() {
         let api = initialize_api().unwrap();
+        let api = api.lock().unwrap();
         let device = api.open(0x2752, 0x0011).unwrap();
         let device = Box::new(HidStream::new(device));
 
