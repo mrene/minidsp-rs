@@ -105,22 +105,35 @@ impl Client {
         let mut addrs: Vec<_> = addrs.into_iter().collect();
         addrs.sort_unstable();
 
-        let mut addrs = addrs.into_iter();
+        let mut addrs = addrs.into_iter().peekable();
         let mut output = Vec::with_capacity(addrs.len());
 
         // Break the reads into chunks that fit into the the max packet size
         loop {
             let mut begin: Option<u16> = None;
-            let chunk: Vec<_> = {
-                (&mut addrs).take_while(|&i| match begin {
+            let mut chunk = Vec::with_capacity(commands::READ_FLOATS_MAX);
+            while chunk.is_empty()
+                || *chunk.last().unwrap() - *chunk.first().unwrap()
+                    < commands::READ_FLOATS_MAX as u16
+            {
+                let i = match addrs.peek() {
+                    None => break,
+                    Some(&i) => i,
+                };
+                let include = match begin {
                     None => {
                         begin = Some(i);
                         true
                     }
                     Some(val) => (i - val) < commands::READ_FLOATS_MAX as u16,
-                })
+                };
+
+                if !include {
+                    break;
+                }
+
+                chunk.push(addrs.next().unwrap());
             }
-            .collect();
 
             if chunk.is_empty() {
                 break;
