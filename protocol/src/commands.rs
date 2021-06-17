@@ -34,6 +34,12 @@ pub enum ProtocolError {
 
     #[cfg_attr(feature = "debug", error("parse error: {0}"))]
     ParseError(ParseError),
+
+    #[cfg_attr(
+        feature = "debug",
+        error("the received hardware id was malformed or empty")
+    )]
+    MalformedHardwareId,
 }
 
 #[derive(Clone)]
@@ -572,7 +578,9 @@ impl Responses {
 
     pub fn into_hardware_id(self) -> Result<u8, ProtocolError> {
         match self {
-            Responses::HardwareId { payload } => Ok(payload[2]),
+            Responses::HardwareId { payload } => {
+                Ok(*payload.last().ok_or(ProtocolError::MalformedHardwareId)?)
+            }
             _ => Err(ProtocolError::UnexpectedResponseType),
         }
     }
