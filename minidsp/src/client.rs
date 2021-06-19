@@ -91,6 +91,7 @@ impl Client {
         self.roundtrip(Commands::Write {
             addr,
             value: value.into(),
+            addr_len: 1,
         })
         .await?
         .into_ack()

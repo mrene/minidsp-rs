@@ -73,6 +73,7 @@ devices = [
   "minidsp-protocol/device_msharc4x8",
   "minidsp-protocol/device_shd",
   "minidsp-protocol/device_ddrc24",
+  "minidsp-protocol/device_nanodigi2x8"
 ]
 hid = ["hidapi"]
 

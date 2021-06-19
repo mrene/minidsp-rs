@@ -18,7 +18,7 @@ pub struct Setting {
     pub dsp_version: u8,
 
     #[xml(flatten_text = "master_mute")]
-    pub master_mute: u8,
+    pub master_mute: Option<u8>,
 
     #[xml(child = "label")]
     pub labels: Vec<Label>,

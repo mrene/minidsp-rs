@@ -193,6 +193,8 @@ pub enum Commands {
     Write {
         addr: u16,
         value: Value,
+        // Length of the address field, in bytes (1 or 2)
+        addr_len: u8,
     },
 
     /// 0x39: Start FIR load
@@ -261,9 +263,18 @@ impl Commands {
             },
             0x13 => {
                 frame.get_u8(); // discard 0x80
-                Commands::Write {
-                    addr: frame.get_u16(),
-                    value: Value::from_bytes(frame),
+                if frame.len() >= 6 {
+                    Commands::Write {
+                        addr: frame.get_u16(),
+                        value: Value::from_bytes(frame),
+                        addr_len: 2,
+                    }
+                } else {
+                    Commands::Write {
+                        addr: frame.get_u8() as u16,
+                        value: Value::from_bytes(frame),
+                        addr_len: 1,
+                    }
                 }
             }
             0x14 => Commands::ReadFloats {
@@ -375,9 +386,17 @@ impl Commands {
                 f.put_u8(if value { 0x80 } else { 0x00 });
                 f.put_u16(addr);
             }
-            &Commands::Write { addr, ref value } => {
+            &Commands::Write {
+                addr,
+                ref value,
+                addr_len,
+            } => {
                 f.put_u16(0x1380);
-                f.put_u16(addr);
+                if addr_len == 1 {
+                    f.put_u8(addr as u8);
+                } else {
+                    f.put_u16(addr);
+                }
                 f.put(value.clone().into_bytes());
             }
 
@@ -463,6 +482,7 @@ impl Commands {
         Commands::Write {
             addr,
             value: Value::Int(value),
+            addr_len: 2,
         }
     }
 }

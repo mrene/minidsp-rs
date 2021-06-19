@@ -9,10 +9,13 @@ use std::{
 use anyhow::Result;
 use bimap::BiMap;
 use clap::{self as clap, Clap};
-use codegen::{ddrc24, generate_static_config, m2x4hd, m4x10hd, msharc4x8, shd, spec::Device};
+use codegen::{
+    ddrc24, generate_static_config, m2x4hd, m4x10hd, msharc4x8, nanodigi2x8, shd, spec::Device,
+};
 use futures::{Stream, StreamExt};
 use minidsp::{
     commands::Commands,
+    device::{self, DeviceKind},
     utils::{decoder, recorder},
 };
 use tokio::{fs::File, io::AsyncReadExt};
@@ -33,7 +36,11 @@ struct Opts {
 #[derive(Clap, Debug)]
 enum SubCommand {
     /// Pretty-print protocol decodes
-    Decode { input: PathBuf },
+    Decode {
+        input: PathBuf,
+        #[clap(name = "force-kind", long)]
+        force_kind: Option<DeviceKind>,
+    },
 
     /// Dumps the bulk-loaded parameter data into a file
     DumpBulk {
@@ -56,12 +63,12 @@ pub async fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.cmd {
-        SubCommand::Decode { input } => {
+        SubCommand::Decode { input, force_kind } => {
             let file = File::open(input).await?;
             let framed = LinesCodec::new().framed(file);
             let messages =
                 framed.filter_map(|x| async { recorder::Message::from_string(x.ok()?.as_str()) });
-            decode(messages).await?;
+            decode(messages, force_kind).await?;
         }
         SubCommand::DumpBulk {
             input,
@@ -113,12 +120,19 @@ async fn dump(
     Ok(())
 }
 
-async fn decode(framed: impl Stream<Item = recorder::Message>) -> Result<()> {
+async fn decode(
+    framed: impl Stream<Item = recorder::Message>,
+    device_kind: Option<DeviceKind>,
+) -> Result<()> {
     let mut decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stdout(ColorChoice::Always);
         decoder::Decoder::new(Box::new(writer), true, None)
     };
+
+    if let Some(device_kind) = device_kind {
+        decoder.set_name_map(device::by_kind(device_kind).symbols.iter().cloned());
+    }
 
     let mut n_recv: i32 = 0;
     let mut n_sent: i32 = 0;
@@ -168,6 +182,7 @@ fn codegen_main(output: PathBuf) -> Result<()> {
     gen_write::<m4x10hd::Target>(&output)?;
     gen_write::<shd::Target>(&output)?;
     gen_write::<ddrc24::Target>(&output)?;
+    gen_write::<nanodigi2x8::Target>(&output)?;
 
     Ok(())
 }
