@@ -107,7 +107,12 @@ impl fmt::Debug for Value {
         let b = self.clone().into_bytes();
         match self {
             Value::Unknown(u) => {
-                let float = b.clone().get_f32_le();
+                let float = if b.len() >= 4 {
+                    Some(b.clone().get_f32_le())
+                } else {
+                    None
+                };
+
                 let i = b[0];
                 write!(
                     f,
