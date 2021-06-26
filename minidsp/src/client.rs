@@ -1,6 +1,7 @@
 use std::{error::Error, time::Duration};
 
 use anyhow::anyhow;
+use minidsp_protocol::commands::Addr;
 use tokio_stream::wrappers::BroadcastStream;
 use tower::{Service, ServiceBuilder};
 
@@ -89,9 +90,8 @@ impl Client {
     /// Writes data to the dsp memory area
     pub async fn write_dsp<T: Into<Value>>(&self, addr: u16, value: T) -> Result<(), MiniDSPError> {
         self.roundtrip(Commands::Write {
-            addr,
+            addr: Addr::new(addr, 2),
             value: value.into(),
-            addr_len: 1,
         })
         .await?
         .into_ack()

@@ -133,9 +133,9 @@ impl Decoder {
     fn maybe_print_addr(&mut self, cmd: &ParsedMessage) -> std::io::Result<()> {
         let addr = match cmd {
             ParsedMessage::Request(Commands::ReadFloats { addr, .. }) => addr,
-            ParsedMessage::Request(Commands::Write { addr, .. }) => addr,
-            ParsedMessage::Request(Commands::WriteBiquad { addr, .. }) => addr,
-            ParsedMessage::Request(Commands::WriteBiquadBypass { addr, .. }) => addr,
+            ParsedMessage::Request(Commands::Write { addr, .. }) => &addr.val,
+            ParsedMessage::Request(Commands::WriteBiquad { addr, .. }) => &addr.val,
+            ParsedMessage::Request(Commands::WriteBiquadBypass { addr, .. }) => &addr.val,
             _ => {
                 return writeln!(self.w);
             }

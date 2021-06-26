@@ -127,7 +127,7 @@ async fn decode(
     let mut decoder = {
         use termcolor::{ColorChoice, StandardStream};
         let writer = StandardStream::stdout(ColorChoice::Always);
-        decoder::Decoder::new(Box::new(writer), true, None)
+        decoder::Decoder::new(Box::new(writer), false, None)
     };
 
     if let Some(device_kind) = device_kind {

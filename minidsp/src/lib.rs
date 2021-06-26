@@ -61,6 +61,7 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use client::Client;
 use futures::{Stream, StreamExt};
+use minidsp_protocol::commands::Addr;
 pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
@@ -416,7 +417,7 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquad {
-                addr: self.addr,
+                addr: Addr::new(self.addr, 2),
                 data: coefficients.try_into().unwrap(),
             })
             .await?
@@ -429,7 +430,7 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr: self.addr,
+                addr: Addr::new(self.addr, 2),
                 value: bypass,
             })
             .await?
@@ -485,7 +486,7 @@ impl<'a> Crossover<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr,
+                addr: Addr::new(addr, 2),
                 value: bypass,
             })
             .await?

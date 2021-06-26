@@ -132,6 +132,53 @@ impl fmt::Debug for Value {
     }
 }
 
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Addr {
+    pub val: u16,
+    pub len: u8,
+}
+
+impl Addr {
+    pub fn new(val: u16, len: u8) -> Self {
+        Self { val, len }
+    }
+
+    pub fn read(buf: &mut Bytes, len: u8) -> Self {
+        if len == 1 {
+            Self::read_u8(buf)
+        } else if len == 2 {
+            Self::read_u16(buf)
+        } else {
+            panic!("invalid address len")
+        }
+    }
+
+    pub fn read_u8(buf: &mut Bytes) -> Self {
+        Self {
+            val: buf.get_u8() as u16,
+            len: 1,
+        }
+    }
+
+    pub fn read_u16(buf: &mut Bytes) -> Self {
+        Self {
+            val: buf.get_u16() as u16,
+            len: 2,
+        }
+    }
+
+    pub fn write(&self, buf: &mut BytesMut) {
+        if self.len == 1 {
+            buf.put_u8(self.val as u8);
+        } else if self.len == 2 {
+            buf.put_u16(self.val);
+        } else {
+            panic!("invalid address len")
+        }
+    }
+}
+
 #[derive(Clone)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum Commands {
@@ -179,22 +226,20 @@ pub enum Commands {
 
     /// 0x30: Write biquad data
     WriteBiquad {
-        addr: u16,
+        addr: Addr,
         data: [f32; 5],
     },
 
     /// 0x19: Toggle biquad filter bypass
     WriteBiquadBypass {
-        addr: u16,
+        addr: Addr,
         value: bool,
     },
 
     /// 0x13: Write dsp data
     Write {
-        addr: u16,
+        addr: Addr,
         value: Value,
-        // Length of the address field, in bytes (1 or 2)
-        addr_len: u8,
     },
 
     /// 0x39: Start FIR load
@@ -263,18 +308,10 @@ impl Commands {
             },
             0x13 => {
                 frame.get_u8(); // discard 0x80
-                if frame.len() >= 6 {
-                    Commands::Write {
-                        addr: frame.get_u16(),
-                        value: Value::from_bytes(frame),
-                        addr_len: 2,
-                    }
-                } else {
-                    Commands::Write {
-                        addr: frame.get_u8() as u16,
-                        value: Value::from_bytes(frame),
-                        addr_len: 1,
-                    }
+                let len = if frame.len() >= 6 { 2 } else { 1 };
+                Commands::Write {
+                    addr: Addr::read(&mut frame, len),
+                    value: Value::from_bytes(frame),
                 }
             }
             0x14 => Commands::ReadFloats {
@@ -284,10 +321,13 @@ impl Commands {
             0x17 => Commands::SetMute {
                 value: frame.get_u8() != 0,
             },
-            0x19 => Commands::WriteBiquadBypass {
-                value: frame.get_u8() == 0x80,
-                addr: frame.get_u16(),
-            },
+            0x19 => {
+                let len = if frame.len() > 3 { 2 } else { 1 };
+                Commands::WriteBiquadBypass {
+                    value: frame.get_u8() == 0x80,
+                    addr: Addr::read(&mut frame, len),
+                }
+            }
             0x25 => Commands::SetConfig {
                 config: frame.get_u8(),
                 reset: frame.get_u8() != 0,
@@ -296,7 +336,7 @@ impl Commands {
             0x30 => Commands::WriteBiquad {
                 addr: {
                     frame.get_u8(); // discard 0x80
-                    frame.get_u16()
+                    Addr::read_u8(&mut frame) // FIXME: HACK
                 },
                 data: {
                     frame.get_u16(); // discard 0x0000;
@@ -375,7 +415,7 @@ impl Commands {
             }
             &Commands::WriteBiquad { addr, data } => {
                 f.put_u16(0x3080);
-                f.put_u16(addr);
+                addr.write(&mut f);
                 f.put_u16(0x0000);
                 for &coeff in data.iter() {
                     f.put_f32_le(coeff);
@@ -384,19 +424,11 @@ impl Commands {
             &Commands::WriteBiquadBypass { addr, value } => {
                 f.put_u8(0x19);
                 f.put_u8(if value { 0x80 } else { 0x00 });
-                f.put_u16(addr);
+                addr.write(&mut f);
             }
-            &Commands::Write {
-                addr,
-                ref value,
-                addr_len,
-            } => {
+            &Commands::Write { addr, ref value } => {
                 f.put_u16(0x1380);
-                if addr_len == 1 {
-                    f.put_u8(addr as u8);
-                } else {
-                    f.put_u16(addr);
-                }
+                addr.write(&mut f);
                 f.put(value.clone().into_bytes());
             }
 
@@ -480,9 +512,8 @@ impl Commands {
         };
 
         Commands::Write {
-            addr,
+            addr: Addr::new(addr, 2),
             value: Value::Int(value),
-            addr_len: 2,
         }
     }
 }
