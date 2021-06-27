@@ -34,6 +34,12 @@ pub enum ProtocolError {
 
     #[cfg_attr(feature = "debug", error("parse error: {0}"))]
     ParseError(ParseError),
+
+    #[cfg_attr(
+        feature = "debug",
+        error("the received hardware id was malformed or empty")
+    )]
+    MalformedHardwareId,
 }
 
 #[derive(Clone)]
@@ -101,7 +107,12 @@ impl fmt::Debug for Value {
         let b = self.clone().into_bytes();
         match self {
             Value::Unknown(u) => {
-                let float = b.clone().get_f32_le();
+                let float = if b.len() >= 4 {
+                    Some(b.clone().get_f32_le())
+                } else {
+                    None
+                };
+
                 let i = b[0];
                 write!(
                     f,
@@ -117,6 +128,49 @@ impl fmt::Debug for Value {
             &Value::Int(val) => {
                 write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Addr {
+    pub val: u16,
+    pub len: u8,
+}
+
+impl Addr {
+    pub fn new(val: u16, len: u8) -> Self {
+        Self { val, len }
+    }
+
+    pub fn read(buf: &mut Bytes, len: u8) -> Self {
+        match len {
+            1 => Self::read_u8(buf),
+            2 => Self::read_u16(buf),
+            _ => panic!("invalid address len"),
+        }
+    }
+
+    pub fn read_u8(buf: &mut Bytes) -> Self {
+        Self {
+            val: buf.get_u8() as u16,
+            len: 1,
+        }
+    }
+
+    pub fn read_u16(buf: &mut Bytes) -> Self {
+        Self {
+            val: buf.get_u16(),
+            len: 2,
+        }
+    }
+
+    pub fn write(&self, buf: &mut BytesMut) {
+        match self.len {
+            1 => buf.put_u8(self.val as u8),
+            2 => buf.put_u16(self.val),
+            _ => panic!("invalid address len"),
         }
     }
 }
@@ -168,19 +222,19 @@ pub enum Commands {
 
     /// 0x30: Write biquad data
     WriteBiquad {
-        addr: u16,
+        addr: Addr,
         data: [f32; 5],
     },
 
     /// 0x19: Toggle biquad filter bypass
     WriteBiquadBypass {
-        addr: u16,
+        addr: Addr,
         value: bool,
     },
 
     /// 0x13: Write dsp data
     Write {
-        addr: u16,
+        addr: Addr,
         value: Value,
     },
 
@@ -250,8 +304,9 @@ impl Commands {
             },
             0x13 => {
                 frame.get_u8(); // discard 0x80
+                let len = if frame.len() >= 6 { 2 } else { 1 };
                 Commands::Write {
-                    addr: frame.get_u16(),
+                    addr: Addr::read(&mut frame, len),
                     value: Value::from_bytes(frame),
                 }
             }
@@ -262,10 +317,13 @@ impl Commands {
             0x17 => Commands::SetMute {
                 value: frame.get_u8() != 0,
             },
-            0x19 => Commands::WriteBiquadBypass {
-                value: frame.get_u8() == 0x80,
-                addr: frame.get_u16(),
-            },
+            0x19 => {
+                let len = if frame.len() > 3 { 2 } else { 1 };
+                Commands::WriteBiquadBypass {
+                    value: frame.get_u8() == 0x80,
+                    addr: Addr::read(&mut frame, len),
+                }
+            }
             0x25 => Commands::SetConfig {
                 config: frame.get_u8(),
                 reset: frame.get_u8() != 0,
@@ -274,7 +332,7 @@ impl Commands {
             0x30 => Commands::WriteBiquad {
                 addr: {
                     frame.get_u8(); // discard 0x80
-                    frame.get_u16()
+                    Addr::read_u16(&mut frame)
                 },
                 data: {
                     frame.get_u16(); // discard 0x0000;
@@ -353,7 +411,7 @@ impl Commands {
             }
             &Commands::WriteBiquad { addr, data } => {
                 f.put_u16(0x3080);
-                f.put_u16(addr);
+                addr.write(&mut f);
                 f.put_u16(0x0000);
                 for &coeff in data.iter() {
                     f.put_f32_le(coeff);
@@ -362,11 +420,11 @@ impl Commands {
             &Commands::WriteBiquadBypass { addr, value } => {
                 f.put_u8(0x19);
                 f.put_u8(if value { 0x80 } else { 0x00 });
-                f.put_u16(addr);
+                addr.write(&mut f);
             }
             &Commands::Write { addr, ref value } => {
                 f.put_u16(0x1380);
-                f.put_u16(addr);
+                addr.write(&mut f);
                 f.put(value.clone().into_bytes());
             }
 
@@ -450,7 +508,7 @@ impl Commands {
         };
 
         Commands::Write {
-            addr,
+            addr: Addr::new(addr, 2),
             value: Value::Int(value),
         }
     }
@@ -572,7 +630,9 @@ impl Responses {
 
     pub fn into_hardware_id(self) -> Result<u8, ProtocolError> {
         match self {
-            Responses::HardwareId { payload } => Ok(payload[2]),
+            Responses::HardwareId { payload } => {
+                Ok(*payload.last().ok_or(ProtocolError::MalformedHardwareId)?)
+            }
             _ => Err(ProtocolError::UnexpectedResponseType),
         }
     }

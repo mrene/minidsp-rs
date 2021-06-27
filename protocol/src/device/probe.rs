@@ -27,6 +27,8 @@ pub enum DeviceKind {
     Shd,
     #[cfg(feature = "device_ddrc24")]
     DDRC24,
+    #[cfg(feature = "device_nanodigi2x8")]
+    Nanodigi2x8,
 }
 
 /// Attempts to get a `&Device` from a DeviceInfo
@@ -47,6 +49,8 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         (10, 101) => DDRC24,
         #[cfg(feature = "device_shd")]
         (14, _) => Shd,
+        #[cfg(feature = "device_nanodigi2x8")]
+        (09, 54) => Nanodigi2x8,
         _ => Generic,
     }
 }
@@ -70,5 +74,8 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_shd")]
         Shd => &super::shd::DEVICE,
+
+        #[cfg(feature = "device_nanodigi2x8")]
+        Nanodigi2x8 => &super::nanodigi2x8::DEVICE,
     }
 }

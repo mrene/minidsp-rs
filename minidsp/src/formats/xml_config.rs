@@ -6,7 +6,7 @@ use bytes::Bytes;
 use strong_xml::{XmlRead, XmlWrite};
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
-#[xml(tag = "setting")]
+#[xml(default, tag = "setting")]
 pub struct Setting {
     #[xml(attr = "version")]
     pub version: String,
@@ -18,7 +18,7 @@ pub struct Setting {
     pub dsp_version: u8,
 
     #[xml(flatten_text = "master_mute")]
-    pub master_mute: u8,
+    pub master_mute: Option<u8>,
 
     #[xml(child = "label")]
     pub labels: Vec<Label>,
@@ -134,7 +134,7 @@ impl RestoreBlob {
 }
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
-#[xml(tag = "label")]
+#[xml(default, tag = "label")]
 pub struct Label {
     #[xml(attr = "name")]
     pub name: String,
@@ -144,7 +144,7 @@ pub struct Label {
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
 pub enum AddressableElement {
-    #[xml(tag = "item")]
+    #[xml(default, tag = "item")]
     Item {
         #[xml(attr = "name")]
         name: String,
@@ -155,7 +155,7 @@ pub enum AddressableElement {
         #[xml(flatten_text = "hex")]
         hex: HexString,
     },
-    #[xml(tag = "fir")]
+    #[xml(default, tag = "fir")]
     Fir {
         #[xml(attr = "name")]
         name: String,
@@ -164,7 +164,7 @@ pub enum AddressableElement {
         #[xml(child = "para")]
         para: Vec<Para>,
     },
-    #[xml(tag = "filter")]
+    #[xml(default, tag = "filter")]
     Filter {
         #[xml(attr = "name")]
         name: String,
@@ -188,7 +188,7 @@ pub enum AddressableElement {
 }
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
-#[xml(tag = "para")]
+#[xml(default, tag = "para")]
 pub struct Para {
     #[xml(attr = "count")]
     pub count: u16,
@@ -199,7 +199,7 @@ pub struct Para {
 }
 
 #[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
-#[xml(tag = "subpara")]
+#[xml(default, tag = "subpara")]
 pub struct Subpara {
     #[xml(attr = "row")]
     pub row: u8,

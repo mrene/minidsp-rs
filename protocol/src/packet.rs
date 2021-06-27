@@ -50,6 +50,8 @@ pub fn unframe(response: Bytes) -> Result<Bytes, ParseError> {
             actual: response.len(),
             data: response,
         })
+    } else if len == 0 {
+        Err(ParseError::EmptyPacket)
     } else {
         Ok(response.slice(1..len))
     }
