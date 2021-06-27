@@ -10,7 +10,7 @@ repository = "https://github.com/mrene/minidsp-rs"
 version = "0.1.1"
 
 [dependencies]
-anyhow = "1.0.40"
+anyhow = "1.0.41"
 async-trait = "0.1.50"
 atomic_refcell = "0.1.7"
 bimap = "0.6.1"
