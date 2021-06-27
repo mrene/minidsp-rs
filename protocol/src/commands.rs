@@ -145,12 +145,10 @@ impl Addr {
     }
 
     pub fn read(buf: &mut Bytes, len: u8) -> Self {
-        if len == 1 {
-            Self::read_u8(buf)
-        } else if len == 2 {
-            Self::read_u16(buf)
-        } else {
-            panic!("invalid address len")
+        match len {
+            1 => Self::read_u8(buf),
+            2 => Self::read_u16(buf),
+            _ => panic!("invalid address len"),
         }
     }
 
@@ -163,18 +161,16 @@ impl Addr {
 
     pub fn read_u16(buf: &mut Bytes) -> Self {
         Self {
-            val: buf.get_u16() as u16,
+            val: buf.get_u16(),
             len: 2,
         }
     }
 
     pub fn write(&self, buf: &mut BytesMut) {
-        if self.len == 1 {
-            buf.put_u8(self.val as u8);
-        } else if self.len == 2 {
-            buf.put_u16(self.val);
-        } else {
-            panic!("invalid address len")
+        match self.len {
+            1 => buf.put_u8(self.val as u8),
+            2 => buf.put_u16(self.val),
+            _ => panic!("invalid address len"),
         }
     }
 }
@@ -336,7 +332,7 @@ impl Commands {
             0x30 => Commands::WriteBiquad {
                 addr: {
                     frame.get_u8(); // discard 0x80
-                    Addr::read_u8(&mut frame) // FIXME: HACK
+                    Addr::read_u16(&mut frame)
                 },
                 data: {
                     frame.get_u16(); // discard 0x0000;
