@@ -569,14 +569,12 @@ dependencies = [
 
 [[package]]
 name = "hyper-tungstenite"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fe20fbc2a4d19a8ee579e56fd1320eab6ca234e710645981f0a5f6a7f2989fe"
+checksum = "3bd29c3bffc64a135f9edb3f52604e7f44e767b8ddb2f3a3e4e80a5319649b37"
 dependencies = [
- "base64",
  "hyper",
  "pin-project",
- "sha-1",
  "tokio",
  "tokio-tungstenite",
 ]
