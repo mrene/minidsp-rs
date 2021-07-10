@@ -35,7 +35,7 @@ strong-xml = "0.6.3"
 strum = {version = "0.21.0", features = ["derive"]}
 termcolor = "1.1.2"
 thiserror = "1.0.26"
-tokio-stream = {version = "0.1.6", features = ["sync"]}
+tokio-stream = {version = "0.1.7", features = ["sync"]}
 tokio-tungstenite = "0.14.0"
 tower = {version = "0.4.8", features = ["util", "timeout"]}
 url2 = "0.0.6"
