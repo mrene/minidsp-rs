@@ -2,7 +2,7 @@
 
 use std::convert::TryInto;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use bytes::{BufMut, Bytes, BytesMut};
 use clap::Clap;
 use minidsp::{
