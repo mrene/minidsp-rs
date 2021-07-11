@@ -129,7 +129,7 @@ impl Device {
     pub fn new_static() -> Self {
         Self {
             last_seen: time::Instant::now(),
-            static_device: false,
+            static_device: true,
         }
     }
 

@@ -36,3 +36,13 @@ bind_address = "127.0.0.1:5333"
 
 # If a wi-dg isn't auto-discovered, it can be added with
 # url = "tcp://192.168.1.2:5333"
+
+# It's possible to declare mock devices for testing purposes, and give them different serial numbers
+# A `response_delay` needs to be specified if connecting with the minidsp plugin, as it doesn't appreciate fast replies.
+# The `serial` parameter has to be betwen `900000` and `965535`
+#
+# [[static_device]]
+# url = "mock:?serial=911111&response_delay=50"
+#
+# [[static_device]]
+# url = "mock:?serial=922222"

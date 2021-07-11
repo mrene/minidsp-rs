@@ -9,6 +9,7 @@
 
 use alloc::vec::Vec;
 use core::{convert::TryInto, fmt, fmt::Debug, ops::Deref, str::FromStr};
+use std::ops::DerefMut;
 
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -54,6 +55,11 @@ impl Deref for BytesWrap {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+impl DerefMut for BytesWrap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -279,6 +285,11 @@ pub enum Commands {
         payload: BytesWrap,
     },
 
+    // 0x07: Seen in configuration restore
+    Unk07 {
+        payload: u8,
+    },
+
     Unknown {
         cmd_id: u8,
         payload: BytesWrap,
@@ -298,6 +309,9 @@ impl Commands {
             },
             0x06 => Commands::BulkLoadFilterData {
                 payload: BytesWrap(frame),
+            },
+            0x07 => Commands::Unk07 {
+                payload: frame.get_u8(),
             },
             0x12 => Commands::BulkLoad {
                 payload: BytesWrap(frame),
@@ -454,6 +468,10 @@ impl Commands {
                 f.put_u8(0x3f);
                 f.put_u8(value);
             }
+            &Commands::Unk07 { payload } => {
+                f.put_u8(0x07);
+                f.put_u8(payload);
+            }
             &Commands::Unknown {
                 cmd_id,
                 ref payload,
@@ -484,6 +502,7 @@ impl Commands {
             Commands::ReadHardwareId => matches!(response, Responses::HardwareId { .. }),
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
             Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize { .. }),
+            &Commands::Unk07 { .. } => matches!(response, Responses::Unk02 { .. }),
             Commands::WriteMemory { .. }
             | Commands::SetSource { .. }
             | Commands::SetMute { .. }
@@ -530,6 +549,9 @@ pub enum Responses {
     /// Speculative commands
     ConfigChanged,
 
+    // 0x02: Seen during configuration restore as a response to [`Commands::Unk07`]
+    Unk02,
+
     Unknown {
         cmd_id: u8,
         payload: BytesWrap,
@@ -558,6 +580,7 @@ impl Responses {
                 },
             },
             0xab => Responses::ConfigChanged,
+            0x02 => Responses::Unk02,
             cmd_id => Responses::Unknown {
                 cmd_id,
                 payload: BytesWrap(frame),
@@ -575,7 +598,7 @@ impl Responses {
                 f.put(data.data.clone());
             }
             Responses::FloatData(data) => {
-                f.put_u8(0x05);
+                f.put_u8(0x14);
                 f.put_u16(data.base);
 
                 for &item in &data.data {
@@ -597,7 +620,12 @@ impl Responses {
                 f.put_u8(0x39);
                 f.put_u16(size);
             }
-            Responses::ConfigChanged => {}
+            Responses::ConfigChanged => {
+                f.put_u8(0xab);
+            }
+            &Responses::Unk02 => {
+                f.put_u8(0x02);
+            }
         }
         f.freeze()
     }

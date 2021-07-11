@@ -31,6 +31,12 @@ pub enum DeviceKind {
     Nanodigi2x8,
 }
 
+impl Default for DeviceKind {
+    fn default() -> Self {
+        DeviceKind::Generic
+    }
+}
+
 /// Attempts to get a `&Device` from a DeviceInfo
 pub fn probe(device_info: &DeviceInfo) -> &'static super::Device {
     by_kind(probe_kind(device_info))
