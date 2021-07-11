@@ -101,7 +101,7 @@ impl MockDevice {
     }
 
     pub fn write_eeprom_u16(&mut self, addr: u16, value: u16) {
-        self.eeprom[addr as usize..addr as usize + 1].copy_from_slice(&value.to_be_bytes());
+        self.eeprom[addr as usize..addr as usize + 2].copy_from_slice(&value.to_be_bytes());
     }
 
     pub fn write_eeprom_u32(&mut self, addr: u16, value: u32) {
