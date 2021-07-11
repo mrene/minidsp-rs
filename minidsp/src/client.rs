@@ -1,7 +1,7 @@
 use std::{error::Error, time::Duration};
 
 use anyhow::anyhow;
-use minidsp_protocol::commands::Addr;
+use minidsp_protocol::{commands::Addr, eeprom};
 use tokio_stream::wrappers::BroadcastStream;
 use tower::{Service, ServiceBuilder};
 
@@ -61,12 +61,12 @@ impl Client {
             .await?
             .into_hardware_id()?;
 
-        let dsp_version_view = self.read_memory(0xffa1, 1).await?;
-        let serial_view = self.read_memory(0xfffc, 2).await?;
+        let dsp_version_view = self.read_memory(eeprom::FIRMWARE_VERSION, 1).await?;
+        let serial_view = self.read_memory(eeprom::SERIAL, 2).await?;
         let info = DeviceInfo {
             hw_id,
-            dsp_version: dsp_version_view.read_u8(0xffa1).unwrap(),
-            serial: 900000 + (serial_view.read_u16(0xfffc).unwrap() as u32),
+            dsp_version: dsp_version_view.read_u8(eeprom::FIRMWARE_VERSION).unwrap(),
+            serial: 900000 + (serial_view.read_u16(eeprom::SERIAL).unwrap() as u32),
         };
         Ok(info)
     }

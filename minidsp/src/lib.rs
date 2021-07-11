@@ -62,7 +62,7 @@ use async_trait::async_trait;
 use client::Client;
 use futures::{Stream, StreamExt};
 use minidsp_protocol::commands::Addr;
-pub use minidsp_protocol::{Commands, DeviceInfo, FromMemory, MasterStatus, Source};
+pub use minidsp_protocol::{eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
 use utils::ErrInto;
@@ -112,7 +112,7 @@ impl MiniDSP<'_> {
     /// Returns a `MasterStatus` object containing the current state
     pub async fn get_master_status(&self) -> Result<MasterStatus> {
         let device_info = self.device_info;
-        let memory = self.client.read_memory(0xffd8, 9).await?;
+        let memory = self.client.read_memory(eeprom::PRESET, 9).await?;
 
         Ok(
             MasterStatus::from_memory(&device_info, &memory).map_err(|e| {

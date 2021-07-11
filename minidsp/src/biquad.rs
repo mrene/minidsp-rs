@@ -18,6 +18,15 @@ impl Biquad {
     pub fn to_array(&self) -> [f32; 5] {
         [self.b0, self.b1, self.b2, self.a1, self.a2]
     }
+
+    pub fn is_zero(&self) -> bool {
+        (self.b0 - 1.0).abs() < 1e-4
+            && self.b1 == 0.
+            && self.b1 == 0.
+            && self.b2 == 0.
+            && self.a1 == 0.
+            && self.a2 == 0.
+    }
 }
 
 impl Default for Biquad {

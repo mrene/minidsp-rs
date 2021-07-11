@@ -23,6 +23,8 @@ pub use source::Source;
 #[cfg(feature = "devices")]
 pub mod device;
 
+pub mod eeprom;
+
 #[derive(Copy, Clone)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(

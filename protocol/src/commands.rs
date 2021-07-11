@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::DeviceInfo;
-use crate::{packet::ParseError, MasterStatus};
+use crate::{eeprom, packet::ParseError, MasterStatus};
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;
@@ -762,17 +762,6 @@ impl UnaryResponse for FloatView {
     }
 }
 
-/// A contiguous bytes view read from the device
-// ## EEPROM Addresses
-// 0xFFA1 (1) Firmware version
-// 0xFFC8 (4) Timestamp
-// 0xFFD8 (1) Preset
-// 0xFFD9 (1) Source ("Digital IO")
-// 0xFFDA (1) Master Volume "Codec mute?"
-// 0xFFDB (1) Mute
-// 0xFFE0 (1) Master FIR bypass (Dirac Live bypass)
-// 0xFFE5 (1) "Channel mode"
-// 0xFFFC (2) Serial (+ 900000) ("board id")
 #[derive(Clone, Default)]
 pub struct MemoryView {
     pub base: u16,
@@ -873,15 +862,15 @@ where
 {
     fn from_memory(device_info: &DeviceInfo, view: &MemoryView) -> Result<Self> {
         Ok(Self {
-            preset: view.read_u8(0xffd8),
+            preset: view.read_u8(eeprom::PRESET),
             source: view
-                .read_u8(0xffd9)
-                .or_else(|| view.read_u8(0xffa9))
+                .read_u8(eeprom::SOURCE)
+                .or_else(|| view.read_u8(eeprom::SOURCE_ASYNC))
                 .map(|id| super::Source::from_id(id, device_info)),
-            volume: view.read_u8(0xffda).map(Into::into),
-            mute: view.read_u8(0xffdb).map(|x| x == 1),
+            volume: view.read_u8(eeprom::MASTER_VOLUME).map(Into::into),
+            mute: view.read_u8(eeprom::MUTE).map(|x| x == 1),
             dirac: if device_info.supports_dirac() {
-                view.read_u8(0xffe0).map(|x| x == 0)
+                view.read_u8(eeprom::DIRAC_BYPASS).map(|x| x == 0)
             } else {
                 None
             },

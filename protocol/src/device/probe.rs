@@ -50,7 +50,7 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         #[cfg(feature = "device_shd")]
         (14, _) => Shd,
         #[cfg(feature = "device_nanodigi2x8")]
-        (09, 54) => Nanodigi2x8,
+        (9, 54) => Nanodigi2x8,
         _ => Generic,
     }
 }

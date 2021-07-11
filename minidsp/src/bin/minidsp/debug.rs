@@ -1,11 +1,13 @@
 //! This contain command line utilities for debugging and inspecting lower level protocol commands
 
-use anyhow::Result;
-use bytes::Bytes;
+use std::convert::TryInto;
+
+use anyhow::{Context, Result};
+use bytes::{BufMut, Bytes, BytesMut};
 use clap::Clap;
 use minidsp::{
     commands::{BytesWrap, Commands, ExtendView, FloatView, MemoryView},
-    source, MiniDSP,
+    eeprom, source, MiniDSP,
 };
 
 use super::{parse_hex, parse_hex_u16};
@@ -83,6 +85,23 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
                 dump_floats(&floats);
             }
         }
+        &DebugCommands::SetSerial { value } => {
+            if value > 900000 {
+                return Err(anyhow::anyhow!("Serial must be between 900000 and 965535"));
+            }
+            let value: u16 = (value - 900000).try_into().unwrap();
+            device
+                .client
+                .roundtrip(Commands::WriteMemory {
+                    addr: eeprom::SERIAL,
+                    data: {
+                        let mut b = BytesMut::new();
+                        b.put_u16(value);
+                        BytesWrap(b.freeze())
+                    },
+                })
+                .await?;
+        }
     }
 
     std::process::exit(0);
@@ -133,4 +152,7 @@ pub enum DebugCommands {
 
     /// Retrieves information about the device's identify
     Id,
+
+    /// Sets the device's serial number
+    SetSerial { value: u32 },
 }
