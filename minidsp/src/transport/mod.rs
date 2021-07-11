@@ -29,6 +29,7 @@ pub mod multiplexer;
 pub use multiplexer::Multiplexer;
 pub mod hub;
 pub use hub::Hub;
+pub mod mock;
 
 use self::multiplexer::MultiplexerService;
 pub mod net;
@@ -117,6 +118,7 @@ pub async fn open_url(url: &Url2) -> Result<Transport, MiniDSPError> {
         }
         "tcp" => Ok(net::open_url(url).await?.into_transport()),
         "ws" | "wss" => Ok(ws::open_url(url).await?),
+        "mock" => Ok(mock::open_url(url)),
         _ => Err(MiniDSPError::InvalidURL),
     }
 }

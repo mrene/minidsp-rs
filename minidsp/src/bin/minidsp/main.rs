@@ -473,6 +473,8 @@ async fn main() -> Result<()> {
         .collect()
         .await;
 
+    devices.sort_by(|a, b| a.device_info.serial.cmp(&b.device_info.serial));
+
     if let Some(SubCommand::Probe { net }) = opts.subcmd {
         run_probe(devices, net).await?;
         return Ok(());

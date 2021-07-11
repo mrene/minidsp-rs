@@ -1,4 +1,5 @@
 pub mod decoder;
+pub mod mock_device;
 pub mod recorder;
 
 mod err_into;
