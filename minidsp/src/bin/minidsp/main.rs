@@ -540,17 +540,23 @@ async fn main() -> Result<()> {
                 };
 
                 // Run this command on all devices in parallel
-                stream::iter(&devices)
+                let results = stream::iter(&devices)
                     .then(|dev| handlers::run_command(dev, this_opts.subcmd.as_ref(), &opts))
                     .collect::<Vec<_>>()
                     .await;
+                for result in results {
+                    result?;
+                }
             }
         }
         None => {
-            stream::iter(&devices)
+            let results = stream::iter(&devices)
                 .then(|dev| handlers::run_command(dev, opts.subcmd.as_ref(), &opts))
                 .collect::<Vec<_>>()
                 .await;
+            for result in results {
+                result?;
+            }
         }
     }
 
