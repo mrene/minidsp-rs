@@ -86,7 +86,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
             }
         }
         &DebugCommands::SetSerial { value } => {
-            if value > 900000 {
+            if value < 900000 || value > 965535 {
                 return Err(anyhow::anyhow!("Serial must be between 900000 and 965535"));
             }
             let value: u16 = (value - 900000).try_into().unwrap();
