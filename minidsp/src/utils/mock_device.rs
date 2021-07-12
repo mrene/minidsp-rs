@@ -2,7 +2,7 @@
 
 use std::convert::TryInto;
 
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, BytesMut};
 use minidsp_protocol::{
     commands::{BytesWrap, FloatView, MemoryView, Responses},
     device::{Device, DeviceKind},
@@ -55,12 +55,12 @@ impl MockDevice {
             kind,
             eeprom: {
                 let mut v = Vec::new();
-                v.resize(u16::MAX as usize + 1, 0xFF);
+                v.resize(u16::MAX as usize, 0xFF);
                 v
             },
             settings: {
                 let mut v = Vec::new();
-                v.resize(u16::MAX as usize + 1, 0);
+                v.resize(u16::MAX as usize, 0);
                 v
             },
             ..Default::default()
@@ -133,7 +133,17 @@ impl MockDevice {
                 let size = size as usize;
                 Responses::MemoryData(MemoryView {
                     base: addr as u16,
-                    data: Bytes::copy_from_slice(&self.eeprom[addr..addr + size]),
+                    data: {
+                        let effective_size = if addr + size > u16::MAX as usize {
+                            u16::MAX as usize - addr
+                        } else {
+                            size
+                        };
+
+                        let mut data = BytesMut::from(&self.eeprom[addr..addr + effective_size]);
+                        data.resize(size, 0xFF);
+                        data.freeze()
+                    },
                 })
             }
             &Commands::WriteMemory { addr, ref data } => {
