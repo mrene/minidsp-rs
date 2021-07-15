@@ -137,7 +137,7 @@ impl MockDevice {
                 Responses::MemoryData(MemoryView {
                     base: addr as u16,
                     data: {
-                        let effective_size = if addr + size > 65536 as usize {
+                        let effective_size = if addr + size > 65536_usize {
                             u16::MAX as usize - addr
                         } else {
                             size

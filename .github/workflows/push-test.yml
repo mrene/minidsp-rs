@@ -39,7 +39,7 @@ jobs:
         uses: actions-rs/clippy-check@v1
         if: steps.check_permissions.outputs.has-permission
         with:
-          args: --all-targets -- -D warnings
+          args: --all-targets --all-features -- -D warnings
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run clippy manually without annotations
