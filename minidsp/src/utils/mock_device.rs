@@ -55,12 +55,12 @@ impl MockDevice {
             kind,
             eeprom: {
                 let mut v = Vec::new();
-                v.resize(u16::MAX as usize, 0xFF);
+                v.resize(65536, 0xFF);
                 v
             },
             settings: {
                 let mut v = Vec::new();
-                v.resize(u16::MAX as usize, 0);
+                v.resize(65536, 0);
                 v
             },
             ..Default::default()
@@ -110,9 +110,12 @@ impl MockDevice {
 
     pub fn set_serial(&mut self, value: u32) {
         let value = value.saturating_sub(900000);
-        let value: u16 = value.try_into().unwrap();
 
-        self.write_eeprom_u16(eeprom::SERIAL, value);
+        self.write_eeprom_u32(eeprom::SERIAL, value);
+    }
+
+    pub fn set_timestamp(&mut self, value: u32) {
+        self.write_eeprom_u32(eeprom::TIMESTAMP, value);
     }
 
     // Executes a command and response with the appropriate response, while updating
@@ -134,7 +137,7 @@ impl MockDevice {
                 Responses::MemoryData(MemoryView {
                     base: addr as u16,
                     data: {
-                        let effective_size = if addr + size > u16::MAX as usize {
+                        let effective_size = if addr + size > 65536 as usize {
                             u16::MAX as usize - addr
                         } else {
                             size

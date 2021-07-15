@@ -85,6 +85,8 @@ pub fn open_url(url: &Url2) -> Transport {
             device.response_delay = Some(std::time::Duration::from_millis(value));
         } else if key == "serial" {
             device.set_serial(value.parse().unwrap());
+        } else if key == "timestamp" {
+            device.set_timestamp(value.parse().unwrap());
         }
     }
     drop(device);

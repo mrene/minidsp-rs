@@ -32,5 +32,8 @@ pub const DIRAC_BYPASS: u16 = 0xFFE0;
 // u8 Channel mode
 pub const CHANNEL_MODE: u16 = 0xFFE5;
 
-// u16 Serial (+900000) - also known as "board id"
+// u32 Serial (+900000) - also known as "board id" (32 bits version)
 pub const SERIAL: u16 = 0xFFFC;
+
+// u16 Serial (+900000) - also known as "board id" (16 bits version)
+pub const SERIAL_SHORT: u16 = 0xFFFE;

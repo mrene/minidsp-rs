@@ -798,7 +798,7 @@ pub struct MemoryView {
 
 impl MemoryView {
     pub fn read_at(&self, addr: u16, len: u8) -> Option<&'_ [u8]> {
-        if addr < self.base || addr > self.base + self.data.len() as u16 {
+        if addr < self.base || addr as usize > self.base as usize + self.data.len() {
             return None;
         }
 
