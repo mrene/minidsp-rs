@@ -1,7 +1,11 @@
 use std::{error::Error, time::Duration};
 
 use anyhow::anyhow;
-use minidsp_protocol::{commands::Addr, eeprom};
+use bytes::Bytes;
+use minidsp_protocol::{
+    commands::{Addr, BytesWrap},
+    eeprom,
+};
 use tokio_stream::wrappers::BroadcastStream;
 use tower::{Service, ServiceBuilder};
 
@@ -85,6 +89,28 @@ impl Client {
             .await?
             .into_float_view()
             .err_into()
+    }
+
+    pub async fn write_memory(&self, addr: u16, data: &[u8]) -> Result<(), MiniDSPError> {
+        self.roundtrip(Commands::WriteMemory {
+            addr,
+            data: BytesWrap(Bytes::copy_from_slice(data)),
+        })
+        .await?
+        .into_ack()
+        .err_into()
+    }
+
+    pub async fn write_u8(&self, addr: u16, data: u8) -> Result<(), MiniDSPError> {
+        self.write_memory(addr, &[data]).await
+    }
+
+    pub async fn write_u16(&self, addr: u16, data: u16) -> Result<(), MiniDSPError> {
+        self.write_memory(addr, &data.to_be_bytes()).await
+    }
+
+    pub async fn write_u32(&self, addr: u16, data: u32) -> Result<(), MiniDSPError> {
+        self.write_memory(addr, &data.to_be_bytes()).await
     }
 
     /// Writes data to the dsp memory area

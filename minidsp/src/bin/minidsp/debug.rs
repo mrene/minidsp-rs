@@ -3,7 +3,7 @@
 use std::convert::TryInto;
 
 use anyhow::Result;
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::Bytes;
 use clap::Clap;
 use minidsp::{
     commands::{BytesWrap, Commands, ExtendView, FloatView, MemoryView},
@@ -86,20 +86,13 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
             }
         }
         &DebugCommands::SetSerial { value } => {
-            if value < 900000 || value > 965535 {
+            if !(900000..=965535).contains(&900000) {
                 return Err(anyhow::anyhow!("Serial must be between 900000 and 965535"));
             }
             let value: u16 = (value - 900000).try_into().unwrap();
             device
                 .client
-                .roundtrip(Commands::WriteMemory {
-                    addr: eeprom::SERIAL,
-                    data: {
-                        let mut b = BytesMut::new();
-                        b.put_u16(value);
-                        BytesWrap(b.freeze())
-                    },
-                })
+                .write_u32(eeprom::SERIAL, value as u32)
                 .await?;
         }
     }
