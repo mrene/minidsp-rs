@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::DeviceInfo;
-use crate::{eeprom, packet::ParseError, MasterStatus};
+use crate::{eeprom, packet::ParseError, util::TryBuf, util::TryBufError, MasterStatus};
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;
@@ -41,6 +41,9 @@ pub enum ProtocolError {
         error("the received hardware id was malformed or empty")
     )]
     MalformedHardwareId,
+
+    #[cfg_attr(feature = "debug", error("parse error: {0}"))]
+    DecodeError(#[from] TryBufError),
 }
 
 #[derive(Clone)]
@@ -96,14 +99,14 @@ impl Value {
         }
     }
 
-    pub fn from_bytes(mut b: Bytes) -> Self {
-        if b.len() < 4 {
+    pub fn from_bytes(mut b: Bytes) -> Result<Self, TryBufError> {
+        Ok(if b.len() < 4 {
             Value::Unknown(b)
         } else if (b[0] != 0 || b[1] != 0) && (b[2] == 0 && b[3] == 0) {
-            Value::Int(b.get_u16_le())
+            Value::Int(b.try_get_u16_le()?)
         } else {
-            Value::Float(b.get_f32_le())
-        }
+            Value::Float(b.try_get_f32_le()?)
+        })
     }
 }
 
@@ -150,7 +153,7 @@ impl Addr {
         Self { val, len }
     }
 
-    pub fn read(buf: &mut Bytes, len: u8) -> Self {
+    pub fn read(buf: &mut Bytes, len: u8) -> Result<Self, TryBufError> {
         match len {
             1 => Self::read_u8(buf),
             2 => Self::read_u16(buf),
@@ -158,18 +161,18 @@ impl Addr {
         }
     }
 
-    pub fn read_u8(buf: &mut Bytes) -> Self {
-        Self {
-            val: buf.get_u8() as u16,
+    pub fn read_u8(buf: &mut Bytes) -> Result<Self, TryBufError> {
+        Ok(Self {
+            val: buf.try_get_u8()? as u16,
             len: 1,
-        }
+        })
     }
 
-    pub fn read_u16(buf: &mut Bytes) -> Self {
-        Self {
-            val: buf.get_u16(),
+    pub fn read_u16(buf: &mut Bytes) -> Result<Self, TryBufError> {
+        Ok(Self {
+            val: buf.try_get_u16()?,
             len: 2,
-        }
+        })
     }
 
     pub fn write(&self, buf: &mut BytesMut) {
@@ -298,84 +301,84 @@ pub enum Commands {
 
 impl Commands {
     pub fn from_bytes(mut frame: Bytes) -> Result<Commands, ProtocolError> {
-        Ok(match frame.get_u8() {
+        Ok(match frame.try_get_u8()? {
             0x04 => Commands::WriteMemory {
-                addr: frame.get_u16(),
+                addr: frame.try_get_u16()?,
                 data: BytesWrap(frame),
             },
             0x05 => Commands::ReadMemory {
-                addr: frame.get_u16(),
-                size: frame.get_u8(),
+                addr: frame.try_get_u16()?,
+                size: frame.try_get_u8()?,
             },
             0x06 => Commands::BulkLoadFilterData {
                 payload: BytesWrap(frame),
             },
             0x07 => Commands::Unk07 {
-                payload: frame.get_u8(),
+                payload: frame.try_get_u8()?,
             },
             0x12 => Commands::BulkLoad {
                 payload: BytesWrap(frame),
             },
             0x13 => {
-                frame.get_u8(); // discard 0x80
+                frame.try_get_u8()?; // discard 0x80
                 let len = if frame.len() >= 6 { 2 } else { 1 };
                 Commands::Write {
-                    addr: Addr::read(&mut frame, len),
-                    value: Value::from_bytes(frame),
+                    addr: Addr::read(&mut frame, len)?,
+                    value: Value::from_bytes(frame)?,
                 }
             }
             0x14 => Commands::ReadFloats {
-                addr: frame.get_u16(),
-                len: frame.get_u8(),
+                addr: frame.try_get_u16()?,
+                len: frame.try_get_u8()?,
             },
             0x17 => Commands::SetMute {
-                value: frame.get_u8() != 0,
+                value: frame.try_get_u8()? != 0,
             },
             0x19 => {
                 let len = if frame.len() > 3 { 2 } else { 1 };
                 Commands::WriteBiquadBypass {
-                    value: frame.get_u8() == 0x80,
-                    addr: Addr::read(&mut frame, len),
+                    value: frame.try_get_u8()? == 0x80,
+                    addr: Addr::read(&mut frame, len)?,
                 }
             }
             0x25 => Commands::SetConfig {
-                config: frame.get_u8(),
-                reset: frame.get_u8() != 0,
+                config: frame.try_get_u8()?,
+                reset: frame.try_get_u8()? != 0,
             },
             0x31 => Commands::ReadHardwareId {},
             0x30 => Commands::WriteBiquad {
                 addr: {
-                    frame.get_u8(); // discard 0x80
-                    Addr::read_u16(&mut frame)
+                    frame.try_get_u8()?; // discard 0x80
+                    Addr::read_u16(&mut frame)?
                 },
                 data: {
-                    frame.get_u16(); // discard 0x0000;
+                    frame.try_get_u16()?; // discard 0x0000;
                     let mut data: [f32; 5] = Default::default();
                     for f in data.iter_mut() {
-                        *f = frame.get_f32_le();
+                        *f = frame.try_get_f32_le()?;
                     }
                     data
                 },
             },
             0x34 => Commands::SetSource {
-                source: frame.get_u8(),
+                source: frame.try_get_u8()?,
             },
             0x39 => Commands::FirLoadStart {
-                index: frame.get_u8(),
+                index: frame.try_get_u8()?,
             },
             0x3a => Commands::FirLoadData {
-                index: frame.get_u8(),
+                index: frame.try_get_u8()?,
                 data: {
                     let mut data = Vec::with_capacity(15);
                     while frame.len() > 4 {
-                        data.push(frame.get_f32_le());
+                        data.push(frame.try_get_f32_le()?);
                     }
                     data
                 },
             },
             0x3b => Commands::FirLoadEnd,
             0x42 => Commands::SetVolume {
-                value: frame.get_u8().into(),
+                value: frame.try_get_u8()?.into(),
             },
             cmd_id => Commands::Unknown {
                 cmd_id,
@@ -565,18 +568,18 @@ impl Responses {
         }
 
         Ok(match frame[0] {
-            0x05 => Responses::MemoryData(MemoryView::from_packet(frame)),
-            0x14 => Responses::FloatData(FloatView::from_packet(frame)),
+            0x05 => Responses::MemoryData(MemoryView::from_packet(frame)?),
+            0x14 => Responses::FloatData(FloatView::from_packet(frame)?),
             0x31 => Responses::HardwareId {
                 payload: {
-                    frame.get_u8();
+                    frame.try_get_u8()?;
                     BytesWrap(frame)
                 },
             },
             0x39 => Responses::FirLoadSize {
                 size: {
-                    frame.get_u8(); // Consume command id
-                    frame.get_u16()
+                    frame.try_get_u8()?; // Consume command id
+                    frame.try_get_u16()?
                 },
             },
             0xab => Responses::ConfigChanged,
@@ -700,8 +703,8 @@ impl Responses {
 }
 
 /// Parsable response type
-pub trait UnaryResponse {
-    fn from_packet(packet: Bytes) -> Self;
+pub trait UnaryResponse: Sized {
+    fn from_packet(packet: Bytes) -> Result<Self, ProtocolError>;
 }
 
 #[derive(Copy, Clone, PartialEq, Default)]
@@ -777,16 +780,16 @@ impl ExtendView for FloatView {
 }
 
 impl UnaryResponse for FloatView {
-    fn from_packet(mut packet: Bytes) -> Self {
-        packet.get_u8(); // Discard command id 0x14
-        let base = packet.get_u16();
+    fn from_packet(mut packet: Bytes) -> Result<Self, ProtocolError> {
+        packet.try_get_u8()?; // Discard command id 0x14
+        let base = packet.try_get_u16()?;
         let data = packet
             .chunks_exact(4)
             .map(|x| x.try_into().unwrap())
             .map(f32::from_le_bytes)
             .collect();
 
-        FloatView { base, data }
+        Ok(FloatView { base, data })
     }
 }
 
@@ -824,11 +827,11 @@ impl MemoryView {
 }
 
 impl UnaryResponse for MemoryView {
-    fn from_packet(mut packet: Bytes) -> Self {
-        packet.get_u8(); // Discard command id 0x5
-        let base = packet.get_u16();
+    fn from_packet(mut packet: Bytes) -> Result<Self, ProtocolError> {
+        packet.try_get_u8()?; // Discard command id 0x5
+        let base = packet.try_get_u16()?;
 
-        MemoryView { base, data: packet }
+        Ok(MemoryView { base, data: packet })
     }
 }
 

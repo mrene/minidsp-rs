@@ -10,6 +10,8 @@
 
 extern crate alloc;
 
+mod util;
+
 pub mod commands;
 pub use commands::{Commands, FromMemory};
 
