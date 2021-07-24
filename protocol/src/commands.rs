@@ -568,18 +568,18 @@ impl Responses {
         }
 
         Ok(match frame[0] {
-            0x05 => Responses::MemoryData(MemoryView::from_packet(frame)),
-            0x14 => Responses::FloatData(FloatView::from_packet(frame)),
+            0x05 => Responses::MemoryData(MemoryView::from_packet(frame)?),
+            0x14 => Responses::FloatData(FloatView::from_packet(frame)?),
             0x31 => Responses::HardwareId {
                 payload: {
-                    frame.get_u8();
+                    frame.try_get_u8()?;
                     BytesWrap(frame)
                 },
             },
             0x39 => Responses::FirLoadSize {
                 size: {
-                    frame.get_u8(); // Consume command id
-                    frame.get_u16()
+                    frame.try_get_u8()?; // Consume command id
+                    frame.try_get_u16()?
                 },
             },
             0xab => Responses::ConfigChanged,
@@ -703,8 +703,8 @@ impl Responses {
 }
 
 /// Parsable response type
-pub trait UnaryResponse {
-    fn from_packet(packet: Bytes) -> Self;
+pub trait UnaryResponse: Sized {
+    fn from_packet(packet: Bytes) -> Result<Self, ProtocolError>;
 }
 
 #[derive(Copy, Clone, PartialEq, Default)]
@@ -780,16 +780,16 @@ impl ExtendView for FloatView {
 }
 
 impl UnaryResponse for FloatView {
-    fn from_packet(mut packet: Bytes) -> Self {
-        packet.get_u8(); // Discard command id 0x14
-        let base = packet.get_u16();
+    fn from_packet(mut packet: Bytes) -> Result<Self, ProtocolError> {
+        packet.try_get_u8()?; // Discard command id 0x14
+        let base = packet.try_get_u16()?;
         let data = packet
             .chunks_exact(4)
             .map(|x| x.try_into().unwrap())
             .map(f32::from_le_bytes)
             .collect();
 
-        FloatView { base, data }
+        Ok(FloatView { base, data })
     }
 }
 
@@ -827,11 +827,11 @@ impl MemoryView {
 }
 
 impl UnaryResponse for MemoryView {
-    fn from_packet(mut packet: Bytes) -> Self {
-        packet.get_u8(); // Discard command id 0x5
-        let base = packet.get_u16();
+    fn from_packet(mut packet: Bytes) -> Result<Self, ProtocolError> {
+        packet.try_get_u8()?; // Discard command id 0x5
+        let base = packet.try_get_u16()?;
 
-        MemoryView { base, data: packet }
+        Ok(MemoryView { base, data: packet })
     }
 }
 
