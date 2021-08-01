@@ -63,7 +63,7 @@ fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStrea
 }
 
 pub fn generate_static_config(symbol_map: &mut SymbolMap, spec: &spec::Device) -> TokenStream {
-    let symbols = generate_symbols(&symbol_map);
+    let symbols = generate_symbols(symbol_map);
     let device = spec.to_symbol_tokens(|s| resolve_symbol(symbol_map, s));
 
     quote! {

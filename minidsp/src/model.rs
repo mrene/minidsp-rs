@@ -147,7 +147,7 @@ impl Config {
     pub async fn apply(&self, dsp: &MiniDSP<'_>) -> Result<(), MiniDSPError> {
         // Always set master status first, since it might change the current active preset
         if let Some(master_status) = &self.master_status {
-            master_status.apply(&dsp).await?;
+            master_status.apply(dsp).await?;
         }
 
         for input in &self.inputs {
