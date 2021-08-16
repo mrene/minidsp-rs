@@ -6,7 +6,7 @@ version = "0.1.2"
 license = "Apache-2.0"
 
 [dependencies]
-anyhow = "1.0.41"
+anyhow = "1.0.43"
 bytes = "1.0.1"
 schemars = {version = "0.8.3", optional = true}
 serde = {version = "1.0.126", features = ["derive"], optional = true}
