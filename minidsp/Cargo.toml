@@ -29,7 +29,7 @@ minidsp-protocol = {path = "../protocol", default-features = false, features = [
 pin-project = "1.0.8"
 schemars = "0.8.3"
 serde = {version = "1.0.130", features = ["derive"]}
-serde_json = "1.0.64"
+serde_json = "1.0.68"
 shellwords = "1.1.0"
 strong-xml = "0.6.3"
 strum = {version = "0.21.0", features = ["derive"]}
