@@ -522,14 +522,14 @@ dependencies = [
 
 [[package]]
 name = "hyper-tungstenite"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bd29c3bffc64a135f9edb3f52604e7f44e767b8ddb2f3a3e4e80a5319649b37"
+checksum = "a4250e8622b0eb137e6e46673c706b71159356fe4ac61ee6d3e8330e4388e2cd"
 dependencies = [
  "hyper",
  "pin-project",
  "tokio",
- "tokio-tungstenite",
+ "tokio-tungstenite 0.15.0",
 ]
 
 [[package]]
@@ -654,7 +654,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
- "tokio-tungstenite",
+ "tokio-tungstenite 0.14.0",
  "tokio-util",
  "tower",
  "url2",
@@ -694,7 +694,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-util",
- "tungstenite",
+ "tungstenite 0.13.0",
  "url2",
 ]
 
@@ -1437,7 +1437,20 @@ dependencies = [
  "log",
  "pin-project",
  "tokio",
- "tungstenite",
+ "tungstenite 0.13.0",
+]
+
+[[package]]
+name = "tokio-tungstenite"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "511de3f85caf1c98983545490c3d09685fa8eb634e57eec22bb4db271f46cbd8"
+dependencies = [
+ "futures-util",
+ "log",
+ "pin-project",
+ "tokio",
+ "tungstenite 0.14.0",
 ]
 
 [[package]]
@@ -1543,6 +1556,25 @@ dependencies = [
  "input_buffer",
  "log",
  "native-tls",
+ "rand",
+ "sha-1",
+ "thiserror",
+ "url",
+ "utf-8",
+]
+
+[[package]]
+name = "tungstenite"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0b2d8558abd2e276b0a8df5c05a2ec762609344191e5fd23e292c910e9165b5"
+dependencies = [
+ "base64",
+ "byteorder",
+ "bytes",
+ "http",
+ "httparse",
+ "log",
  "rand",
  "sha-1",
  "thiserror",
