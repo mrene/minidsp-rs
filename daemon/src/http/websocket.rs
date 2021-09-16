@@ -1,9 +1,11 @@
 use anyhow::Context;
 use bytes::Bytes;
 use futures::StreamExt;
-use hyper_tungstenite::HyperWebsocket;
+use hyper_tungstenite::{
+    tungstenite::{self, Message},
+    HyperWebsocket,
+};
 use minidsp::{transport::Hub, MiniDSPError};
-use tungstenite::Message;
 
 /// Bridges frames between a websocket connection and a transport hub
 /// The connection is closed as soon as a transport error occurs
