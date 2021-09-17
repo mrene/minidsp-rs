@@ -1,4 +1,5 @@
 pub mod decoder;
+#[cfg(feature = "mock")]
 pub mod mock_device;
 pub mod recorder;
 
