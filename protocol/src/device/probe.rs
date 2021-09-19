@@ -27,6 +27,8 @@ pub enum DeviceKind {
     Shd,
     #[cfg(feature = "device_ddrc24")]
     DDRC24,
+    #[cfg(feature = "device_ddrc88bm")]
+    DDRC88BM,
     #[cfg(feature = "device_nanodigi2x8")]
     Nanodigi2x8,
 }
@@ -53,6 +55,8 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         (10, 100) => M2x4Hd,
         #[cfg(feature = "device_ddrc24")]
         (10, 101) => DDRC24,
+        #[cfg(feature = "device_ddrc88bm")]
+        (6, 95) => DDRC88BM,
         #[cfg(feature = "device_shd")]
         (14, _) => Shd,
         #[cfg(feature = "device_nanodigi2x8")]
@@ -77,6 +81,9 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_ddrc24")]
         DDRC24 => &super::ddrc24::DEVICE,
+
+        #[cfg(feature = "device_ddrc88bm")]
+        DDRC88BM => &super::ddrc88bm::DEVICE,
 
         #[cfg(feature = "device_shd")]
         Shd => &super::shd::DEVICE,

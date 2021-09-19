@@ -23,6 +23,9 @@ pub mod shd;
 #[cfg(feature = "device_ddrc24")]
 pub mod ddrc24;
 
+#[cfg(feature = "device_ddrc88bm")]
+pub mod ddrc88bm;
+
 #[cfg(feature = "device_nanodigi2x8")]
 pub mod nanodigi2x8;
 
