@@ -31,6 +31,8 @@ pub enum DeviceKind {
     DDRC88BM,
     #[cfg(feature = "device_nanodigi2x8")]
     Nanodigi2x8,
+    #[cfg(feature = "device_c8x12v2")]
+    C8x12v2,
 }
 
 impl Default for DeviceKind {
@@ -61,6 +63,8 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         (14, _) => Shd,
         #[cfg(feature = "device_nanodigi2x8")]
         (9, 54) => Nanodigi2x8,
+        #[cfg(feature = "device_c8x12v2")]
+        (11, 97) => C8x12v2,
         _ => Generic,
     }
 }
@@ -90,5 +94,8 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_nanodigi2x8")]
         Nanodigi2x8 => &super::nanodigi2x8::DEVICE,
+
+        #[cfg(feature = "device_c8x12v2")]
+        C8x12v2 => &super::c8x12v2::DEVICE,
     }
 }

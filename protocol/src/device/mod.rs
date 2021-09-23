@@ -29,6 +29,9 @@ pub mod ddrc88bm;
 #[cfg(feature = "device_nanodigi2x8")]
 pub mod nanodigi2x8;
 
+#[cfg(feature = "device_c8x12v2")]
+pub mod c8x12v2;
+
 pub static GENERIC: Device = Device {
     product_name: "Generic",
     sources: &[],
