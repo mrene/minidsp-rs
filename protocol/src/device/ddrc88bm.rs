@@ -1106,6 +1106,22 @@ pub const DEVICE: Device = Device {
                     enable: BM_MIXER_1_4_STATUS,
                     gain: BM_MIXER_1_4,
                 },
+                Gate {
+                    enable: BM_MIXER_1_5_STATUS,
+                    gain: BM_MIXER_1_5,
+                },
+                Gate {
+                    enable: BM_MIXER_1_6_STATUS,
+                    gain: BM_MIXER_1_6,
+                },
+                Gate {
+                    enable: BM_MIXER_1_7_STATUS,
+                    gain: BM_MIXER_1_7,
+                },
+                Gate {
+                    enable: BM_MIXER_1_8_STATUS,
+                    gain: BM_MIXER_1_8,
+                },
             ],
             peq: &[],
         },
@@ -1128,6 +1144,22 @@ pub const DEVICE: Device = Device {
                 Gate {
                     enable: BM_MIXER_2_4_STATUS,
                     gain: BM_MIXER_2_4,
+                },
+                Gate {
+                    enable: BM_MIXER_2_5_STATUS,
+                    gain: BM_MIXER_2_5,
+                },
+                Gate {
+                    enable: BM_MIXER_2_6_STATUS,
+                    gain: BM_MIXER_2_6,
+                },
+                Gate {
+                    enable: BM_MIXER_2_7_STATUS,
+                    gain: BM_MIXER_2_7,
+                },
+                Gate {
+                    enable: BM_MIXER_2_8_STATUS,
+                    gain: BM_MIXER_2_8,
                 },
             ],
             peq: &[],
@@ -1152,6 +1184,22 @@ pub const DEVICE: Device = Device {
                     enable: BM_MIXER_3_4_STATUS,
                     gain: BM_MIXER_3_4,
                 },
+                Gate {
+                    enable: BM_MIXER_3_5_STATUS,
+                    gain: BM_MIXER_3_5,
+                },
+                Gate {
+                    enable: BM_MIXER_3_6_STATUS,
+                    gain: BM_MIXER_3_6,
+                },
+                Gate {
+                    enable: BM_MIXER_3_7_STATUS,
+                    gain: BM_MIXER_3_7,
+                },
+                Gate {
+                    enable: BM_MIXER_3_8_STATUS,
+                    gain: BM_MIXER_3_8,
+                },
             ],
             peq: &[],
         },
@@ -1174,6 +1222,22 @@ pub const DEVICE: Device = Device {
                 Gate {
                     enable: BM_MIXER_4_4_STATUS,
                     gain: BM_MIXER_4_4,
+                },
+                Gate {
+                    enable: BM_MIXER_4_5_STATUS,
+                    gain: BM_MIXER_4_5,
+                },
+                Gate {
+                    enable: BM_MIXER_4_6_STATUS,
+                    gain: BM_MIXER_4_6,
+                },
+                Gate {
+                    enable: BM_MIXER_4_7_STATUS,
+                    gain: BM_MIXER_4_7,
+                },
+                Gate {
+                    enable: BM_MIXER_4_8_STATUS,
+                    gain: BM_MIXER_4_8,
                 },
             ],
             peq: &[],
@@ -1198,6 +1262,22 @@ pub const DEVICE: Device = Device {
                     enable: BM_MIXER_5_4_STATUS,
                     gain: BM_MIXER_5_4,
                 },
+                Gate {
+                    enable: BM_MIXER_5_5_STATUS,
+                    gain: BM_MIXER_5_5,
+                },
+                Gate {
+                    enable: BM_MIXER_5_6_STATUS,
+                    gain: BM_MIXER_5_6,
+                },
+                Gate {
+                    enable: BM_MIXER_5_7_STATUS,
+                    gain: BM_MIXER_5_7,
+                },
+                Gate {
+                    enable: BM_MIXER_5_8_STATUS,
+                    gain: BM_MIXER_5_8,
+                },
             ],
             peq: &[],
         },
@@ -1220,6 +1300,22 @@ pub const DEVICE: Device = Device {
                 Gate {
                     enable: BM_MIXER_6_4_STATUS,
                     gain: BM_MIXER_6_4,
+                },
+                Gate {
+                    enable: BM_MIXER_6_5_STATUS,
+                    gain: BM_MIXER_6_5,
+                },
+                Gate {
+                    enable: BM_MIXER_6_6_STATUS,
+                    gain: BM_MIXER_6_6,
+                },
+                Gate {
+                    enable: BM_MIXER_6_7_STATUS,
+                    gain: BM_MIXER_6_7,
+                },
+                Gate {
+                    enable: BM_MIXER_6_8_STATUS,
+                    gain: BM_MIXER_6_8,
                 },
             ],
             peq: &[],
@@ -1244,6 +1340,22 @@ pub const DEVICE: Device = Device {
                     enable: BM_MIXER_7_4_STATUS,
                     gain: BM_MIXER_7_4,
                 },
+                Gate {
+                    enable: BM_MIXER_7_5_STATUS,
+                    gain: BM_MIXER_7_5,
+                },
+                Gate {
+                    enable: BM_MIXER_7_6_STATUS,
+                    gain: BM_MIXER_7_6,
+                },
+                Gate {
+                    enable: BM_MIXER_7_7_STATUS,
+                    gain: BM_MIXER_7_7,
+                },
+                Gate {
+                    enable: BM_MIXER_7_8_STATUS,
+                    gain: BM_MIXER_7_8,
+                },
             ],
             peq: &[],
         },
@@ -1266,6 +1378,22 @@ pub const DEVICE: Device = Device {
                 Gate {
                     enable: BM_MIXER_8_4_STATUS,
                     gain: BM_MIXER_8_4,
+                },
+                Gate {
+                    enable: BM_MIXER_8_5_STATUS,
+                    gain: BM_MIXER_8_5,
+                },
+                Gate {
+                    enable: BM_MIXER_8_6_STATUS,
+                    gain: BM_MIXER_8_6,
+                },
+                Gate {
+                    enable: BM_MIXER_8_7_STATUS,
+                    gain: BM_MIXER_8_7,
+                },
+                Gate {
+                    enable: BM_MIXER_8_8_STATUS,
+                    gain: BM_MIXER_8_8,
                 },
             ],
             peq: &[],
@@ -1475,6 +1603,7 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 0,
     internal_sampling_rate: 48000,
+    delay_mode: DelayMode::Samples,
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

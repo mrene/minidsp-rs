@@ -1,3 +1,5 @@
+use minidsp::device::DelayMode;
+
 /// Defines how the high level api should interact with the device based on its memory layout
 #[derive(Debug)]
 pub struct Device {
@@ -13,6 +15,8 @@ pub struct Device {
     pub fir_max_taps: u16,
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
+    /// Whether the device accepts delay values in samples or in 0.01ms increments
+    pub delay_mode: DelayMode,
 }
 
 /// Defines an input channel and its features

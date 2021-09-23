@@ -36,6 +36,7 @@ pub static GENERIC: Device = Device {
     outputs: &[],
     fir_max_taps: 0,
     internal_sampling_rate: 0,
+    delay_mode: DelayMode::TenNanoseconds,
     #[cfg(feature = "symbols")]
     symbols: &[],
 };
@@ -55,6 +56,8 @@ pub struct Device {
     pub fir_max_taps: u16,
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
+    /// Whether the device accepts delay values in samples or in 0.01ms increments
+    pub delay_mode: DelayMode,
     // A mapping of all symbols by name, as defined in the xml config
     #[cfg(feature = "symbols")]
     pub symbols: &'static [(&'static str, u16)],
@@ -132,4 +135,19 @@ pub struct Fir {
 
     /// Maximum supported coefficients
     pub max_coefficients: u16,
+}
+
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum DelayMode {
+    /// Delay values are in 0.01ms increments
+    TenNanoseconds,
+
+    /// Delay values are in samples, based on the device's internal sampling rate
+    Samples,
+}
+
+impl Default for DelayMode {
+    fn default() -> Self {
+        DelayMode::TenNanoseconds
+    }
 }

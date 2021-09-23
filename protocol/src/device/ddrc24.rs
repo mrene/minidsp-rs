@@ -437,6 +437,7 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 0,
     internal_sampling_rate: 96000,
+    delay_mode: DelayMode::TenNanoseconds,
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

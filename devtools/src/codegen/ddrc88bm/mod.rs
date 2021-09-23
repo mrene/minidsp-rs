@@ -1,5 +1,5 @@
 use bimap::BiHashMap;
-use minidsp::formats::xml_config::Setting;
+use minidsp::{device::DelayMode, formats::xml_config::Setting};
 use strong_xml::XmlRead;
 
 use super::spec::*;
@@ -73,6 +73,7 @@ pub fn device() -> Device {
         outputs: (0..8).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 48000,
+        delay_mode: DelayMode::Samples,
     }
 }
 

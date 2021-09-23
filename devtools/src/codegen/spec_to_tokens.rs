@@ -1,3 +1,4 @@
+use minidsp::device::DelayMode;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::quote;
 
@@ -24,6 +25,7 @@ impl ToSymbolTokens for Device {
             .map(|name| Ident::new(name, Span::call_site()));
         let fir_max_taps = Literal::usize_unsuffixed(self.fir_max_taps as usize);
         let internal_sampling_rate = Literal::u32_unsuffixed(self.internal_sampling_rate);
+        let delay_mode = self.delay_mode.to_symbol_tokens(|s| resolve(s));
         resolve_sym!(self, resolve, inputs, outputs);
 
         quote! {
@@ -34,6 +36,7 @@ impl ToSymbolTokens for Device {
                 outputs: #outputs,
                 fir_max_taps: #fir_max_taps,
                 internal_sampling_rate: #internal_sampling_rate,
+                delay_mode: #delay_mode,
                 #[cfg(feature="symbols")]
                 symbols: SYMBOLS,
             };
@@ -174,6 +177,15 @@ impl ToSymbolTokens for Fir {
                 num_coefficients: #num_coefficients,
                 max_coefficients: #max_coefficients,
             }
+        }
+    }
+}
+
+impl ToSymbolTokens for DelayMode {
+    fn to_symbol_tokens<F: FnMut(&str) -> TokenStream>(&self, _resolve: F) -> TokenStream {
+        match self {
+            DelayMode::TenNanoseconds => quote! { DelayMode::TenNanoseconds },
+            DelayMode::Samples => quote! { DelayMode::Samples },
         }
     }
 }

@@ -1,5 +1,5 @@
 use bimap::BiHashMap;
-use minidsp::formats::xml_config::Setting;
+use minidsp::{device::DelayMode, formats::xml_config::Setting};
 use strong_xml::XmlRead;
 
 use super::spec::*;
@@ -27,6 +27,7 @@ pub fn device() -> Device {
         outputs: Vec::new(),
         fir_max_taps: 0,
         internal_sampling_rate: 0,
+        delay_mode: DelayMode::TenNanoseconds,
     }
 }
 

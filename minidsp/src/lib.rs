@@ -62,6 +62,7 @@ use async_trait::async_trait;
 use client::Client;
 use futures::{Stream, StreamExt};
 use minidsp_protocol::commands::Addr;
+use minidsp_protocol::device::DelayMode;
 pub use minidsp_protocol::{eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
@@ -354,15 +355,32 @@ impl<'a> Output<'a> {
 
     /// Sets the output delay setting
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
-        // Each delay increment is 0.010 ms
-        // let value = value / Duration::from_micros(10);
-        let value = value.as_micros() / 10;
-        if value > 80 {
-            return Err(MiniDSPError::InternalError(anyhow!(
-                "Delay should be within [0, 80], was {:?}",
-                value
-            )));
-        }
+        let value = match self.dsp.device.delay_mode {
+            DelayMode::TenNanoseconds => {
+                // Each delay increment is 0.010 ms
+                let value = value.as_micros() / 10;
+                if value > 80 {
+                    return Err(MiniDSPError::InternalError(anyhow!(
+                        "Delay should be within [0, 80], was {:?}",
+                        value
+                    )));
+                }
+                value as u16
+            }
+            DelayMode::Samples => {
+                // Convert the duration into a number of samples based on the device's sampling rate
+                let value =
+                    value.as_micros() * self.dsp.device.internal_sampling_rate as u128 / 1_000_000;
+                if value > u16::MAX as u128 {
+                    return Err(MiniDSPError::InternalError(anyhow!(
+                        "Delay should be within [0, {}], was {:?}",
+                        u16::MAX,
+                        value
+                    )));
+                }
+                value as u16
+            }
+        };
 
         let value = value as u16;
         self.dsp.client.write_dsp(self.spec.delay_addr, value).await

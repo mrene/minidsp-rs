@@ -1,5 +1,5 @@
 use bimap::BiHashMap;
-use minidsp::formats::xml_config::Setting;
+use minidsp::{device::DelayMode, formats::xml_config::Setting};
 use strong_xml::XmlRead;
 
 use super::spec::*;
@@ -84,6 +84,8 @@ pub fn device() -> Device {
 
         // FIXME: This depends on the installed plugin
         internal_sampling_rate: 96000,
+
+        delay_mode: DelayMode::TenNanoseconds,
     }
 }
 
