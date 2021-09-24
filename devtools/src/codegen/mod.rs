@@ -1,5 +1,6 @@
 //! Code to generate device definitions
 
+pub mod c8x12v2;
 pub mod ddrc24;
 pub mod ddrc88bm;
 pub mod m2x4hd;
