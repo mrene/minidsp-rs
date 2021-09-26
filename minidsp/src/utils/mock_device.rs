@@ -12,7 +12,7 @@ use minidsp_protocol::{
 pub struct MockDevice {
     pub hw_id: u8,
     pub dsp_version: u8,
-    pub firmware_version: u8,
+    pub firmware_version: (u8, u8),
 
     /// Emulated device kind
     pub kind: DeviceKind,
@@ -36,7 +36,7 @@ impl Default for MockDevice {
             // FIXME: hardcoded values for the 2x4hd
             hw_id: 10,
             dsp_version: 100,
-            firmware_version: 13,
+            firmware_version: (1, 13),
 
             kind: DeviceKind::default(),
             spec: &crate::device::m2x4hd::DEVICE,
@@ -125,8 +125,8 @@ impl MockDevice {
             Commands::ReadHardwareId => Responses::HardwareId {
                 payload: {
                     let mut b = BytesMut::new();
-                    b.put_u8(0x1);
-                    b.put_u8(self.firmware_version);
+                    b.put_u8(self.firmware_version.0);
+                    b.put_u8(self.firmware_version.1);
                     b.put_u8(self.hw_id);
                     BytesWrap(b.freeze())
                 },

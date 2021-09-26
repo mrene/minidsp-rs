@@ -2,7 +2,7 @@ use std::{fmt::Debug, sync::Arc};
 
 use bytes::Bytes;
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
-use minidsp_protocol::{commands::Responses, packet, Commands};
+use minidsp_protocol::{commands::Responses, device::probe_kind, packet, Commands, DeviceInfo};
 use tokio::sync::Mutex;
 use url2::Url2;
 
@@ -22,12 +22,14 @@ pub struct MockTransport {
 }
 
 impl MockTransport {
-    pub fn new() -> Self {
-        let device: Arc<Mutex<MockDevice>> = Arc::new(Mutex::new(MockDevice::new(
-            10,
-            100,
-            minidsp_protocol::device::DeviceKind::M2x4Hd,
-        )));
+    pub fn new(hw_id: u8, dsp_version: u8) -> Self {
+        let kind = probe_kind(&DeviceInfo {
+            dsp_version,
+            hw_id,
+            serial: 0,
+        });
+        let device: Arc<Mutex<MockDevice>> =
+            Arc::new(Mutex::new(MockDevice::new(hw_id, dsp_version, kind)));
         let (commands_tx, commands_rx) = mpsc::unbounded::<Commands>();
         let (responses_tx, responses_rx) = mpsc::unbounded::<Responses>();
         let task = tokio::spawn(Self::task(device.clone(), commands_rx, responses_tx)).into();
@@ -71,12 +73,20 @@ impl MockTransport {
 
 impl Default for MockTransport {
     fn default() -> Self {
-        Self::new()
+        Self::new(10, 100)
     }
 }
 
 pub fn open_url(url: &Url2) -> Transport {
-    let mock = MockTransport::new();
+    let (mut hw_id, mut dsp_version) = (10, 100);
+    for (key, value) in url.query_pairs() {
+        if key == "hw_id" {
+            hw_id = value.parse().unwrap();
+        } else if key == "dsp_version" {
+            dsp_version = value.parse().unwrap()
+        }
+    }
+    let mock = MockTransport::new(hw_id, dsp_version);
 
     let mut device = mock.device.try_lock().unwrap();
     for (key, value) in url.query_pairs() {
@@ -87,6 +97,13 @@ pub fn open_url(url: &Url2) -> Transport {
             device.set_serial(value.parse().unwrap());
         } else if key == "timestamp" {
             device.set_timestamp(value.parse().unwrap());
+        } else if key == "firmware_version" {
+            let parts = value.split(".").collect::<Vec<_>>();
+            if parts.len() < 2 {
+                panic!("invalid firmware version, use format 1.13")
+            }
+            let firmware_version = (parts[0].parse().unwrap(), parts[1].parse().unwrap());
+            device.firmware_version = firmware_version;
         }
     }
     drop(device);
