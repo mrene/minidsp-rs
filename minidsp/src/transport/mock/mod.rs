@@ -1,13 +1,19 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, sync::Arc, time::Duration};
 
-use bytes::Bytes;
+use bytes::{Buf, Bytes};
 use futures::{channel::mpsc, pin_mut, Sink, SinkExt, Stream, StreamExt};
-use minidsp_protocol::{commands::Responses, device::probe_kind, packet, Commands, DeviceInfo};
+use minidsp_protocol::{
+    commands::{BytesWrap, Responses},
+    device::probe_kind,
+    packet, Commands, DeviceInfo,
+};
+use strong_xml::XmlRead;
 use tokio::sync::Mutex;
 use url2::Url2;
 
 use super::Transport;
 use crate::{
+    formats::xml_config::Setting,
     utils::{mock_device::MockDevice, Combine, OwnedJoinHandle},
     MiniDSPError,
 };
@@ -37,7 +43,20 @@ impl MockTransport {
         let commands_tx = commands_tx
             .sink_map_err(|_| MiniDSPError::TransportClosed)
             .with(|cmd| async move {
-                Ok::<_, MiniDSPError>(Commands::from_bytes(packet::unframe(cmd).unwrap()).unwrap())
+                let mut unframed = packet::unframe(cmd).unwrap();
+                let cmd = Commands::from_bytes(unframed.clone());
+                let cmd = match cmd {
+                    Ok(c) => c,
+                    Err(e) => {
+                        log::error!("Command decode error: {:?}", e);
+                        Commands::Unknown {
+                            cmd_id: unframed.get_u8(),
+                            payload: BytesWrap(unframed),
+                        }
+                    }
+                };
+
+                Ok::<_, MiniDSPError>(cmd)
             });
 
         let responses_rx =
@@ -92,7 +111,7 @@ pub fn open_url(url: &Url2) -> Transport {
     for (key, value) in url.query_pairs() {
         if key == "response_delay" {
             let value = value.parse().unwrap();
-            device.response_delay = Some(std::time::Duration::from_millis(value));
+            device.response_delay = Some(Duration::from_millis(value));
         } else if key == "serial" {
             device.set_serial(value.parse().unwrap());
         } else if key == "timestamp" {
@@ -106,6 +125,7 @@ pub fn open_url(url: &Url2) -> Transport {
             device.firmware_version = firmware_version;
         }
     }
+
     drop(device);
 
     Box::pin(mock)

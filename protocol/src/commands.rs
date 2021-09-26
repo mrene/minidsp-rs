@@ -19,7 +19,9 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::DeviceInfo;
-use crate::{eeprom, packet::ParseError, util::TryBuf, util::TryBufError, MasterStatus};
+use crate::{
+    eeprom, packet::ParseError, util::TryBuf, util::TryBufError, FixedPoint, MasterStatus,
+};
 
 /// Maximum number of floats that can be read in a single command
 pub const READ_FLOATS_MAX: usize = 14;
@@ -70,12 +72,19 @@ impl DerefMut for BytesWrap {
 pub enum Value {
     Unknown(Bytes),
     Float(f32),
+    FixedPoint(FixedPoint),
     Int(u16),
 }
 
 impl From<f32> for Value {
     fn from(f: f32) -> Self {
         Value::Float(f)
+    }
+}
+
+impl From<FixedPoint> for Value {
+    fn from(fp: FixedPoint) -> Self {
+        Value::FixedPoint(fp)
     }
 }
 
@@ -90,6 +99,7 @@ impl Value {
         match self {
             Value::Unknown(b) => b,
             Value::Float(f) => Bytes::copy_from_slice(&f.to_le_bytes()),
+            Value::FixedPoint(fp) => Bytes::copy_from_slice(&fp.to_u32().to_be_bytes()),
             Value::Int(i) => {
                 let mut b = BytesMut::with_capacity(4);
                 b.put_u16_le(i);
@@ -134,6 +144,14 @@ impl fmt::Debug for Value {
             &Value::Float(val) => {
                 write!(f, "Value {{ Float: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
+            &Value::FixedPoint(val) => {
+                write!(
+                    f,
+                    "Value {{ FixedPoint: {:?} (Bytes: {:x?}) }}",
+                    val.to_f32(),
+                    b.as_ref()
+                )
+            }
             &Value::Int(val) => {
                 write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
@@ -141,44 +159,82 @@ impl fmt::Debug for Value {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Addr {
-    pub val: u16,
+    pub val: u32,
     pub len: u8,
+    pub extra_bit: bool,
 }
 
 impl Addr {
     pub fn new(val: u16, len: u8) -> Self {
-        Self { val, len }
+        Self {
+            val: val as u32,
+            len,
+            extra_bit: true,
+        }
+    }
+
+    pub fn new_with_extra_bit(val: u32, len: u8, extra_bit: bool) -> Self {
+        Self {
+            val,
+            len,
+            extra_bit,
+        }
     }
 
     pub fn read(buf: &mut Bytes, len: u8) -> Result<Self, TryBufError> {
         match len {
-            1 => Self::read_u8(buf),
             2 => Self::read_u16(buf),
+            3 => Self::read_u24(buf),
             _ => panic!("invalid address len"),
         }
     }
 
-    pub fn read_u8(buf: &mut Bytes) -> Result<Self, TryBufError> {
+    pub fn read_u16(buf: &mut Bytes) -> Result<Self, TryBufError> {
+        let mut val = buf.try_get_u16()?;
+        let extra_bit = (val & 0x80_00) != 0;
+
+        val &= 0x0FFF;
+
         Ok(Self {
-            val: buf.try_get_u8()? as u16,
-            len: 1,
+            val: val as _,
+            len: 2,
+            extra_bit,
         })
     }
 
-    pub fn read_u16(buf: &mut Bytes) -> Result<Self, TryBufError> {
+    pub fn read_u24(buf: &mut Bytes) -> Result<Self, TryBufError> {
+        let prefix = buf.try_get_u8()?; // ^ 0x80;
+        let extra_bit = if (prefix & 0x80) != 0 { true } else { false };
+        let prefix = prefix & 0x0F;
+        let addr = buf.try_get_u16()? as u32;
+        let val = (prefix as u32) << 16 | addr;
         Ok(Self {
-            val: buf.try_get_u16()?,
-            len: 2,
+            val: val as _,
+            len: 3,
+            extra_bit,
         })
     }
 
     pub fn write(&self, buf: &mut BytesMut) {
         match self.len {
-            1 => buf.put_u8(self.val as u8),
-            2 => buf.put_u16(self.val),
+            2 => {
+                let mut val = 0x80_00 | (self.val & 0x7F_FF);
+                if !self.extra_bit {
+                    val ^= 0x80_00;
+                }
+                buf.put_u16(val as _)
+            }
+            3 => {
+                let mut val = 0x80_00_00 | (self.val & 0x7F_FF_FF);
+                if !self.extra_bit {
+                    val ^= 0x80_00_00;
+                }
+                buf.put_u8(((val >> 16) & 0xFF) as _);
+                buf.put_u16(val as _);
+            }
             _ => panic!("invalid address len"),
         }
     }
@@ -320,8 +376,7 @@ impl Commands {
                 payload: BytesWrap(frame),
             },
             0x13 => {
-                frame.try_get_u8()?; // discard 0x80
-                let len = if frame.len() >= 6 { 2 } else { 1 };
+                let len = if frame.len() >= 7 { 3 } else { 2 };
                 Commands::Write {
                     addr: Addr::read(&mut frame, len)?,
                     value: Value::from_bytes(frame)?,
@@ -335,10 +390,12 @@ impl Commands {
                 value: frame.try_get_u8()? != 0,
             },
             0x19 => {
-                let len = if frame.len() > 3 { 2 } else { 1 };
+                let len = if frame.len() > 2 { 3 } else { 2 };
+                let addr = Addr::read(&mut frame, len)?;
+
                 Commands::WriteBiquadBypass {
-                    value: frame.try_get_u8()? == 0x80,
-                    addr: Addr::read(&mut frame, len)?,
+                    value: addr.extra_bit,
+                    addr,
                 }
             }
             0x25 => Commands::SetConfig {
@@ -348,14 +405,18 @@ impl Commands {
             0x31 => Commands::ReadHardwareId {},
             0x30 => Commands::WriteBiquad {
                 addr: {
-                    frame.try_get_u8()?; // discard 0x80
-                    Addr::read_u16(&mut frame)?
+                    let len = if frame.len() > 24 { 3 } else { 2 };
+                    Addr::read(&mut frame, len)?
                 },
                 data: {
-                    frame.try_get_u16()?; // discard 0x0000;
+                    frame.try_get_u16()?;
                     let mut data: [f32; 5] = Default::default();
                     for f in data.iter_mut() {
-                        *f = frame.try_get_f32_le()?;
+                        // HACK: FIXME: temporary
+                        // *f = frame.try_get_f32_le()?;
+
+                        let val = frame.try_get_u32()?;
+                        *f = FixedPoint::from_u32(val).into();
                     }
                     data
                 },
@@ -440,7 +501,7 @@ impl Commands {
                 addr.write(&mut f);
             }
             &Commands::Write { addr, ref value } => {
-                f.put_u16(0x1380);
+                f.put_u8(0x13);
                 addr.write(&mut f);
                 f.put(value.clone().into_bytes());
             }
@@ -530,7 +591,7 @@ impl Commands {
         };
 
         Commands::Write {
-            addr: Addr::new(addr, 2),
+            addr: Addr::new(addr as _, 2),
             value: Value::Int(value),
         }
     }
@@ -912,6 +973,57 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_addr() {
+        let tests: &[(&[u8], Addr)] = &[
+            // Should trim the prefixed 0x80
+            (
+                &[0x80, 0x10],
+                Addr {
+                    extra_bit: true,
+                    val: 0x10,
+                    len: 2,
+                },
+            ),
+            // Should trim the prefixed 0x80
+            (
+                &[0x80, 0x10, 0x00],
+                Addr {
+                    extra_bit: true,
+                    val: 0x10_00,
+                    len: 3,
+                },
+            ),
+            (
+                &[0x8F, 0x10],
+                Addr {
+                    extra_bit: true,
+                    val: 0xF10,
+                    len: 2,
+                },
+            ),
+            (
+                &[0x8F, 0x10, 0x00],
+                Addr {
+                    extra_bit: true,
+                    val: 0x0F_10_00,
+                    len: 3,
+                },
+            ),
+        ];
+
+        for (bytes, addr) in tests {
+            // println!("b={:x?} addr={:x?}", bytes, addr);
+            let data = Bytes::from_static(bytes);
+            let parsed = Addr::read(&mut data.clone(), data.len() as _).unwrap();
+            assert_eq!(addr, &parsed);
+
+            let mut written_bytes = BytesMut::new();
+            addr.write(&mut written_bytes);
+            assert_eq!(&written_bytes, bytes);
+        }
+    }
 
     #[test]
     fn test_read_reg() {
