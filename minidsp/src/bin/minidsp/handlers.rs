@@ -56,14 +56,14 @@ pub(crate) async fn run_command(
         Some(&SubCommand::Input {
             input_index,
             ref cmd,
-        }) => run_input(&device, cmd, input_index).await?,
+        }) => run_input(device, cmd, input_index).await?,
         Some(&SubCommand::Output {
             output_index,
             ref cmd,
-        }) => run_output(&device, output_index, cmd).await?,
+        }) => run_output(device, output_index, cmd).await?,
 
         // Other tools
-        Some(&SubCommand::Debug { ref cmd }) => run_debug(&device, cmd).await?,
+        Some(&SubCommand::Debug { ref cmd }) => run_debug(device, cmd).await?,
 
         // Handled earlier
         Some(&SubCommand::Server { .. }) => {}
@@ -190,7 +190,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> R
                 eprintln!("Warning: Setting the same coefficients on all PEQs, did you mean `peq [n] set` instead?")
             }
             for peq in peqs {
-                peq.set_coefficients(&coeff).await?;
+                peq.set_coefficients(coeff).await?;
             }
         }
         &Bypass { value } => {

@@ -53,7 +53,7 @@ impl HidTransport {
         let path = url.path();
         if !path.is_empty() {
             let path = urlencoding::decode(path).map_err(|_| HidError::OpenHidDeviceError)?;
-            return HidTransport::with_path(hid, path);
+            return HidTransport::with_path(hid, path.to_string());
         }
 
         // If it's empty, try to get the vid and pid from the query string

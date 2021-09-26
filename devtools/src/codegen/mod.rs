@@ -1,6 +1,8 @@
 //! Code to generate device definitions
 
+pub mod c8x12v2;
 pub mod ddrc24;
+pub mod ddrc88bm;
 pub mod m2x4hd;
 pub mod m4x10hd;
 pub mod msharc4x8;
@@ -63,7 +65,7 @@ fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStrea
 }
 
 pub fn generate_static_config(symbol_map: &mut SymbolMap, spec: &spec::Device) -> TokenStream {
-    let symbols = generate_symbols(&symbol_map);
+    let symbols = generate_symbols(symbol_map);
     let device = spec.to_symbol_tokens(|s| resolve_symbol(symbol_map, s));
 
     quote! {

@@ -3,6 +3,7 @@ use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
 use anyhow::Context;
 use futures::{future::join_all, SinkExt, StreamExt};
 use hyper::{Body, Request, Response, Server, StatusCode};
+use hyper_tungstenite::tungstenite::{self, Message};
 use minidsp::{
     model::{Config, MasterStatus, StatusSummary},
     utils::{ErrInto, OwnedJoinHandle},
@@ -13,7 +14,6 @@ use routerify_query::{query_parser, RequestQueryExt};
 use schemars::JsonSchema;
 use serde::Serialize;
 use tokio_stream::wrappers::IntervalStream;
-use tungstenite::Message;
 use websocket::websocket_transport_bridge;
 
 use super::{config::HttpServer, device_manager, App};

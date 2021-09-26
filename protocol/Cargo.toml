@@ -6,22 +6,24 @@ version = "0.1.2"
 license = "Apache-2.0"
 
 [dependencies]
-anyhow = "1.0.41"
-bytes = "1.0.1"
-schemars = {version = "0.8.3", optional = true}
-serde = {version = "1.0.126", features = ["derive"], optional = true}
+anyhow = "1.0.44"
+bytes = "1.1.0"
+schemars = {version = "0.8.5", optional = true}
+serde = {version = "1.0.130", features = ["derive"], optional = true}
 strum = {version = "0.20.0", features = ["derive"], optional = true}
-thiserror = "1.0.26"
+thiserror = "1.0.29"
 
 [features]
 debug = ["std"]
-default = ["std", "debug", "symbols", "device_2x4hd", "device_msharc4x8", "device_4x10hd", "device_shd", "device_ddrc24", "device_nanodigi2x8"]
+default = ["std", "debug", "symbols", "device_2x4hd", "device_msharc4x8", "device_4x10hd", "device_shd", "device_ddrc24", "device_nanodigi2x8", "device_ddrc88bm", "device_c8x12v2"]
 device_2x4hd = ["devices"]
 device_4x10hd = ["devices"]
 device_msharc4x8 = ["devices"]
 device_shd = ["devices"]
 device_ddrc24 = ["devices"]
 device_nanodigi2x8 = ["devices"]
+device_ddrc88bm = ["devices"]
+device_c8x12v2 = ["devices"]
 devices = []
 std = []
 use_serde = ["std", "serde", "schemars", "strum"]

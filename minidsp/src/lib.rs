@@ -234,7 +234,7 @@ impl MiniDSP<'_> {
             Err(MiniDSPError::OutOfRange)
         } else {
             Ok(Input {
-                dsp: &self,
+                dsp: self,
                 spec: &self.device.inputs[index],
             })
         }
@@ -246,7 +246,7 @@ impl MiniDSP<'_> {
             Err(MiniDSPError::OutOfRange)
         } else {
             Ok(Output {
-                dsp: &self,
+                dsp: self,
                 spec: &self.device.outputs[index],
             })
         }
@@ -333,7 +333,7 @@ impl<'a> Input<'a> {
 
 impl Channel for Input<'_> {
     fn _channel(&self) -> (&MiniDSP, Option<&Gate>, &'static [u16]) {
-        (self.dsp, self.spec.gate.as_ref(), &self.spec.peq)
+        (self.dsp, self.spec.gate.as_ref(), self.spec.peq)
     }
 }
 
@@ -386,7 +386,7 @@ impl<'a> Output<'a> {
 
 impl Channel for Output<'_> {
     fn _channel(&self) -> (&MiniDSP, Option<&Gate>, &'static [u16]) {
-        (self.dsp, Some(&self.spec.gate), &self.spec.peq)
+        (self.dsp, Some(&self.spec.gate), self.spec.peq)
     }
 }
 

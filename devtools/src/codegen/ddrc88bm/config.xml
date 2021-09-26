@@ -1,0 +1,2735 @@
+<setting version="2.3d2">
+  <timestamp>0</timestamp>
+  <dspversion>95</dspversion>
+  <master_mute>0</master_mute>
+  <label name="Input1" text="FL In"/>
+  <label name="Input2" text="FR In"/>
+  <label name="Input3" text="LFE In"/>
+  <label name="Input4" text="CTR In"/>
+  <label name="Input5" text="SL In"/>
+  <label name="Input6" text="SR In"/>
+  <label name="Input7" text="RL In"/>
+  <label name="Input8" text="RR In"/>
+  <label name="Input9" text="LFE Mgt"/>
+  <label name="Output1" text="FL Out"/>
+  <label name="Output2" text="FR Out"/>
+  <label name="Output3" text="SUB Out"/>
+  <label name="Output4" text="CTR Out"/>
+  <label name="Output5" text="SL Out"/>
+  <label name="Output6" text="SR Out"/>
+  <label name="Output7" text="RL Out"/>
+  <label name="Output8" text="RR Out"/>
+  <label name="Input1d" text="FL In 1"/>
+  <label name="Input2d" text="FR In 1"/>
+  <label name="Input3d" text="LFE In 1"/>
+  <label name="Input4d" text="CTR In 1"/>
+  <label name="Input5d" text="SL In 1"/>
+  <label name="Input6d" text="SR In 1"/>
+  <label name="Input7d" text="RL In 1"/>
+  <label name="Input8d" text="RR In 1"/>
+  <item name="BM_DGain_1_status" addr="0">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_2_status" addr="1">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_3_status" addr="2">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_4_status" addr="3">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_DGain_5_status" addr="4">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_6_status" addr="5">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_7_status" addr="6">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_8_status" addr="7">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_DGain_1" addr="8">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_2" addr="9">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_3" addr="10">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_4" addr="11">
+    <dec>10</dec>
+    <hex>41200000</hex>
+  </item>
+  <item name="BM_DGain_5" addr="12">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_6" addr="13">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_7" addr="14">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_DGain_8" addr="15">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_1_status" addr="16">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_1_2_status" addr="17">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_3_status" addr="18">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_4_status" addr="19">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_5_status" addr="20">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_6_status" addr="21">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_7_status" addr="22">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_8_status" addr="23">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_1_status" addr="24">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_2_status" addr="25">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_2_3_status" addr="26">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_4_status" addr="27">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_5_status" addr="28">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_6_status" addr="29">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_7_status" addr="30">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_2_8_status" addr="31">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_3_1_status" addr="32">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_3_2_status" addr="33">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_3_3_status" addr="34">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_3_4_status" addr="35">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_3_5_status" addr="36">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_3_6_status" addr="37">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_3_7_status" addr="38">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_3_8_status" addr="39">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_4_1_status" addr="40">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_4_2_status" addr="41">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_4_3_status" addr="42">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_4_4_status" addr="43">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_4_5_status" addr="44">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_4_6_status" addr="45">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_4_7_status" addr="46">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_4_8_status" addr="47">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_1_status" addr="48">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_2_status" addr="49">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_3_status" addr="50">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_4_status" addr="51">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_5_status" addr="52">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_5_6_status" addr="53">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_7_status" addr="54">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_5_8_status" addr="55">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_1_status" addr="56">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_2_status" addr="57">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_3_status" addr="58">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_4_status" addr="59">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_5_status" addr="60">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_6_status" addr="61">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_6_7_status" addr="62">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_6_8_status" addr="63">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_1_status" addr="64">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_7_2_status" addr="65">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_3_status" addr="66">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_4_status" addr="67">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_5_status" addr="68">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_7_6_status" addr="69">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_7_status" addr="70">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_7_8_status" addr="71">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_1_status" addr="72">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_2_status" addr="73">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_8_3_status" addr="74">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_4_status" addr="75">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_5_status" addr="76">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_6_status" addr="77">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="BM_Mixer_8_7_status" addr="78">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_8_8_status" addr="79">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_1_status" addr="80">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_2_status" addr="81">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_3_status" addr="82">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_4_status" addr="83">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_5_status" addr="84">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_6_status" addr="85">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_7_status" addr="86">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_9_8_status" addr="87">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="BM_Mixer_1_1" addr="88">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_2" addr="89">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_3" addr="90">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_4" addr="91">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_5" addr="92">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_6" addr="93">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_7" addr="94">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_1_8" addr="95">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_1" addr="96">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_2" addr="97">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_3" addr="98">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_4" addr="99">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_5" addr="100">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_6" addr="101">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_7" addr="102">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_2_8" addr="103">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_1" addr="104">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_3_2" addr="105">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_3_3" addr="106">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_4" addr="107">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_5" addr="108">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_6" addr="109">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_7" addr="110">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_3_8" addr="111">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_4_1" addr="112">
+    <dec>7</dec>
+    <hex>40e00000</hex>
+  </item>
+  <item name="BM_Mixer_4_2" addr="113">
+    <dec>7</dec>
+    <hex>40e00000</hex>
+  </item>
+  <item name="BM_Mixer_4_3" addr="114">
+    <dec>10</dec>
+    <hex>41200000</hex>
+  </item>
+  <item name="BM_Mixer_4_4" addr="115">
+    <dec>12</dec>
+    <hex>41400000</hex>
+  </item>
+  <item name="BM_Mixer_4_5" addr="116">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_4_6" addr="117">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_4_7" addr="118">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_4_8" addr="119">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_1" addr="120">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_2" addr="121">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_3" addr="122">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_4" addr="123">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_5" addr="124">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_6" addr="125">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_7" addr="126">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_5_8" addr="127">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_1" addr="128">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_2" addr="129">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_3" addr="130">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_4" addr="131">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_5" addr="132">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_6" addr="133">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_7" addr="134">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_6_8" addr="135">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_1" addr="136">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_2" addr="137">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_3" addr="138">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_4" addr="139">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_5" addr="140">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_7_6" addr="141">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_7" addr="142">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_7_8" addr="143">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_1" addr="144">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_2" addr="145">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_3" addr="146">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_4" addr="147">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_5" addr="148">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_6" addr="149">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_8_7" addr="150">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_8_8" addr="151">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_1" addr="152">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_9_2" addr="153">
+    <dec>-3</dec>
+    <hex>c0400000</hex>
+  </item>
+  <item name="BM_Mixer_9_3" addr="154">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_4" addr="155">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_5" addr="156">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_6" addr="157">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_7" addr="158">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="BM_Mixer_9_8" addr="159">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="BPF_9_1" addr="160">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_17_5" addr="170">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_10_1" addr="180">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_18_5" addr="190">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_11_1" addr="200">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_19_5" addr="210">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_12_1" addr="220">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_20_5" addr="230">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_13_1" addr="240">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_21_5" addr="250">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_14_1" addr="260">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_22_5" addr="270">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_15_1" addr="280">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_23_5" addr="290">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_16_1" addr="300">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRLPF_4</type>
+    <bypass>0</bypass>
+    <dec>0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,0.000042443368140115214,0.00008488673628023043,0.000042443368140115214,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>38320538,38b20538,38320538,3ffda16a,bf7b4df5,38320538,38b20538,38320538,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <filter name="BPF_24_5" addr="310">
+    <freq>100</freq>
+    <q>0</q>
+    <boost>0</boost>
+    <type>LRHPF_4</type>
+    <bypass>1</bypass>
+    <dec>0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,0.9907866979376808,-1.9815733958753616,0.9907866979376808,1.9814885091390815,-0.9816582826116418,</dec>
+    <hex>3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,3f7da432,bffda432,3f7da432,3ffda16a,bf7b4df5,</hex>
+  </filter>
+  <item name="Out_Mixer_0_0_status" addr="320">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_0_1_status" addr="321">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_2_status" addr="322">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_3_status" addr="323">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_4_status" addr="324">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_5_status" addr="325">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_6_status" addr="326">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_0_7_status" addr="327">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_0_status" addr="328">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_1_status" addr="329">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_1_2_status" addr="330">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_3_status" addr="331">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_4_status" addr="332">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_5_status" addr="333">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_6_status" addr="334">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_1_7_status" addr="335">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_0_status" addr="336">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_1_status" addr="337">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_2_status" addr="338">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_2_3_status" addr="339">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_4_status" addr="340">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_5_status" addr="341">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_6_status" addr="342">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_2_7_status" addr="343">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_0_status" addr="344">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_1_status" addr="345">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_2_status" addr="346">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_3_status" addr="347">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_3_4_status" addr="348">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_5_status" addr="349">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_6_status" addr="350">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_3_7_status" addr="351">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_0_status" addr="352">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_1_status" addr="353">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_2_status" addr="354">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_3_status" addr="355">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_4_status" addr="356">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_4_5_status" addr="357">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_6_status" addr="358">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_4_7_status" addr="359">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_0_status" addr="360">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_1_status" addr="361">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_2_status" addr="362">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_3_status" addr="363">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_4_status" addr="364">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_5_status" addr="365">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_5_6_status" addr="366">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_5_7_status" addr="367">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_0_status" addr="368">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_1_status" addr="369">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_2_status" addr="370">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_3_status" addr="371">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_4_status" addr="372">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_5_status" addr="373">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_6_6_status" addr="374">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_6_7_status" addr="375">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_0_status" addr="376">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_1_status" addr="377">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_2_status" addr="378">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_3_status" addr="379">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_4_status" addr="380">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_5_status" addr="381">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_6_status" addr="382">
+    <dec>1</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="Out_Mixer_7_7_status" addr="383">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="Out_Mixer_0_0" addr="384">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_1" addr="385">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_2" addr="386">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_3" addr="387">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_4" addr="388">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_5" addr="389">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_6" addr="390">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_0_7" addr="391">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_0" addr="392">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_1" addr="393">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_2" addr="394">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_3" addr="395">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_4" addr="396">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_5" addr="397">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_6" addr="398">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_1_7" addr="399">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_0" addr="400">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_1" addr="401">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_2" addr="402">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_3" addr="403">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_4" addr="404">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_5" addr="405">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_6" addr="406">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_2_7" addr="407">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_0" addr="408">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_1" addr="409">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_2" addr="410">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_3" addr="411">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_4" addr="412">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_5" addr="413">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_6" addr="414">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_3_7" addr="415">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_0" addr="416">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_1" addr="417">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_2" addr="418">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_3" addr="419">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_4" addr="420">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_5" addr="421">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_6" addr="422">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_4_7" addr="423">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_0" addr="424">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_1" addr="425">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_2" addr="426">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_3" addr="427">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_4" addr="428">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_5" addr="429">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_6" addr="430">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_5_7" addr="431">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_0" addr="432">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_1" addr="433">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_2" addr="434">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_3" addr="435">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_4" addr="436">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_5" addr="437">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_6" addr="438">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_6_7" addr="439">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_0" addr="440">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_1" addr="441">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_2" addr="442">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_3" addr="443">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_4" addr="444">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_5" addr="445">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_6" addr="446">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Out_Mixer_7_7" addr="447">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_1" addr="448">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_2" addr="449">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_3" addr="450">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_4" addr="451">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_5" addr="452">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_6" addr="453">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_7" addr="454">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_In_8" addr="455">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_1" addr="456">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_2" addr="457">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_3" addr="458">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_4" addr="459">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_5" addr="460">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_6" addr="461">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_7" addr="462">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Comp_8" addr="463">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_1" addr="464">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_2" addr="465">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_3" addr="466">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_4" addr="467">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_5" addr="468">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_6" addr="469">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_7" addr="470">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_Out_8" addr="471">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="DGain_1_0_status" addr="472">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_1_0_status" addr="473">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_1_0" addr="474">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_1_0_threshold" addr="475">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_1_0_gain" addr="476">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_1_0_ratio" addr="477">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_1_0_knee" addr="478">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_1_0_atime" addr="479">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_1_0_rtime" addr="480">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_1_0" addr="481">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_1_0" addr="482">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_1_1" addr="483">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_1_2" addr="484">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_1_0" addr="485">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_1_1" addr="486">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_2" addr="491">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_3" addr="496">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_4" addr="501">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_5" addr="506">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_6" addr="511">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_7" addr="516">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_8" addr="521">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_9" addr="526">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_1_10" addr="531">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_1_1" addr="536">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_1_5" addr="556">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_2_0_status" addr="576">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_2_0_status" addr="577">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_2_0" addr="578">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_2_0_threshold" addr="579">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_2_0_gain" addr="580">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_2_0_ratio" addr="581">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_2_0_knee" addr="582">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_2_0_atime" addr="583">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_2_0_rtime" addr="584">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_2_0" addr="585">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_2_0" addr="586">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_2_1" addr="587">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_2_2" addr="588">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_2_0" addr="589">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_2_1" addr="590">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_2" addr="595">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_3" addr="600">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_4" addr="605">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_5" addr="610">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_6" addr="615">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_7" addr="620">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_8" addr="625">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_9" addr="630">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_2_10" addr="635">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_2_1" addr="640">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_2_5" addr="660">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_3_0_status" addr="680">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_3_0_status" addr="681">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_3_0" addr="682">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_3_0_threshold" addr="683">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_3_0_gain" addr="684">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_3_0_ratio" addr="685">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_3_0_knee" addr="686">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_3_0_atime" addr="687">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_3_0_rtime" addr="688">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_3_0" addr="689">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_3_0" addr="690">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_3_1" addr="691">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_3_2" addr="692">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_3_0" addr="693">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_3_1" addr="694">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_2" addr="699">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_3" addr="704">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_4" addr="709">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_5" addr="714">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_6" addr="719">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_7" addr="724">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_8" addr="729">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_9" addr="734">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_3_10" addr="739">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_3_1" addr="744">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_3_5" addr="764">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_4_0_status" addr="784">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_4_0_status" addr="785">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_4_0" addr="786">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_4_0_threshold" addr="787">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_4_0_gain" addr="788">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_4_0_ratio" addr="789">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_4_0_knee" addr="790">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_4_0_atime" addr="791">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_4_0_rtime" addr="792">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_4_0" addr="793">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_4_0" addr="794">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_4_1" addr="795">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_4_2" addr="796">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_4_0" addr="797">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_4_1" addr="798">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_2" addr="803">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_3" addr="808">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_4" addr="813">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_5" addr="818">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_6" addr="823">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_7" addr="828">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_8" addr="833">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_9" addr="838">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_4_10" addr="843">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_4_1" addr="848">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_4_5" addr="868">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_5_0_status" addr="888">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_5_0_status" addr="889">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_5_0" addr="890">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_5_0_threshold" addr="891">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_5_0_gain" addr="892">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_5_0_ratio" addr="893">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_5_0_knee" addr="894">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_5_0_atime" addr="895">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_5_0_rtime" addr="896">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_5_0" addr="897">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_5_0" addr="898">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_5_1" addr="899">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_5_2" addr="900">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_5_0" addr="901">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_5_1" addr="902">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_2" addr="907">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_3" addr="912">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_4" addr="917">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_5" addr="922">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_6" addr="927">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_7" addr="932">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_8" addr="937">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_9" addr="942">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_5_10" addr="947">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_5_1" addr="952">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_5_5" addr="972">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_6_0_status" addr="992">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_6_0_status" addr="993">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_6_0" addr="994">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_6_0_threshold" addr="995">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_6_0_gain" addr="996">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_6_0_ratio" addr="997">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_6_0_knee" addr="998">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_6_0_atime" addr="999">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_6_0_rtime" addr="1000">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_6_0" addr="1001">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_6_0" addr="1002">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_6_1" addr="1003">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_6_2" addr="1004">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_6_0" addr="1005">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_6_1" addr="1006">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_2" addr="1011">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_3" addr="1016">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_4" addr="1021">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_5" addr="1026">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_6" addr="1031">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_7" addr="1036">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_8" addr="1041">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_9" addr="1046">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_6_10" addr="1051">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_6_1" addr="1056">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_6_5" addr="1076">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_7_0_status" addr="1096">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_7_0_status" addr="1097">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_7_0" addr="1098">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_7_0_threshold" addr="1099">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_7_0_gain" addr="1100">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_7_0_ratio" addr="1101">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_7_0_knee" addr="1102">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_7_0_atime" addr="1103">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_7_0_rtime" addr="1104">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_7_0" addr="1105">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_7_0" addr="1106">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_7_1" addr="1107">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_7_2" addr="1108">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_7_0" addr="1109">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_7_1" addr="1110">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_2" addr="1115">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_3" addr="1120">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_4" addr="1125">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_5" addr="1130">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_6" addr="1135">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_7" addr="1140">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_8" addr="1145">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_9" addr="1150">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_7_10" addr="1155">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_7_1" addr="1160">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_7_5" addr="1180">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <item name="DGain_8_0_status" addr="1200">
+    <dec>2</dec>
+    <hex>00000002</hex>
+  </item>
+  <item name="COMP_8_0_status" addr="1201">
+    <dec>3</dec>
+    <hex>00000003</hex>
+  </item>
+  <item name="DGain_8_0" addr="1202">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="COMP_8_0_threshold" addr="1203">
+    <dec>-30</dec>
+    <hex>C1F00000</hex>
+  </item>
+  <item name="COMP_8_0_gain" addr="1204">
+    <dec>0</dec>
+    <hex>0</hex>
+  </item>
+  <item name="COMP_8_0_ratio" addr="1205">
+    <dec>4</dec>
+    <hex>40800000</hex>
+  </item>
+  <item name="COMP_8_0_knee" addr="1206">
+    <dec>20</dec>
+    <hex>41A00000</hex>
+  </item>
+  <item name="COMP_8_0_atime" addr="1207">
+    <dec>40</dec>
+    <hex>4220000</hex>
+  </item>
+  <item name="COMP_8_0_rtime" addr="1208">
+    <dec>100</dec>
+    <hex>42C8000</hex>
+  </item>
+  <item name="Delay_8_0" addr="1209">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_8_0" addr="1210">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_8_1" addr="1211">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="Meter_8_2" addr="1212">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="polarity_out_8_0" addr="1213">
+    <dec>0</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="PEQ_8_1" addr="1214">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_2" addr="1219">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_3" addr="1224">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_4" addr="1229">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_5" addr="1234">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_6" addr="1239">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_7" addr="1244">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_8" addr="1249">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_9" addr="1254">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="PEQ_8_10" addr="1259">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <dec>1, 0, 0, 0, 0,</dec>
+    <hex>3f800000,00000000,00000000,00000000,00000000,</hex>
+  </filter>
+  <filter name="BPF_8_1" addr="1264">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.003817245817468829,0.007634491634937658,0.003817245817468829,1.7695043485301245,-0.7847733317999998,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,0.004074068719947566,0.008148137439895132,0.004074068719947566,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b7a2ac2,3bfa2ac2,3b7a2ac2,3fe27f1e,bf48e6e8,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,3b857fc4,3c057fc4,3b857fc4,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <filter name="BPF_8_5" addr="1284">
+    <freq>1000</freq>
+    <q>0.707</q>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <bypass>1</bypass>
+    <dec>0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.8885694200825311,-1.7771388401650623,0.8885694200825311,1.7695043485301245,-0.7847733317999998,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,0.9483520456800525,-1.896704091360105,0.9483520456800525,1.8885559539202097,-0.9048522288,</dec>
+    <hex>3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f637949,bfe37949,3f637949,3fe27f1e,bf48e6e8,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,3f72c733,bff2c733,3f72c733,3ff1bc34,bf67a465,</hex>
+  </filter>
+  <link/>
+</setting>

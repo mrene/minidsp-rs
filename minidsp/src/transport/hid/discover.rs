@@ -50,12 +50,12 @@ impl fmt::Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let query = match self.id {
             Some((vid, pid)) => format!("?vid={:04x}&pid={:04x}", vid, pid),
-            None => "".to_owned(),
+            None => "".into(),
         };
 
         let path = match &self.path {
             Some(path) => urlencoding::encode(path.as_str()),
-            None => "".to_owned(),
+            None => "".into(),
         };
 
         write!(f, "usb:{}{}", path, query)

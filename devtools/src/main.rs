@@ -10,7 +10,8 @@ use anyhow::Result;
 use bimap::BiMap;
 use clap::{self as clap, Clap};
 use codegen::{
-    ddrc24, generate_static_config, m2x4hd, m4x10hd, msharc4x8, nanodigi2x8, shd, spec::Device,
+    c8x12v2, ddrc24, ddrc88bm, generate_static_config, m2x4hd, m4x10hd, msharc4x8, nanodigi2x8,
+    shd, spec::Device,
 };
 use futures::{Stream, StreamExt};
 use minidsp::{
@@ -183,6 +184,7 @@ fn codegen_main(output: PathBuf) -> Result<()> {
     gen_write::<shd::Target>(&output)?;
     gen_write::<ddrc24::Target>(&output)?;
     gen_write::<nanodigi2x8::Target>(&output)?;
-
+    gen_write::<ddrc88bm::Target>(&output)?;
+    gen_write::<c8x12v2::Target>(&output)?;
     Ok(())
 }
