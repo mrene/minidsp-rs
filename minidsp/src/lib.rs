@@ -417,7 +417,7 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquad {
-                addr: Addr::new(self.addr, 2),
+                addr: Addr::new(self.addr, 3),
                 data: coefficients.try_into().unwrap(),
             })
             .await?
@@ -430,7 +430,7 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr: Addr::new(self.addr, 2),
+                addr: Addr::new(self.addr, 3),
                 value: bypass,
             })
             .await?
@@ -486,7 +486,7 @@ impl<'a> Crossover<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr: Addr::new(addr, 2),
+                addr: Addr::new(addr, 3),
                 value: bypass,
             })
             .await?

@@ -27,7 +27,7 @@ impl FixedPoint {
         // }
 
         if encoded & 0xF000_0000 == 0xF000_0000 {
-            encoded = encoded & 0x0FFF_FFFF
+            encoded &= 0x0FFF_FFFF
         }
 
         Self(encoded)
@@ -51,9 +51,9 @@ impl From<f32> for FixedPoint {
     }
 }
 
-impl Into<f32> for FixedPoint {
-    fn into(self) -> f32 {
-        self.to_f32()
+impl From<FixedPoint> for f32 {
+    fn from(fp: FixedPoint) -> Self {
+        fp.to_f32()
     }
 }
 

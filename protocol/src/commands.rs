@@ -206,8 +206,8 @@ impl Addr {
     }
 
     pub fn read_u24(buf: &mut Bytes) -> Result<Self, TryBufError> {
-        let prefix = buf.try_get_u8()?; // ^ 0x80;
-        let extra_bit = if (prefix & 0x80) != 0 { true } else { false };
+        let prefix = buf.try_get_u8()?;
+        let extra_bit = (prefix & 0x80) != 0;
         let prefix = prefix & 0x0F;
         let addr = buf.try_get_u16()? as u32;
         let val = (prefix as u32) << 16 | addr;
@@ -488,16 +488,16 @@ impl Commands {
                 f.put_u8((value).into());
             }
             &Commands::WriteBiquad { addr, data } => {
-                f.put_u16(0x3080);
+                f.put_u8(0x30);
                 addr.write(&mut f);
                 f.put_u16(0x0000);
                 for &coeff in data.iter() {
                     f.put_f32_le(coeff);
                 }
             }
-            &Commands::WriteBiquadBypass { addr, value } => {
+            &Commands::WriteBiquadBypass { mut addr, value } => {
                 f.put_u8(0x19);
-                f.put_u8(if value { 0x80 } else { 0x00 });
+                addr.extra_bit = value;
                 addr.write(&mut f);
             }
             &Commands::Write { addr, ref value } => {
@@ -591,7 +591,7 @@ impl Commands {
         };
 
         Commands::Write {
-            addr: Addr::new(addr as _, 2),
+            addr: Addr::new(addr as _, 3),
             value: Value::Int(value),
         }
     }
