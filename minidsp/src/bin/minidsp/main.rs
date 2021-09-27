@@ -89,6 +89,7 @@ struct Opts {
 impl Opts {
     // Applies transport and logging options to this builder
     async fn apply_builder(&self, builder: &mut Builder) -> Result<(), MiniDSPError> {
+        #[allow(unused_mut)]
         let mut bound = false;
         #[cfg(target_family = "unix")]
         if let Some(socket_path) = &self.daemon_sock {
