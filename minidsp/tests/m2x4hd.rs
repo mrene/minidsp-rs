@@ -1,10 +1,11 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use bytes::Bytes;
 use futures::{
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
     pin_mut, Future, FutureExt, SinkExt, StreamExt,
 };
+use hex_literal::hex;
 use minidsp::{
     client::Client,
     transport::{Multiplexer, Transport},
@@ -12,7 +13,6 @@ use minidsp::{
     Channel, DeviceInfo, MiniDSP, MiniDSPError,
 };
 use tokio::sync::Mutex;
-use hex_literal::hex;
 
 pub struct TestDevice {
     commands_rx: UnboundedReceiver<Bytes>,
@@ -76,7 +76,7 @@ impl TestDevice {
                 },
                 cmd = &mut cmd => {
                     let cmd = cmd.unwrap();
-                    println!("{} vs {}", hex::encode(&cmd), hex::encode(expect_cmd.as_ref()));
+                    println!("actual: {} vs expected: {}", hex::encode(&cmd), hex::encode(expect_cmd.as_ref()));
                     assert_eq!(&cmd, expect_cmd.as_ref());
                     self.responses_tx.send(Ok(Bytes::from_static(response))).await.unwrap();
                 }
@@ -106,30 +106,58 @@ async fn test_2x4hd() -> anyhow::Result<()> {
         )
         .await
         .unwrap();
-
     }
     {
         // Input PEQs
         let peq = input.peq(0)?;
-        dev.run(
-            peq.set_bypass(true),
-            hex!("05 19 802085 43"),
-            &[0x01],
-        )
-        .await
-        .unwrap();
-        dev.run(
-            peq.set_bypass(false),
-            hex!("05 19 002085 c3"),
-            &[0x01],
-        )
-        .await
-        .unwrap();
+        dev.run(peq.set_bypass(true), hex!("05 19 802085 43"), &[0x01])
+            .await
+            .unwrap();
+        dev.run(peq.set_bypass(false), hex!("05 19 002085 c3"), &[0x01])
+            .await
+            .unwrap();
 
         dev.run(
             peq.set_coefficients(&[1.0, 0.2, 0.3, 0.4, 0.5]),
             hex!("1b 30 802085 0000 0000803f cdcc4c3e 9a99993e cdcccc3e 0000003f 3e"),
             &[0x01],
+        )
+        .await
+        .unwrap();
+    }
+
+    let output = dsp.output(0)?;
+    {
+        // Gain & Mute
+        dev.run(
+            output.set_mute(true),
+            hex!("09 13 800002 01000000 9f"),
+            &[0x1],
+        )
+        .await
+        .unwrap();
+        dev.run(
+            output.set_mute(false),
+            hex!("09 13 800002 02000000 a0"),
+            &[0x1],
+        )
+        .await
+        .unwrap();
+    }
+    {
+        // Delays
+        dev.run(
+            output.set_delay(Duration::from_micros(10)),
+            hex!("09 13 800040 01000000 dd"),
+            &[0x1],
+        )
+        .await
+        .unwrap();
+
+        dev.run(
+            output.set_delay(Duration::from_millis(1)),
+            hex!("09 13 800040 60000000 3c"),
+            &[0x1],
         )
         .await
         .unwrap();

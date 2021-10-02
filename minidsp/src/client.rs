@@ -116,7 +116,7 @@ impl Client {
     /// Writes data to the dsp memory area
     pub async fn write_dsp<T: Into<Value>>(&self, addr: u16, value: T) -> Result<(), MiniDSPError> {
         self.roundtrip(Commands::Write {
-            addr: Addr::new(addr, 2),
+            addr: Addr::new(addr, 3),
             value: value.into(),
         })
         .await?

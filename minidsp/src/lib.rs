@@ -354,12 +354,13 @@ impl<'a> Output<'a> {
 
     /// Sets the output delay setting
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
-        // Each delay increment is 0.010 ms
-        // let value = value / Duration::from_micros(10);
-        let value = value.as_micros() / 10;
-        if value > 80 {
+        // Convert the duration to a number of samples
+        let value = (value.as_micros() as f64 * self.dsp.device.internal_sampling_rate as f64
+            / 1_000_000_f64)
+            .round() as u64;
+        if value > 8000 {
             return Err(MiniDSPError::InternalError(anyhow!(
-                "Delay should be within [0, 80], was {:?}",
+                "Delay should be within [0, 80] ms was {:?}",
                 value
             )));
         }
