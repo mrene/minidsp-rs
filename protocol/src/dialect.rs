@@ -72,4 +72,12 @@ impl Dialect {
     pub fn int(&self, value: u16) -> Value {
         Value::Int(value)
     }
+
+    // FIXME: Don't rely on addr len here
+    pub fn delay(&self, num_samples: u32) -> Value {
+        match self.addr_encoding {
+            AddrEncoding::AddrLen2 => Value::Int32(num_samples),
+            AddrEncoding::AddrLen3 => Value::Int(num_samples as _),
+        }
+    }
 }

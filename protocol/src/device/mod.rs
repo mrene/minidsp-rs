@@ -7,9 +7,7 @@ use crate::dialect::Dialect;
 #[allow(unused_imports)]
 use super::{
     commands::{Addr, Value},
-    FixedPoint,
-    AddrEncoding,
-    FloatEncoding,
+    AddrEncoding, FixedPoint, FloatEncoding,
     Source::{self as Source, *},
 };
 

@@ -75,7 +75,7 @@ pub fn device() -> Device {
         inputs: (0..4).map(input).collect(),
         outputs: (0..10).map(output).collect(),
         fir_max_taps: 0,
-        internal_sampling_rate: 48000,
+        internal_sampling_rate: 96000,
         dialect: Dialect {
             addr_encoding: AddrEncoding::AddrLen2,
             float_encoding: FloatEncoding::FixedPoint,

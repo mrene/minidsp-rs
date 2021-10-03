@@ -74,6 +74,13 @@ pub enum Value {
     Float(f32),
     FixedPoint(FixedPoint),
     Int(u16),
+    Int32(u32),
+}
+
+impl Default for Value {
+    fn default() -> Self {
+        Value::Float(0.)
+    }
 }
 
 impl From<f32> for Value {
@@ -106,6 +113,7 @@ impl Value {
                 b.put_u16(0x00);
                 b.freeze()
             }
+            Value::Int32(i) => Bytes::copy_from_slice(&i.to_be_bytes()),
         }
     }
 
@@ -160,6 +168,9 @@ impl fmt::Debug for Value {
                 )
             }
             &Value::Int(val) => {
+                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
+            }
+            &Value::Int32(val) => {
                 write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
         }
@@ -295,7 +306,7 @@ pub enum Commands {
     /// 0x30: Write biquad data
     WriteBiquad {
         addr: Addr,
-        data: [f32; 5],
+        data: [Value; 5],
     },
 
     /// 0x19: Toggle biquad filter bypass
@@ -417,9 +428,10 @@ impl Commands {
                 },
                 data: {
                     frame.try_get_u16()?;
-                    let mut data: [f32; 5] = Default::default();
+                    let mut data: [Value; 5] = Default::default();
                     for f in data.iter_mut() {
-                        *f = frame.try_get_f32_le()?;
+                        *f = Value::Unknown(Bytes::copy_from_slice(&frame[0..4]));
+                        frame.advance(4);
                     }
                     data
                 },
@@ -490,12 +502,12 @@ impl Commands {
                 f.put_u8(0x42);
                 f.put_u8((value).into());
             }
-            &Commands::WriteBiquad { addr, data } => {
+            Commands::WriteBiquad { addr, data } => {
                 f.put_u8(0x30);
                 addr.write(&mut f);
                 f.put_u16(0x0000);
-                for &coeff in data.iter() {
-                    f.put_f32_le(coeff);
+                for coeff in data.iter() {
+                    f.put(coeff.clone().into_bytes());
                 }
             }
             &Commands::WriteBiquadBypass { mut addr, value } => {

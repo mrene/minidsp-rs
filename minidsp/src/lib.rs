@@ -395,8 +395,14 @@ impl<'a> Output<'a> {
             )));
         }
 
-        let value = value as u16;
-        self.dsp.write_dsp_int(self.spec.delay_addr, value).await
+        let dialect = self.dsp.dialect();
+        self.dsp
+            .client
+            .write_dsp(
+                dialect.addr(self.spec.delay_addr),
+                dialect.delay(value as _),
+            )
+            .await
     }
 
     /// Helper for setting crossover settings
@@ -449,7 +455,12 @@ impl<'a> BiquadFilter<'a> {
             .client
             .roundtrip(Commands::WriteBiquad {
                 addr: self.addr,
-                data: coefficients.try_into().unwrap(),
+                data: coefficients
+                    .iter()
+                    .map(|&coeff| self.dsp.dialect().float(coeff))
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
             })
             .await?
             .into_ack()
