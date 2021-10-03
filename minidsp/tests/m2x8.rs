@@ -24,6 +24,15 @@ async fn test_2x8() -> anyhow::Result<()> {
     );
 
     // PEQ
+    let peq = input.peq(0)?;
+    test!(
+        dev,
+        peq.set_coefficients(&[1.0, 0.50, 0.25, -0.25, -0.50]),
+        hex!("1a 30 809a0000 00800000 00400000 00200000 0fe00000 0fc00000 02")
+    );
+    test!(dev, peq.set_bypass(true), hex!("04 19 809a 37"));
+    test!(dev, peq.set_bypass(false), hex!("04 19 009a b7"));
+
     // Output - uses half the first byte for the extended address
     let output = dsp.output(0)?;
     test!(
@@ -41,6 +50,11 @@ async fn test_2x8() -> anyhow::Result<()> {
         output.set_delay(Duration::from_millis(9)),
         hex!("08 13 835b 00000360 5c")
     );
-
+    test!(dev, output.set_invert(true), hex!("08 13 8365 ff800000 82"));
+    test!(
+        dev,
+        output.set_invert(false),
+        hex!("08 13 8365 00800000 83")
+    );
     Ok(())
 }

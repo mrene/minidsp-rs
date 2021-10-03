@@ -1,3 +1,5 @@
+use minidsp::Dialect;
+
 /// Defines how the high level api should interact with the device based on its memory layout
 #[derive(Debug)]
 pub struct Device {
@@ -13,6 +15,23 @@ pub struct Device {
     pub fir_max_taps: u16,
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
+    /// Whether this device uses 3 bytes or 2 bytes addresses
+    pub dialect: Dialect,
+    
+}
+
+impl Default for Device {
+    fn default() -> Self {
+        Self {
+            product_name: Default::default(),
+            sources: Default::default(),
+            inputs: Default::default(),
+            outputs: Default::default(),
+            fir_max_taps: Default::default(),
+            internal_sampling_rate: Default::default(),
+            dialect: Dialect::default()
+        }
+    }
 }
 
 /// Defines an input channel and its features

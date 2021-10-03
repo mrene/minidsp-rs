@@ -62,7 +62,7 @@ use async_trait::async_trait;
 use client::Client;
 use futures::{Stream, StreamExt};
 use minidsp_protocol::commands::Addr;
-pub use minidsp_protocol::{eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source};
+pub use minidsp_protocol::{eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source, dialect::*};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
 use utils::ErrInto;

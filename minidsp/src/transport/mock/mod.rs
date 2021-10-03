@@ -7,11 +7,13 @@ use minidsp_protocol::{
     device::probe_kind,
     packet, Commands, DeviceInfo,
 };
+use strong_xml::XmlRead;
 use tokio::sync::Mutex;
 use url2::Url2;
 
 use super::Transport;
 use crate::{
+    formats::xml_config::Setting,
     utils::{mock_device::MockDevice, Combine, OwnedJoinHandle},
     MiniDSPError,
 };
@@ -122,6 +124,15 @@ pub fn open_url(url: &Url2) -> Transport {
             let firmware_version = (parts[0].parse().unwrap(), parts[1].parse().unwrap());
             device.firmware_version = firmware_version;
         }
+    }
+    {
+        let cfg = std::fs::read_to_string(
+            r"C:\Users\mrene\Documents\MiniDSP\MiniDSP-2x8\setting\setting1.xml",
+        )
+        .unwrap();
+        let s = Setting::from_str(&cfg).unwrap();
+        println!("GOT TS: {}", s.timestamp);
+        device.set_timestamp(s.timestamp);
     }
 
     drop(device);

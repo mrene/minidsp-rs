@@ -27,6 +27,7 @@ pub fn device() -> Device {
         outputs: Vec::new(),
         fir_max_taps: 0,
         internal_sampling_rate: 0,
+        ..Default::default()
     }
 }
 

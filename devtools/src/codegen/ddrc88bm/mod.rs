@@ -73,6 +73,7 @@ pub fn device() -> Device {
         outputs: (0..8).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 48000,
+        ..Default::default()
     }
 }
 

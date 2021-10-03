@@ -53,6 +53,10 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
 }
 
 fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStream {
+    if name.as_ref().is_empty() {
+        return quote! { 0 };
+    }
+
     symbols
         .remove_by_left(name.as_ref())
         .unwrap_or_else(|| panic!("Couldn't find config entry {}", name.as_ref()));

@@ -543,4 +543,5 @@ pub const DEVICE: Device = Device {
     internal_sampling_rate: 96000,
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
+    dialect: Dialect::const_default()
 };

@@ -2,8 +2,14 @@
 //!
 //! This is where support for other devices should be added
 
+use crate::dialect::Dialect;
+
 #[allow(unused_imports)]
-use super::Source::{self as Source, *};
+use super::{
+    commands::{Addr, Value},
+    FixedPoint,
+    Source::{self as Source, *},
+};
 
 mod probe;
 pub use probe::{by_kind, probe, probe_kind, DeviceKind};
@@ -41,6 +47,7 @@ pub static GENERIC: Device = Device {
     internal_sampling_rate: 0,
     #[cfg(feature = "symbols")]
     symbols: &[],
+    dialect: Dialect::const_default()
 };
 
 /// Defines how the high level api should interact with the device based on its memory layout
@@ -58,9 +65,27 @@ pub struct Device {
     pub fir_max_taps: u16,
     /// Internal sampling rate in Hz
     pub internal_sampling_rate: u32,
+    /// Dialect spoken by this device
+    pub dialect: Dialect,
     // A mapping of all symbols by name, as defined in the xml config
     #[cfg(feature = "symbols")]
     pub symbols: &'static [(&'static str, u16)],
+}
+
+impl Default for Device {
+    fn default() -> Self {
+        Self {
+            product_name: Default::default(),
+            sources: Default::default(),
+            inputs: Default::default(),
+            outputs: Default::default(),
+            fir_max_taps: Default::default(),
+            internal_sampling_rate: Default::default(),
+            #[cfg(feature = "symbols")]
+            symbols: Default::default(),
+            dialect: Dialect::const_default()
+        }
+    }
 }
 
 /// Defines an input channel and its features

@@ -84,6 +84,7 @@ pub fn device() -> Device {
 
         // FIXME: This depends on the installed plugin
         internal_sampling_rate: 96000,
+        ..Default::default()
     }
 }
 

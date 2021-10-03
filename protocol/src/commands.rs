@@ -1017,7 +1017,6 @@ mod test {
         ];
 
         for (bytes, addr) in tests {
-            // println!("b={:x?} addr={:x?}", bytes, addr);
             let data = Bytes::from_static(bytes);
             let parsed = Addr::read(&mut data.clone(), data.len() as _).unwrap();
             assert_eq!(addr, &parsed);
