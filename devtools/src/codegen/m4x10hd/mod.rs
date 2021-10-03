@@ -69,6 +69,7 @@ pub(crate) fn output(output: usize) -> Output {
 }
 
 pub fn device() -> Device {
+    #[allow(clippy::needless_update)]
     Device {
         product_name: "MiniDSP 4x10HD".into(),
         sources: vec!["Spdif".into(), "Toslink".into(), "Aesebu".into()],

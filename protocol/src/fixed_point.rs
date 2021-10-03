@@ -67,10 +67,7 @@ impl Display for FixedPoint {
 
 impl fmt::Debug for FixedPoint {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("FixedPoint")
-            .field(&self.0)
-            .field(&self.to_f32())
-            .finish()
+        f.debug_tuple("FixedPoint").field(&self.to_f32()).finish()
     }
 }
 

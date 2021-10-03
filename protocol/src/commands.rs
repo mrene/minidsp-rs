@@ -133,9 +133,15 @@ impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let b = self.clone().into_bytes();
         match self {
-            Value::Unknown(u) => {
+            Value::Unknown(_) => {
                 let float = if b.len() >= 4 {
                     Some(b.clone().get_f32_le())
+                } else {
+                    None
+                };
+
+                let u = if b.len() >= 4 {
+                    Some(b.clone().get_u32())
                 } else {
                     None
                 };
@@ -149,9 +155,10 @@ impl fmt::Debug for Value {
                 let i = b[0];
                 write!(
                     f,
-                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?} | Fixed: {:?}) }}",
+                    "Value {{ Bytes: {:x?} (Int: {:?} | Int32: {:?} | Float: {:?} | Fixed: {:?}) }}",
                     u.as_ref(),
                     i,
+                    u,
                     float,
                     fixed
                 )
@@ -171,7 +178,7 @@ impl fmt::Debug for Value {
                 write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
             &Value::Int32(val) => {
-                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
+                write!(f, "Value {{ Int32: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
             }
         }
     }
