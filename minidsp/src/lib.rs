@@ -74,14 +74,22 @@ pub use crate::commands::Gain;
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
+
 pub use minidsp_protocol::{commands, device, device::Gate, packet};
+
 pub mod tcp_server;
+
 pub use minidsp_protocol::source;
+
 pub mod transport;
 pub mod utils;
+
 pub use biquad::Biquad;
+
 pub mod builder;
+
 pub use builder::Builder;
+
 pub mod client;
 pub mod formats;
 pub mod logging;
@@ -299,8 +307,13 @@ pub trait Channel {
         let (dsp, gate, _) = self._channel();
         let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
 
+        let dialect = dsp.dialect();
+
         dsp.client
-            .roundtrip(Commands::mute(dsp.dialect().addr(gate.enable), value))
+            .roundtrip(Commands::Write {
+                addr: dialect.addr(gate.enable),
+                value: dialect.mute(value),
+            })
             .await?
             .into_ack()
             .err_into()
@@ -377,8 +390,11 @@ pub struct Output<'a> {
 impl<'a> Output<'a> {
     /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
+        let dialect = self.dsp.dialect();
+
         self.dsp
-            .write_dsp_int(self.spec.invert_addr, value as _)
+            .client
+            .write_dsp(dialect.addr(self.spec.invert_addr), dialect.invert(value))
             .await
     }
 

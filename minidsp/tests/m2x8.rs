@@ -10,8 +10,8 @@ async fn test_2x8() -> anyhow::Result<()> {
     let (mut dev, dsp) = TestDevice::new(1, 50);
 
     let input = dsp.input(0)?;
-    // test!(dev, input.set_mute(true), hex!("08 13 8035 00000000 d0"));
-    // test!(dev, input.set_mute(false), hex!("08 13 8035 00800000 50"));
+    test!(dev, input.set_mute(true), hex!("08 13 8035 00000000 d0"));
+    test!(dev, input.set_mute(false), hex!("08 13 8035 00800000 50"));
     test!(
         dev,
         input.set_gain(Gain(10.0)),
@@ -52,11 +52,11 @@ async fn test_2x8() -> anyhow::Result<()> {
         output.set_delay(Duration::from_millis(9)),
         hex!("08 13 835b 00000360 5c")
     );
-    // test!(dev, output.set_invert(true), hex!("08 13 8365 ff800000 82"));
-    // test!(
-    //     dev,
-    //     output.set_invert(false),
-    //     hex!("08 13 8365 00800000 83")
-    // );
+    test!(dev, output.set_invert(true), hex!("08 13 8365 ff800000 82"));
+    test!(
+        dev,
+        output.set_invert(false),
+        hex!("08 13 8365 00800000 83")
+    );
     Ok(())
 }

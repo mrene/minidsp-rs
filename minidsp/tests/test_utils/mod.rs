@@ -18,7 +18,9 @@ use tokio::sync::Mutex;
 #[allow(unused_macros)]
 macro_rules! test {
     ($dev:expr, $cmd:expr, $expect:expr) => {
-        $dev.run($cmd, $expect, &[0x1]).await.unwrap();
+        $dev.run($cmd, $expect, &[0x1], || stringify!($cmd))
+            .await
+            .unwrap();
     };
 }
 
@@ -68,6 +70,7 @@ impl TestDevice {
         fut: impl Future<Output = T>,
         expect_cmd: impl AsRef<[u8]>,
         response: &'static [u8],
+        msg: impl Fn() -> &'static str,
     ) -> T {
         let cmd = self.commands_rx.next().fuse();
         let fut = fut.fuse();
@@ -82,7 +85,7 @@ impl TestDevice {
                 },
                 cmd = &mut cmd => {
                     let cmd = cmd.unwrap();
-                    println!("actual:\t\t{} \nexpected:\t{}\n", hex::encode(&cmd), hex::encode(expect_cmd.as_ref()));
+                    println!("{}\nactual:\t\t{} \nexpected:\t{}\n", msg(), hex::encode(&cmd), hex::encode(expect_cmd.as_ref()));
                     assert_eq!(&cmd, expect_cmd.as_ref());
                     self.responses_tx.send(Ok(Bytes::from_static(response))).await.unwrap();
                 }

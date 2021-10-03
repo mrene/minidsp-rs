@@ -80,4 +80,18 @@ impl Dialect {
             AddrEncoding::AddrLen3 => Value::Int(num_samples as _),
         }
     }
+
+    pub fn mute(&self, mute: bool) -> Value {
+        match self.addr_encoding {
+            AddrEncoding::AddrLen2 => Value::Int32(if mute { 0x0 } else { 0x0080_0000 }),
+            AddrEncoding::AddrLen3 => Value::Int(if mute { 0x1 } else { 0x2 }),
+        }
+    }
+
+    pub fn invert(&self, value: bool) -> Value {
+        match self.addr_encoding {
+            AddrEncoding::AddrLen2 => Value::Int32(if value { 0xFF80_0000 } else { 0x0080_0000 }),
+            AddrEncoding::AddrLen3 => Value::Int(value as _),
+        }
+    }
 }
