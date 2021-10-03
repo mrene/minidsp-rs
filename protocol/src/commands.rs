@@ -315,6 +315,12 @@ pub enum Commands {
         value: bool,
     },
 
+    /// 0x02: Read DSP data
+    Read {
+        addr: Addr,
+        len: u8,
+    },
+
     /// 0x13: Write dsp data
     Write {
         addr: Addr,
@@ -367,6 +373,13 @@ pub enum Commands {
         payload: u8,
     },
 
+    SwitchMux {
+        addr: Addr, //  start addr
+        max: u8,    // mux max
+        arg: bool,  // muxmax |= 0x80 if arg
+        slot: u8,   // slot
+    },
+
     Unknown {
         cmd_id: u8,
         payload: BytesWrap,
@@ -376,6 +389,13 @@ pub enum Commands {
 impl Commands {
     pub fn from_bytes(mut frame: Bytes) -> Result<Commands, ProtocolError> {
         Ok(match frame.try_get_u8()? {
+            0x02 => Commands::Read {
+                addr: {
+                    frame.try_get_u8()?; // Discard 0x70
+                    Addr::read(&mut frame, 2)?
+                },
+                len: frame.try_get_u8()?,
+            },
             0x04 => Commands::WriteMemory {
                 addr: frame.try_get_u16()?,
                 data: BytesWrap(frame),
@@ -421,6 +441,22 @@ impl Commands {
                 reset: frame.try_get_u8()? != 0,
             },
             0x31 => Commands::ReadHardwareId {},
+            0x29 => {
+                let addr = Addr::read(&mut frame, 2)?;
+                let mut max = frame.try_get_u8()?;
+                let arg = max & 0x80 != 0;
+                if arg {
+                    max ^= 0x80;
+                }
+                let slot = frame.try_get_u8()?;
+
+                Commands::SwitchMux {
+                    addr,
+                    max,
+                    arg,
+                    slot,
+                }
+            }
             0x30 => Commands::WriteBiquad {
                 addr: {
                     let len = if frame.len() > 24 { 3 } else { 2 };
@@ -515,6 +551,12 @@ impl Commands {
                 addr.extra_bit = value;
                 addr.write(&mut f);
             }
+            &Commands::Read { addr, len } => {
+                f.put_u8(0x2);
+                f.put_u8(0x70);
+                addr.write(&mut f);
+                f.put_u8(len);
+            }
             &Commands::Write { addr, ref value } => {
                 f.put_u8(0x13);
                 addr.write(&mut f);
@@ -546,6 +588,20 @@ impl Commands {
             &Commands::DiracBypass { value } => {
                 f.put_u8(0x3f);
                 f.put_u8(value);
+            }
+            &Commands::SwitchMux {
+                addr,
+                mut max,
+                arg,
+                slot,
+            } => {
+                f.put_u8(0x29);
+                addr.write(&mut f);
+                if arg {
+                    max |= 0x80;
+                }
+                f.put_u8(max);
+                f.put_u8(slot);
             }
             &Commands::Unk07 { payload } => {
                 f.put_u8(0x07);
@@ -582,6 +638,7 @@ impl Commands {
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
             Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize { .. }),
             &Commands::Unk07 { .. } => matches!(response, Responses::Unk02 { .. }),
+            &Commands::Read { .. } => true,
             Commands::WriteMemory { .. }
             | Commands::SetSource { .. }
             | Commands::SetMute { .. }
@@ -593,7 +650,8 @@ impl Commands {
             | Commands::FirLoadEnd
             | Commands::BulkLoad { .. }
             | Commands::BulkLoadFilterData { .. }
-            | Commands::DiracBypass { .. } => matches!(response, Responses::Ack),
+            | Commands::DiracBypass { .. }
+            | Commands::SwitchMux { .. } => matches!(response, Responses::Ack),
             Commands::Unknown { .. } => true,
         }
     }
@@ -616,6 +674,10 @@ impl Commands {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum Responses {
     Ack,
+    Read {
+        addr: Addr,
+        data: Vec<Value>,
+    },
     MemoryData(MemoryView),
     FloatData(FloatView),
     HardwareId {
@@ -644,6 +706,18 @@ impl Responses {
         }
 
         Ok(match frame[0] {
+            0x02 => Responses::Read {
+                addr: {
+                    frame.try_get_u8()?;
+                    Addr::read(&mut frame, 2)?
+                },
+                data: {
+                    frame
+                        .chunks(4)
+                        .filter_map(|x| Value::from_bytes(Bytes::copy_from_slice(x)).ok())
+                        .collect()
+                },
+            },
             0x05 => Responses::MemoryData(MemoryView::from_packet(frame)?),
             0x14 => Responses::FloatData(FloatView::from_packet(frame)?),
             0x31 => Responses::HardwareId {
@@ -659,7 +733,6 @@ impl Responses {
                 },
             },
             0xab => Responses::ConfigChanged,
-            0x02 => Responses::Unk02,
             cmd_id => Responses::Unknown {
                 cmd_id,
                 payload: BytesWrap(frame),
@@ -701,6 +774,13 @@ impl Responses {
             }
             Responses::ConfigChanged => {
                 f.put_u8(0xab);
+            }
+            Responses::Read { addr, data } => {
+                f.put_u8(0x02);
+                addr.write(&mut f);
+                for d in data {
+                    f.put(d.clone().into_bytes())
+                }
             }
             &Responses::Unk02 => {
                 f.put_u8(0x02);

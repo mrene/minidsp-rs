@@ -574,13 +574,16 @@ impl<'a> Compressor<'a> {
     }
 
     pub async fn set_bypass(&self, value: bool) -> Result<()> {
-        let value = if value {
-            commands::WriteInt::BYPASSED
-        } else {
-            commands::WriteInt::ENABLED
-        };
-
-        self.dsp.write_dsp_int(self.spec.bypass, value).await
+        self.dsp
+            .write_dsp_int(
+                self.spec.bypass,
+                if value {
+                    commands::WriteInt::BYPASSED
+                } else {
+                    commands::WriteInt::ENABLED
+                },
+            )
+            .await
     }
 
     pub async fn set_threshold(&self, value: f32) -> Result<()> {
@@ -626,13 +629,16 @@ impl<'a> Fir<'a> {
     }
 
     pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
-        let value = if bypass {
-            commands::WriteInt::BYPASSED
-        } else {
-            commands::WriteInt::ENABLED
-        };
-
-        self.dsp.write_dsp_int(self.spec.bypass, value).await
+        self.dsp
+            .write_dsp_int(
+                self.spec.bypass,
+                if bypass {
+                    commands::WriteInt::BYPASSED
+                } else {
+                    commands::WriteInt::ENABLED
+                },
+            )
+            .await
     }
 
     pub async fn clear(&self) -> Result<()> {

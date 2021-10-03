@@ -136,6 +136,8 @@ impl Decoder {
             ParsedMessage::Request(Commands::Write { addr, .. }) => addr.val as _,
             ParsedMessage::Request(Commands::WriteBiquad { addr, .. }) => addr.val as _,
             ParsedMessage::Request(Commands::WriteBiquadBypass { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::Read { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::SwitchMux { addr, .. }) => addr.val as _,
             _ => {
                 return writeln!(self.w);
             }

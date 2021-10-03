@@ -4,9 +4,9 @@ use std::convert::TryInto;
 
 use bytes::{Buf, BufMut, BytesMut};
 use minidsp_protocol::{
-    commands::{BytesWrap, FloatView, MemoryView, Responses},
+    commands::{BytesWrap, FloatView, MemoryView, Responses, Value},
     device::{Device, DeviceKind},
-    eeprom, Commands,
+    eeprom, Commands, FixedPoint,
 };
 
 pub struct MockDevice {
@@ -200,6 +200,13 @@ impl MockDevice {
                 }
             }
             &Commands::Unk07 { .. } => Responses::Unk02,
+            &Commands::Read { addr, len } => {
+                assert_eq!(len, 4);
+                Responses::Read {
+                    addr,
+                    data: vec![Value::FixedPoint(FixedPoint::from_db(-10.0))],
+                }
+            }
             _ => Responses::Ack,
         }
     }
