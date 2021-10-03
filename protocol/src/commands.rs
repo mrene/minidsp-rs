@@ -110,13 +110,13 @@ impl Value {
     }
 
     pub fn from_bytes(mut b: Bytes) -> Result<Self, TryBufError> {
-        Ok(if b.len() < 4 {
-            Value::Unknown(b)
-        } else if (b[0] != 0 || b[1] != 0) && (b[2] == 0 && b[3] == 0) {
-            Value::Int(b.try_get_u16_le()?)
-        } else {
-            Value::Float(b.try_get_f32_le()?)
-        })
+        Ok(
+            if b.len() == 4 && ((b[0] != 0 || b[1] != 0) && b[2] == 0 && b[3] == 0) {
+                Value::Int(b.try_get_u16_le()?)
+            } else {
+                Value::Unknown(b)
+            },
+        )
     }
 }
 
@@ -132,13 +132,20 @@ impl fmt::Debug for Value {
                     None
                 };
 
+                let fixed = if b.len() >= 4 {
+                    Some(FixedPoint::from_u32(b.clone().get_u32()))
+                } else {
+                    None
+                };
+
                 let i = b[0];
                 write!(
                     f,
-                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?}) }}",
+                    "Value {{ Bytes: {:x?} (Int: {:?} | Float: {:?} | Fixed: {:?}) }}",
                     u.as_ref(),
                     i,
-                    float
+                    float,
+                    fixed
                 )
             }
             &Value::Float(val) => {
@@ -412,11 +419,7 @@ impl Commands {
                     frame.try_get_u16()?;
                     let mut data: [f32; 5] = Default::default();
                     for f in data.iter_mut() {
-                        // HACK: FIXME: temporary
-                        // *f = frame.try_get_f32_le()?;
-
-                        let val = frame.try_get_u32()?;
-                        *f = FixedPoint::from_u32(val).into();
+                        *f = frame.try_get_f32_le()?;
                     }
                     data
                 },

@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 #[derive(Clone, Copy)]
 pub struct FixedPoint(u32);
 
@@ -54,6 +56,21 @@ impl From<f32> for FixedPoint {
 impl From<FixedPoint> for f32 {
     fn from(fp: FixedPoint) -> Self {
         fp.to_f32()
+    }
+}
+
+impl Display for FixedPoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_f32())
+    }
+}
+
+impl fmt::Debug for FixedPoint {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("FixedPoint")
+            .field(&self.0)
+            .field(&self.to_f32())
+            .finish()
     }
 }
 
