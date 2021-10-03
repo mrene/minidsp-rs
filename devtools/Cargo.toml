@@ -7,7 +7,7 @@ license = "Apache-2.0"
 
 [features]
 default = []
-symbols = ["minidsp/default"]
+symbols = ["minidsp/device"]
 
 [dependencies]
 anyhow = "1.0.44"

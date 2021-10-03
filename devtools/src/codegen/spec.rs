@@ -17,7 +17,6 @@ pub struct Device {
     pub internal_sampling_rate: u32,
     /// Whether this device uses 3 bytes or 2 bytes addresses
     pub dialect: Dialect,
-    
 }
 
 impl Default for Device {
@@ -29,7 +28,7 @@ impl Default for Device {
             outputs: Default::default(),
             fir_max_taps: Default::default(),
             internal_sampling_rate: Default::default(),
-            dialect: Dialect::default()
+            dialect: Dialect::default(),
         }
     }
 }

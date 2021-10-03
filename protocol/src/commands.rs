@@ -586,7 +586,7 @@ impl Commands {
         }
     }
 
-    pub fn mute(addr: u16, value: bool) -> Self {
+    pub fn mute(addr: Addr, value: bool) -> Self {
         let value: u16 = if value {
             WriteInt::DISABLED
         } else {
@@ -594,7 +594,7 @@ impl Commands {
         };
 
         Commands::Write {
-            addr: Addr::new(addr as _, 3),
+            addr,
             value: Value::Int(value),
         }
     }

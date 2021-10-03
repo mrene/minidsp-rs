@@ -66,6 +66,7 @@ hyperlocal = "0.8.0"
 [features]
 debug = []
 default = ["hid", "devices", "mock"]
+device = ["minidsp-protocol/devices", "minidsp-protocol/symbols"]
 devices = [
   "minidsp-protocol/devices",
   "minidsp-protocol/symbols",

@@ -1,6 +1,6 @@
+use minidsp::{AddrEncoding, Dialect, FloatEncoding};
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::quote;
-use minidsp::{AddrEncoding, FloatEncoding, Dialect};
 
 use super::spec::*;
 
@@ -205,8 +205,10 @@ impl ToSymbolTokens for Dialect {
         let float_encoding = self.float_encoding.to_symbol_tokens(|x| resolve(x));
 
         quote! {
-            addr_encoding: #addr_encoding,
-            float_encoding: #float_encoding,
+            Dialect {
+                addr_encoding: #addr_encoding,
+                float_encoding: #float_encoding,
+            }
         }
     }
 }

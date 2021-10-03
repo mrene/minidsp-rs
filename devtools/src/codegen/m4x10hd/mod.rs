@@ -1,5 +1,5 @@
 use bimap::BiHashMap;
-use minidsp::formats::xml_config::Setting;
+use minidsp::{formats::xml_config::Setting, AddrEncoding, Dialect, FloatEncoding};
 use strong_xml::XmlRead;
 
 use super::spec::*;
@@ -76,6 +76,10 @@ pub fn device() -> Device {
         outputs: (0..10).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 48000,
+        dialect: Dialect {
+            addr_encoding: AddrEncoding::AddrLen2,
+            float_encoding: FloatEncoding::FixedPoint,
+        },
         ..Default::default()
     }
 }

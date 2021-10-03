@@ -31,6 +31,7 @@ pub mod fixed_point;
 pub use fixed_point::FixedPoint;
 
 pub mod dialect;
+pub use dialect::{Dialect, AddrEncoding, FloatEncoding};
 
 #[derive(Copy, Clone)]
 #[cfg_attr(feature = "debug", derive(Debug))]

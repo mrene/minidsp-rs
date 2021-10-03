@@ -1,4 +1,7 @@
-use crate::{FixedPoint, commands::{Addr, Value}};
+use crate::{
+    commands::{Addr, Value},
+    FixedPoint,
+};
 
 /// Dialect represents the different encodings between devices
 #[derive(Default)]
@@ -55,14 +58,18 @@ impl Dialect {
     pub fn float(&self, value: f32) -> Value {
         match self.float_encoding {
             FloatEncoding::Float32LE => Value::Float(value),
-            FloatEncoding::FixedPoint => Value::FixedPoint(FixedPoint::from_f32(value))
+            FloatEncoding::FixedPoint => Value::FixedPoint(FixedPoint::from_f32(value)),
         }
     }
 
     pub fn db(&self, value: f32) -> Value {
         match self.float_encoding {
             FloatEncoding::Float32LE => Value::Float(value),
-            FloatEncoding::FixedPoint => Value::FixedPoint(FixedPoint::from_db(value))
+            FloatEncoding::FixedPoint => Value::FixedPoint(FixedPoint::from_db(value)),
         }
+    }
+
+    pub fn int(&self, value: u16) -> Value {
+        Value::Int(value)
     }
 }

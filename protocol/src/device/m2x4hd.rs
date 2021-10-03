@@ -541,7 +541,10 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 4096,
     internal_sampling_rate: 96000,
+    dialect: Dialect {
+        addr_encoding: AddrEncoding::AddrLen3,
+        float_encoding: FloatEncoding::Float32LE,
+    },
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
-    dialect: Dialect::const_default()
 };

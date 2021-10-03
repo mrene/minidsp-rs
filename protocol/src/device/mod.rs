@@ -8,6 +8,8 @@ use crate::dialect::Dialect;
 use super::{
     commands::{Addr, Value},
     FixedPoint,
+    AddrEncoding,
+    FloatEncoding,
     Source::{self as Source, *},
 };
 
@@ -47,7 +49,7 @@ pub static GENERIC: Device = Device {
     internal_sampling_rate: 0,
     #[cfg(feature = "symbols")]
     symbols: &[],
-    dialect: Dialect::const_default()
+    dialect: Dialect::const_default(),
 };
 
 /// Defines how the high level api should interact with the device based on its memory layout
@@ -83,7 +85,7 @@ impl Default for Device {
             internal_sampling_rate: Default::default(),
             #[cfg(feature = "symbols")]
             symbols: Default::default(),
-            dialect: Dialect::const_default()
+            dialect: Dialect::const_default(),
         }
     }
 }
