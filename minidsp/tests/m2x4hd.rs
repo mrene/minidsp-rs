@@ -21,10 +21,17 @@ async fn test_2x4hd() -> anyhow::Result<()> {
         test!(dev, peq.set_bypass(true), hex!("05 19 802085 43"));
     }
 
-
     // Routing
-    test!(dev, dsp.input(0)?.set_output_enable(0, false), hex!("09 13 800006 01000000 a3"));
-    test!(dev, dsp.input(0)?.set_output_enable(0, true), hex!("09 13 800006 02000000 a4"));
+    test!(
+        dev,
+        dsp.input(0)?.set_output_enable(0, false),
+        hex!("09 13 800006 01000000 a3")
+    );
+    test!(
+        dev,
+        dsp.input(0)?.set_output_enable(0, true),
+        hex!("09 13 800006 02000000 a4")
+    );
 
     let output = dsp.output(0)?;
     {
