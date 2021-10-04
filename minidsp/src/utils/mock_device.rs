@@ -90,7 +90,7 @@ impl MockDevice {
         };
 
         for addr in meters {
-            device.settings[addr as usize] = u32::from_le_bytes((-127f32).to_le_bytes());
+            device.settings[addr as usize] = u32::from_le_bytes((-60f32).to_le_bytes());
         }
 
         device
@@ -172,7 +172,6 @@ impl MockDevice {
             &Commands::Write { addr, ref value } => {
                 let addr = addr.val as usize;
                 let data = value.clone().into_bytes();
-                assert!(data.len() == 4);
                 self.settings[addr] = u32::from_le_bytes(data.as_ref().try_into().unwrap());
 
                 Responses::Ack
@@ -200,13 +199,10 @@ impl MockDevice {
                 }
             }
             &Commands::Unk07 { .. } => Responses::Unk02,
-            &Commands::Read { addr, len } => {
-                assert_eq!(len, 4);
-                Responses::Read {
-                    addr,
-                    data: vec![Value::FixedPoint(FixedPoint::from_db(-10.0))],
-                }
-            }
+            &Commands::Read { addr, .. } => Responses::Read {
+                addr,
+                data: vec![Value::FixedPoint(FixedPoint::from_db(-10.0))],
+            },
             _ => Responses::Ack,
         }
     }

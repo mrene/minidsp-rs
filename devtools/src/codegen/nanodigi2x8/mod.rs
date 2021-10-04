@@ -1,8 +1,8 @@
 use bimap::BiHashMap;
-use minidsp::formats::xml_config::Setting;
+use minidsp::{formats::xml_config::Setting, AddrEncoding, Dialect, FloatEncoding};
 use strong_xml::XmlRead;
 
-use super::spec::*;
+use super::{m4x10hd, spec::*};
 
 pub struct Target {}
 impl crate::Target for Target {
@@ -20,13 +20,18 @@ impl crate::Target for Target {
 }
 
 pub fn device() -> Device {
+    #[allow(clippy::needless_update)]
     Device {
         product_name: "NanoDigi 2x8".into(),
-        sources: Vec::new(),
-        inputs: Vec::new(),
-        outputs: Vec::new(),
+        sources: vec!["Toslink".into(), "Spdif".into()],
+        inputs: (0..2).map(|n| m4x10hd::input(n, 8)).collect(),
+        outputs: (0..8).map(m4x10hd::output).collect(),
         fir_max_taps: 0,
-        internal_sampling_rate: 0,
+        internal_sampling_rate: 96000,
+        dialect: Dialect {
+            addr_encoding: AddrEncoding::AddrLen2,
+            float_encoding: FloatEncoding::FixedPoint,
+        },
         ..Default::default()
     }
 }

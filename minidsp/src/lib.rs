@@ -133,7 +133,7 @@ impl MiniDSP<'_> {
 
     pub async fn subscribe_master_status(
         &self,
-    ) -> Result<impl Stream<Item=MasterStatus> + 'static, MiniDSPError> {
+    ) -> Result<impl Stream<Item = MasterStatus> + 'static, MiniDSPError> {
         let device_info = self.device_info;
         let stream = self
             .client
@@ -153,15 +153,22 @@ impl MiniDSP<'_> {
 
     // Gets the current input and output level using a single command
     pub async fn get_input_output_levels(&self) -> Result<(Vec<f32>, Vec<f32>)> {
-        let inputs: Vec<_> = self.device.inputs.iter().filter_map(|idx| idx.meter).collect();
-        let outputs: Vec<_> = self.device.outputs.iter().filter_map(|idx| idx.meter).collect();
+        let inputs: Vec<_> = self
+            .device
+            .inputs
+            .iter()
+            .filter_map(|idx| idx.meter)
+            .collect();
+        let outputs: Vec<_> = self
+            .device
+            .outputs
+            .iter()
+            .filter_map(|idx| idx.meter)
+            .collect();
         let mut levels = self
             .client
-            .read_floats_multi(
-                inputs.iter().copied().chain(outputs.iter().copied()),
-            )
+            .read_floats_multi(inputs.iter().copied().chain(outputs.iter().copied()))
             .await?;
-
 
         let outputs = Vec::from(&levels[inputs.len()..levels.len()]);
         levels.truncate(self.device.inputs.len());
@@ -358,10 +365,7 @@ impl<'a> Input<'a> {
         let addr = dialect.addr(self.spec.routing[output_index].enable);
         let value = dialect.mute(!value);
 
-        self.dsp
-            .client
-            .write_dsp(addr, value)
-            .await
+        self.dsp.client.write_dsp(addr, value).await
     }
 
     /// Sets the routing matrix gain for this [input, output_index] pair

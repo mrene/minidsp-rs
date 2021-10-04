@@ -47,6 +47,12 @@ impl FixedPoint {
     }
 }
 
+impl Default for FixedPoint {
+    fn default() -> Self {
+        Self::from_u32(0)
+    }
+}
+
 impl From<f32> for FixedPoint {
     fn from(val: f32) -> Self {
         Self::from_f32(val)

@@ -20,7 +20,7 @@ impl crate::Target for Target {
     }
 }
 
-pub(crate) fn routing(input: usize) -> Vec<Gate> {
+pub(crate) fn routing(input: usize, num_outputs: usize) -> Vec<Gate> {
     // Routing settings *BY OUTPUT CHANNEL*
 
     let syms = |start: u8| -> Vec<String> {
@@ -29,7 +29,7 @@ pub(crate) fn routing(input: usize) -> Vec<Gate> {
             .collect()
     };
 
-    let starts = &[11, 17, 23, 29, 35, 41, 47, 53, 59, 65];
+    let starts = &[11, 17, 23, 29, 35, 41, 47, 53, 59, 65][0..num_outputs];
     let outputs = starts.iter().map(|&x| syms(x));
 
     outputs
@@ -40,7 +40,7 @@ pub(crate) fn routing(input: usize) -> Vec<Gate> {
         .collect()
 }
 
-pub(crate) fn input(input: usize) -> Input {
+pub(crate) fn input(input: usize, num_outputs: usize) -> Input {
     Input {
         gate: Some(Gate {
             enable: format!("MuteNoSlewAlg7{}mute", input + 1),
@@ -50,7 +50,7 @@ pub(crate) fn input(input: usize) -> Input {
         peq: (0..5usize)
             .map(|index| format!("PEQ_{}_{}", input + 11, 5 - index))
             .collect(),
-        routing: routing(input),
+        routing: routing(input, num_outputs),
     }
 }
 
@@ -87,7 +87,7 @@ pub fn device() -> Device {
     Device {
         product_name: "MiniDSP 4x10HD".into(),
         sources: vec!["Spdif".into(), "Toslink".into(), "Aesebu".into()],
-        inputs: (0..4).map(input).collect(),
+        inputs: (0..4).map(|n| input(n, 10)).collect(),
         outputs: (0..10).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 96000,

@@ -155,30 +155,30 @@ impl fmt::Debug for Value {
                 let i = b[0];
                 write!(
                     f,
-                    "Value {{ Bytes: {:x?} (Int: {:?} | Int32: {:?} | Float: {:?} | Fixed: {:?}) }}",
-                    u.as_ref(),
+                    "Value {{ Bytes: {:x?} (i: {:?} | i32: {:?} | f32: {:?} | fp: {:?}) }}",
+                    b.as_ref(),
                     i,
-                    u,
-                    float,
-                    fixed
+                    u.unwrap_or_default(),
+                    float.unwrap_or_default(),
+                    fixed.unwrap_or_default()
                 )
             }
             &Value::Float(val) => {
-                write!(f, "Value {{ Float: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
+                write!(f, "Value {{ Bytes: {:x?} (f32: {:?}) }}", b.as_ref(), val)
             }
             &Value::FixedPoint(val) => {
                 write!(
                     f,
-                    "Value {{ FixedPoint: {:?} (Bytes: {:x?}) }}",
+                    "Value {{ Bytes: {:x?} (fp: {:?}) }}",
+                    b.as_ref(),
                     val.to_f32(),
-                    b.as_ref()
                 )
             }
             &Value::Int(val) => {
-                write!(f, "Value {{ Int: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
+                write!(f, "Value {{ Bytes: {:x?} (i: {:?}) }}", b.as_ref(), val)
             }
             &Value::Int32(val) => {
-                write!(f, "Value {{ Int32: {:?} (Bytes: {:x?}) }}", val, b.as_ref())
+                write!(f, "Value {{ Bytes: {:x?} (i32: {:?}) }}", b.as_ref(), val)
             }
         }
     }

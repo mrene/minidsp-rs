@@ -3,7 +3,7 @@ mod test_utils;
 use test_utils::TestDevice;
 
 use hex_literal::hex;
-use minidsp::Channel;
+use minidsp::{Channel, Gain};
 use std::time::Duration;
 
 #[tokio::test]
@@ -15,6 +15,11 @@ async fn test_2x4hd() -> anyhow::Result<()> {
         // Gain & Mute
         test!(dev, input.set_mute(true), hex!("09 13 800000 01000000 9d"));
         test!(dev, input.set_mute(false), hex!("09 13 800000 02000000 9e"));
+        test!(
+            dev,
+            input.set_gain(Gain(-10.0)),
+            hex!("09 13 80001a 000020c1 97")
+        );
 
         // Input PEQs
         let peq = input.peq(0)?;

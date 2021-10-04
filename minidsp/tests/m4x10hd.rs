@@ -12,6 +12,7 @@ async fn test_2x8() -> anyhow::Result<()> {
     let input = dsp.input(0)?;
     test!(dev, input.set_mute(true), hex!("08 13 8035 00000000 d0"));
     test!(dev, input.set_mute(false), hex!("08 13 8035 00800000 50"));
+
     test!(
         dev,
         input.set_gain(Gain(10.0)),
@@ -25,8 +26,16 @@ async fn test_2x8() -> anyhow::Result<()> {
     );
 
     // Routing
-    test!(dev, dsp.input(0)?.set_output_enable(0, false), hex!("08 13 809f 00000000 3a"));
-    test!(dev, dsp.input(0)?.set_output_enable(0, true), hex!("08 13 809f 00800000 ba"));
+    test!(
+        dev,
+        dsp.input(0)?.set_output_enable(0, false),
+        hex!("08 13 809f 00000000 3a")
+    );
+    test!(
+        dev,
+        dsp.input(0)?.set_output_enable(0, true),
+        hex!("08 13 809f 00800000 ba")
+    );
 
     // PEQ
     let peq = input.peq(0)?;
