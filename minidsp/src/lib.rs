@@ -133,7 +133,7 @@ impl MiniDSP<'_> {
 
     pub async fn subscribe_master_status(
         &self,
-    ) -> Result<impl Stream<Item = MasterStatus> + 'static, MiniDSPError> {
+    ) -> Result<impl Stream<Item=MasterStatus> + 'static, MiniDSPError> {
         let device_info = self.device_info;
         let stream = self
             .client
@@ -153,18 +153,17 @@ impl MiniDSP<'_> {
 
     // Gets the current input and output level using a single command
     pub async fn get_input_output_levels(&self) -> Result<(Vec<f32>, Vec<f32>)> {
+        let inputs: Vec<_> = self.device.inputs.iter().filter_map(|idx| idx.meter).collect();
+        let outputs: Vec<_> = self.device.outputs.iter().filter_map(|idx| idx.meter).collect();
         let mut levels = self
             .client
             .read_floats_multi(
-                self.device
-                    .inputs
-                    .iter()
-                    .filter_map(|idx| idx.meter)
-                    .chain(self.device.outputs.iter().filter_map(|idx| idx.meter)),
+                inputs.iter().copied().chain(outputs.iter().copied()),
             )
             .await?;
 
-        let outputs = Vec::from(&levels[self.device.inputs.len()..levels.len()]);
+
+        let outputs = Vec::from(&levels[inputs.len()..levels.len()]);
         levels.truncate(self.device.inputs.len());
 
         Ok((levels, outputs))
@@ -355,17 +354,14 @@ pub struct Input<'a> {
 impl<'a> Input<'a> {
     /// Sets whether this input is routed to the given output
     pub async fn set_output_enable(&self, output_index: usize, value: bool) -> Result<()> {
+        let dialect = self.dsp.dialect();
+        let addr = dialect.addr(self.spec.routing[output_index].enable);
+        let value = dialect.mute(!value);
+
         self.dsp
             .client
-            .roundtrip(Commands::mute(
-                self.dsp
-                    .dialect()
-                    .addr(self.spec.routing[output_index].enable),
-                value,
-            ))
-            .await?
-            .into_ack()
-            .err_into()
+            .write_dsp(addr, value)
+            .await
     }
 
     /// Sets the routing matrix gain for this [input, output_index] pair

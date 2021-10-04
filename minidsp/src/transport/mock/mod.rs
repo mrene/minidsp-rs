@@ -127,7 +127,7 @@ pub fn open_url(url: &Url2) -> Transport {
     }
     {
         let cfg = std::fs::read_to_string(
-            r"C:\Users\mrene\Documents\MiniDSP\MiniDSP-2x8\setting\setting1.xml",
+            r"C:\Users\mrene\Documents\MiniDSP\MiniDSP-2x4-HD\setting\setting1.xml",
         )
         .unwrap();
         let s = Setting::from_str(&cfg).unwrap();

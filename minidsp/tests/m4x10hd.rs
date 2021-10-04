@@ -24,6 +24,10 @@ async fn test_2x8() -> anyhow::Result<()> {
         hex!("08 13 800b 002026f3 df")
     );
 
+    // Routing
+    test!(dev, dsp.input(0)?.set_output_enable(0, false), hex!("08 13 809f 00000000 3a"));
+    test!(dev, dsp.input(0)?.set_output_enable(0, true), hex!("08 13 809f 00800000 ba"));
+
     // PEQ
     let peq = input.peq(0)?;
     test!(
