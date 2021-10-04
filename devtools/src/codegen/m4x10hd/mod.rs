@@ -20,23 +20,37 @@ impl crate::Target for Target {
     }
 }
 
+pub(crate) fn routing(input: usize) -> Vec<Gate> {
+    // Routing settings *BY OUTPUT CHANNEL*
+
+    let syms = |start: u8| -> Vec<String> {
+        (start..(start + 4))
+            .map(|n| format!("MuteNoSlewAlg{}mute", n))
+            .collect()
+    };
+
+    let starts = &[11, 17, 23, 29, 35, 41, 47, 53, 59, 65];
+    let outputs = starts.iter().map(|&x| syms(x));
+
+    outputs
+        .map(|inputs| Gate {
+            enable: inputs[input].clone(),
+            gain: None,
+        })
+        .collect()
+}
+
 pub(crate) fn input(input: usize) -> Input {
     Input {
         gate: Some(Gate {
             enable: format!("MuteNoSlewAlg7{}mute", input + 1),
-            gain: format!("Gain1940AlgNS{}", input + 11),
+            gain: Some(format!("Gain1940AlgNS{}", input + 11)),
         }),
         meter: None,
         peq: (0..5usize)
             .map(|index| format!("PEQ_{}_{}", input + 11, 5 - index))
             .collect(),
-        routing: Default::default(),
-        // (0..4usize)
-        //     .map(|output| Gate {
-        //         enable: format!("MixerNxMSmoothed1_{}_{}_status", input, output),
-        //         gain: String::new(),
-        //     })
-        //     .collect(),
+        routing: routing(input),
     }
 }
 
@@ -44,13 +58,13 @@ pub(crate) fn output(output: usize) -> Output {
     Output {
         gate: Gate {
             enable: format!("MuteNoSlewAlg{}mute", output + 1),
-            gain: format!("Gain1940AlgNS{}", output + 1),
+            gain: Some(format!("Gain1940AlgNS{}", output + 1)),
         },
-        meter: String::new(),
+        meter: None,
         delay_addr: if output < 8 {
-            format!("MultCtrlDelGrowAlg{}", output + 1)
+            Some(format!("MultCtrlDelGrowAlg{}", output + 1))
         } else {
-            String::new()
+            None
         },
         invert_addr: format!("EQ1940Invert{}gain", output + 1),
         peq: (1..=5usize)

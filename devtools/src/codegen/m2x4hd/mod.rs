@@ -23,7 +23,7 @@ pub(crate) fn input(input: usize) -> Input {
     Input {
         gate: Some(Gate {
             enable: format!("DGain_{}_0_status", input + 1),
-            gain: format!("DGain_{}_0", input + 1),
+            gain: Some(format!("DGain_{}_0", input + 1)),
         }),
         meter: Some(format!("Meter02_C1_{}", input)),
         peq: (0..10usize)
@@ -32,7 +32,7 @@ pub(crate) fn input(input: usize) -> Input {
         routing: (0..4usize)
             .map(|output| Gate {
                 enable: format!("MixerNxMSmoothed1_{}_{}_status", input, output),
-                gain: format!("MixerNxMSmoothed1_{}_{}", input, output),
+                gain: Some(format!("MixerNxMSmoothed1_{}_{}", input, output)),
             })
             .collect(),
     }
@@ -42,10 +42,10 @@ pub(crate) fn output(output: usize) -> Output {
     Output {
         gate: Gate {
             enable: format!("DGain_{}_0_status", 3 + output),
-            gain: format!("DGain_{}_0", 3 + output),
+            gain: Some(format!("DGain_{}_0", 3 + output)),
         },
-        meter: format!("Meter10_C1_{}", 4 + output),
-        delay_addr: format!("Delay_{}_0", 3 + output),
+        meter: Some(format!("Meter10_C1_{}", 4 + output)),
+        delay_addr: Some(format!("Delay_{}_0", 3 + output)),
         invert_addr: format!("polarity_out_{}_0", 1 + output),
         peq: (1..=10usize)
             .rev()

@@ -107,9 +107,9 @@ pub struct Output {
     /// Mute and Gain
     pub gate: Gate,
     /// Volume Meter
-    pub meter: u16,
+    pub meter: Option<u16>,
     /// Address of the delay value
-    pub delay_addr: u16,
+    pub delay_addr: Option<u16>,
     /// Address of the invert toggle
     pub invert_addr: u16,
     /// Parametric equalizers
@@ -129,7 +129,7 @@ pub struct Gate {
     pub enable: u16,
 
     /// Address where the gain is controlled
-    pub gain: u16,
+    pub gain: Option<u16>,
 }
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Compressor {

@@ -52,9 +52,9 @@ pub struct Output {
     /// Mute and Gain
     pub gate: Gate,
     /// Volume Meter
-    pub meter: String,
+    pub meter: Option<String>,
     /// Address of the delay value
-    pub delay_addr: String,
+    pub delay_addr: Option<String>,
     /// Address of the invert toggle
     pub invert_addr: String,
     /// Parametric equalizers
@@ -74,7 +74,7 @@ pub struct Gate {
     pub enable: String,
 
     /// Address where the gain is controlled
-    pub gain: String,
+    pub gain: Option<String>,
 }
 #[derive(Debug)]
 pub struct Compressor {

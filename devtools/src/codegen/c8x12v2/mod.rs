@@ -23,7 +23,7 @@ pub(crate) fn input(input: usize) -> Input {
     Input {
         gate: Some(Gate {
             enable: format!("DGain_{}_0_status", input + 1),
-            gain: format!("DGain_{}_0", input + 1),
+            gain: Some(format!("DGain_{}_0", input + 1)),
         }),
         meter: Some(format!("Meter_In_{}", input + 1)),
         peq: (0..10usize)
@@ -32,7 +32,7 @@ pub(crate) fn input(input: usize) -> Input {
         routing: (0..8usize)
             .map(|output| Gate {
                 enable: format!("Mixer_{}_{}_status", input, output),
-                gain: format!("Mixer_{}_{}", input, output),
+                gain: Some(format!("Mixer_{}_{}", input, output)),
             })
             .collect(),
     }
@@ -42,10 +42,10 @@ pub(crate) fn output(output: usize) -> Output {
     Output {
         gate: Gate {
             enable: format!("DGain_{}_0_status", 9 + output),
-            gain: format!("DGain_{}_0", 9 + output),
+            gain: Some(format!("DGain_{}_0", 9 + output)),
         },
-        meter: format!("Meter_Out_{}", output + 1),
-        delay_addr: format!("Delay_{}_0", 9 + output),
+        meter: Some(format!("Meter_Out_{}", output + 1)),
+        delay_addr: Some(format!("Delay_{}_0", 9 + output)),
         invert_addr: format!("polarity_out_{}_0", 9 + output),
         peq: (1..=10usize)
             .rev()
@@ -63,8 +63,6 @@ pub(crate) fn output(output: usize) -> Output {
             ratio: format!("COMP_{}_0_ratio", output + 9),
             attack: format!("COMP_{}_0_atime", output + 9),
             release: format!("COMP_{}_0_rtime", output + 9),
-            //gain: format!("COMP_{}_0_gain", output + 9),
-            //knee: format!("COMP_{}_0_knee", output + 9),
             meter: Some(format!("Meter_Comp_{}", output + 1)),
         }),
         fir: None,

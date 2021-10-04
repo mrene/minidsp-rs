@@ -160,7 +160,7 @@ impl MiniDSP<'_> {
                     .inputs
                     .iter()
                     .filter_map(|idx| idx.meter)
-                    .chain(self.device.outputs.iter().map(|idx| idx.meter)),
+                    .chain(self.device.outputs.iter().filter_map(|idx| idx.meter)),
             )
             .await?;
 
@@ -180,7 +180,7 @@ impl MiniDSP<'_> {
     /// Gets the current output levels
     pub async fn get_output_levels(&self) -> Result<Vec<f32>> {
         self.client
-            .read_floats_multi(self.device.outputs.iter().map(|idx| idx.meter))
+            .read_floats_multi(self.device.outputs.iter().filter_map(|idx| idx.meter))
             .await
     }
 
@@ -323,7 +323,9 @@ pub trait Channel {
     async fn set_gain(&self, value: Gain) -> Result<()> {
         let (dsp, gate, _) = self._channel();
         let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
-        dsp.write_dsp_db(gate.gain, value.0).await
+        let gain = gate.gain.ok_or(MiniDSPError::NoSuchPeripheral)?;
+
+        dsp.write_dsp_db(gain, value.0).await
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
@@ -368,10 +370,11 @@ impl<'a> Input<'a> {
 
     /// Sets the routing matrix gain for this [input, output_index] pair
     pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
-        self.dsp
-            .write_dsp_db(self.spec.routing[output_index].gain, gain.0)
-            .await
-            .err_into()
+        let addr = self.spec.routing[output_index]
+            .gain
+            .ok_or(MiniDSPError::NoSuchPeripheral)?;
+
+        self.dsp.write_dsp_db(addr, gain.0).await.err_into()
     }
 }
 
@@ -415,7 +418,7 @@ impl<'a> Output<'a> {
         self.dsp
             .client
             .write_dsp(
-                dialect.addr(self.spec.delay_addr),
+                dialect.addr(self.spec.delay_addr.ok_or(MiniDSPError::NoSuchPeripheral)?),
                 dialect.delay(value as _),
             )
             .await

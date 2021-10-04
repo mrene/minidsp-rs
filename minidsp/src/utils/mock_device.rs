@@ -79,7 +79,7 @@ impl MockDevice {
 
         let meters = {
             let inputs = device.spec.inputs.iter().filter_map(|i| i.meter);
-            let outputs = device.spec.outputs.iter().map(|i| i.meter);
+            let outputs = device.spec.outputs.iter().filter_map(|i| i.meter);
             let compressors = device
                 .spec
                 .outputs

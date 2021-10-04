@@ -54,7 +54,8 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
 
 fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStream {
     if name.as_ref().is_empty() {
-        return quote! { 0 };
+        panic!("missing item");
+        // return quote! { 0 };
     }
 
     symbols
