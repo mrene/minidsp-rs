@@ -733,10 +733,11 @@ dependencies = [
 
 [[package]]
 name = "okapi"
-version = "0.6.0-alpha-1"
+version = "0.7.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb085e00daf8d75b9dbf0ffdb4738e69503e28898d9641fa8bdc6ad536c7bcf4"
+checksum = "ce66b6366e049880a35c378123fddb630b1a1a3c37fa1ca70caaf4a09f6e2893"
 dependencies = [
+ "log",
  "schemars",
  "serde",
  "serde_json",
