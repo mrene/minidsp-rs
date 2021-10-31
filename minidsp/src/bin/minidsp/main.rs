@@ -13,7 +13,7 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
-use clap::Clap;
+use clap::Parser;
 use debug::DebugCommands;
 use futures::{stream, StreamExt};
 use handlers::run_server;
@@ -33,7 +33,7 @@ use std::{io::Read, time::Duration};
 #[cfg(feature = "hid")]
 use minidsp::transport::hid;
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
     /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
@@ -89,6 +89,7 @@ struct Opts {
 impl Opts {
     // Applies transport and logging options to this builder
     async fn apply_builder(&self, builder: &mut Builder) -> Result<(), MiniDSPError> {
+        #[allow(unused_mut)]
         let mut bound = false;
         #[cfg(target_family = "unix")]
         if let Some(socket_path) = &self.daemon_sock {
@@ -132,7 +133,7 @@ impl Opts {
     }
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 enum SubCommand {
     /// Try to find reachable devices
     Probe {
@@ -211,7 +212,7 @@ enum SubCommand {
     },
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 enum InputCommand {
     /// Set the input gain for this channel
     Gain {
@@ -245,7 +246,7 @@ enum InputCommand {
     },
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 enum RoutingCommand {
     /// Controls whether the output matrix for this input is enabled for the given output index
     Enable {
@@ -259,7 +260,7 @@ enum RoutingCommand {
     },
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 enum OutputCommand {
     /// Set the output gain for this channel
     Gain {
@@ -356,7 +357,7 @@ impl FromStr for PEQTarget {
     }
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 enum FilterCommand {
     /// Set coefficients
     Set {
@@ -383,7 +384,7 @@ enum FilterCommand {
     },
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 pub struct ProductId {
     pub vid: u16,
     pub pid: Option<u16>,

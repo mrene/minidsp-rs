@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::Clap;
+use clap::Parser;
 use confy::load_path;
 use minidsp::utils::OwnedJoinHandle;
 use once_cell::sync::OnceCell;
@@ -24,7 +24,7 @@ pub mod tcp;
 
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 
-#[derive(Clone, Clap, Debug, Default)]
+#[derive(Clone, Parser, Debug, Default)]
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 pub struct Opts {
     /// Read config file from path

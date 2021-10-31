@@ -4,7 +4,7 @@ use std::convert::TryInto;
 
 use anyhow::Result;
 use bytes::Bytes;
-use clap::Clap;
+use clap::Parser;
 use minidsp::{
     commands::{BytesWrap, Commands, ExtendView, FloatView, MemoryView},
     eeprom, source, MiniDSP,
@@ -119,7 +119,7 @@ fn dump_floats(view: &FloatView) {
     }
 }
 
-#[derive(Clone, Clap, Debug)]
+#[derive(Clone, Parser, Debug)]
 pub enum DebugCommands {
     /// Send a hex-encoded command
     Send {
