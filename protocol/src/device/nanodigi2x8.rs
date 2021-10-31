@@ -613,7 +613,7 @@ pub mod sym {
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "NanoDigi 2x8",
-    sources: &[],
+    sources: &[Toslink, Spdif],
     inputs: &[
         Input {
             gate: Some(Gate {
@@ -652,14 +652,6 @@ pub const DEVICE: Device = Device {
                 },
                 Gate {
                     enable: MUTE_NO_SLEW_ALG_5_3MUTE,
-                    gain: None,
-                },
-                Gate {
-                    enable: MUTE_NO_SLEW_ALG_5_9MUTE,
-                    gain: None,
-                },
-                Gate {
-                    enable: MUTE_NO_SLEW_ALG_6_5MUTE,
                     gain: None,
                 },
             ],
@@ -702,14 +694,6 @@ pub const DEVICE: Device = Device {
                 },
                 Gate {
                     enable: MUTE_NO_SLEW_ALG_5_4MUTE,
-                    gain: None,
-                },
-                Gate {
-                    enable: MUTE_NO_SLEW_ALG_6_0MUTE,
-                    gain: None,
-                },
-                Gate {
-                    enable: MUTE_NO_SLEW_ALG_6_6MUTE,
                     gain: None,
                 },
             ],

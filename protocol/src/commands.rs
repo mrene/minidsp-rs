@@ -398,8 +398,8 @@ impl Commands {
         Ok(match frame.try_get_u8()? {
             0x02 => Commands::Read {
                 addr: {
-                    frame.try_get_u8()?; // Discard 0x70
-                    Addr::read(&mut frame, 2)?
+                    let len = if frame.len() >= 3 { 3 } else { 2 };
+                    Addr::read(&mut frame, len)?
                 },
                 len: frame.try_get_u8()?,
             },
@@ -560,7 +560,6 @@ impl Commands {
             }
             &Commands::Read { addr, len } => {
                 f.put_u8(0x2);
-                f.put_u8(0x70);
                 addr.write(&mut f);
                 f.put_u8(len);
             }
@@ -645,7 +644,7 @@ impl Commands {
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
             Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize { .. }),
             &Commands::Unk07 { .. } => matches!(response, Responses::Unk02 { .. }),
-            &Commands::Read { .. } => true,
+            &Commands::Read { .. } => matches!(response, Responses::Read { .. }),
             Commands::WriteMemory { .. }
             | Commands::SetSource { .. }
             | Commands::SetMute { .. }
@@ -1224,5 +1223,14 @@ mod test {
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
         assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
+    }
+
+    #[test]
+    // Tests real world crashes seen with other versions
+    fn test_problematic() {
+        let data = Bytes::from_static(&[02, 02, 04]);
+
+        let cmd = Commands::from_bytes(data);
+        assert!(cmd.is_ok());
     }
 }

@@ -20,6 +20,9 @@ pub mod m2x4hd;
 #[cfg(feature = "device_4x10hd")]
 pub mod m4x10hd;
 
+#[cfg(feature = "device_10x10hd")]
+pub mod m10x10hd;
+
 #[cfg(feature = "device_msharc4x8")]
 pub mod msharc4x8;
 
@@ -37,6 +40,9 @@ pub mod nanodigi2x8;
 
 #[cfg(feature = "device_c8x12v2")]
 pub mod c8x12v2;
+
+#[cfg(feature = "device_m2x4")]
+pub mod m2x4;
 
 pub static GENERIC: Device = Device {
     product_name: "Generic",

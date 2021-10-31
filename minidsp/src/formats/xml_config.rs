@@ -57,13 +57,18 @@ impl Setting {
                         }
                     }
                 }
-                AddressableElement::Filter { addr, hex, .. } => {
+                AddressableElement::Filter {
+                    addr: Some(addr),
+                    hex: Some(hex),
+                    ..
+                } => {
                     let mut addr = *addr;
                     for value in &hex.inner {
                         buf.put_slice_at(addr, &value.inner);
                         addr += 1
                     }
                 }
+                _ => {}
             }
         }
 
@@ -75,7 +80,10 @@ impl Setting {
         self.items.sort_unstable_by_key(|item| *match item {
             AddressableElement::Item { addr, .. } => addr,
             AddressableElement::Fir { addr, .. } => addr,
-            AddressableElement::Filter { addr, .. } => addr,
+            AddressableElement::Filter {
+                addr: Some(addr), ..
+            } => addr,
+            _ => &usize::MAX,
         });
 
         // Sort FIR rows so we send them in the right order
@@ -101,9 +109,14 @@ impl Setting {
                 AddressableElement::Fir { name, addr, .. } => {
                     map.insert(name.clone(), *addr as usize);
                 }
-                AddressableElement::Filter { name, addr, .. } => {
+                AddressableElement::Filter {
+                    name,
+                    addr: Some(addr),
+                    ..
+                } => {
                     map.insert(name.clone(), *addr as usize);
                 }
+                _ => {}
             }
         }
 
@@ -169,7 +182,7 @@ pub enum AddressableElement {
         #[xml(attr = "name")]
         name: String,
         #[xml(attr = "addr")]
-        addr: usize,
+        addr: Option<usize>,
         #[xml(flatten_text = "freq")]
         freq: u16,
         #[xml(flatten_text = "q")]
@@ -179,11 +192,11 @@ pub enum AddressableElement {
         #[xml(flatten_text = "type")]
         typ: String,
         #[xml(flatten_text = "bypass")]
-        bypass: u8,
+        bypass: Option<u8>,
         #[xml(flatten_text = "dec")]
-        dec: CommaSeparatedList<f32>,
+        dec: Option<CommaSeparatedList<f32>>,
         #[xml(flatten_text = "hex")]
-        hex: CommaSeparatedList<HexString>,
+        hex: Option<CommaSeparatedList<HexString>>,
     },
 }
 

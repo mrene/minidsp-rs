@@ -116,6 +116,7 @@ impl MockDevice {
 
     pub fn set_timestamp(&mut self, value: u32) {
         self.write_eeprom_u32(eeprom::TIMESTAMP, value);
+        self.write_eeprom_u16(eeprom::TIMESTAMP_2X4, value as u16);
     }
 
     // Executes a command and response with the appropriate response, while updating
@@ -172,7 +173,12 @@ impl MockDevice {
             &Commands::Write { addr, ref value } => {
                 let addr = addr.val as usize;
                 let data = value.clone().into_bytes();
-                self.settings[addr] = u32::from_le_bytes(data.as_ref().try_into().unwrap());
+                let byte_slice = data.as_ref().try_into();
+                if let Ok(byte_slice) = byte_slice {
+                    self.settings[addr] = u32::from_le_bytes(byte_slice);
+                } else {
+                    // log::error!("Unable to unwrap u32 value {:#?}", data.as_ref());
+                }
 
                 Responses::Ack
             }
@@ -193,7 +199,7 @@ impl MockDevice {
                 Responses::Ack
             }
             &Commands::FirLoadStart { .. } => {
-                // TODO:: Capture Fir state
+                // TODO: Capture Fir state
                 Responses::FirLoadSize {
                     size: self.spec.fir_max_taps,
                 }

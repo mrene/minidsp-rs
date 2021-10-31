@@ -5,10 +5,9 @@ use strong_xml::XmlRead;
 use super::spec::*;
 
 pub struct Target {}
-
 impl crate::Target for Target {
     fn filename() -> &'static str {
-        "m4x10hd.rs"
+        "m10x10hd.rs"
     }
 
     fn symbols() -> bimap::BiMap<String, usize> {
@@ -33,10 +32,13 @@ pub(crate) fn routing(
             .map(|n| format!("MuteNoSlewAlg{}mute", n))
             .collect()
     };
-    let starts: Vec<_> = (11..).step_by(spacing).take(num_outputs).collect();
+    let starts: Vec<_> = (11..)
+        .step_by(spacing)
+        .filter(|x| *x != 71)
+        .take(num_outputs)
+        .collect();
 
     let outputs = starts.iter().map(|&x| syms(x));
-
     outputs
         .map(|inputs| Gate {
             enable: inputs[input].clone(),
@@ -95,10 +97,11 @@ pub(crate) fn output(output: usize) -> Output {
 pub fn device() -> Device {
     #[allow(clippy::needless_update)]
     Device {
-        product_name: "MiniDSP 4x10HD".into(),
-        sources: vec!["Spdif".into(), "Toslink".into(), "Aesebu".into()],
-        inputs: (0..4).map(|n| input(n, 4, 10, 6)).collect(),
-        outputs: (0..10).map(output).collect(),
+        product_name: "MiniDSP 10x10HD".into(),
+        sources: vec!["Toslink".into(), "Spdif".into()],
+        inputs: (0..10).map(|n| input(n, 10, 10, 10)).collect(),
+        // TODO: Add compressor
+        outputs: vec![], //(0..10).map(m4x10hd::output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 96000,
         dialect: Dialect {

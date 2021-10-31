@@ -111,7 +111,11 @@ pub fn open_url(url: &Url2) -> Transport {
     for (key, value) in url.query_pairs() {
         if key == "response_delay" {
             let value = value.parse().unwrap();
-            device.response_delay = Some(Duration::from_millis(value));
+            device.response_delay = if value == 0 {
+                None
+            } else {
+                Some(Duration::from_millis(value))
+            };
         } else if key == "serial" {
             device.set_serial(value.parse().unwrap());
         } else if key == "timestamp" {
@@ -125,16 +129,6 @@ pub fn open_url(url: &Url2) -> Transport {
             device.firmware_version = firmware_version;
         }
     }
-    {
-        let cfg = std::fs::read_to_string(
-            r"C:\Users\mrene\Documents\MiniDSP\MiniDSP-2x8-nanoDIGI\setting\setting1.xml",
-        )
-        .unwrap();
-        let s = Setting::from_str(&cfg).unwrap();
-        println!("GOT TS: {}", s.timestamp);
-        device.set_timestamp(s.timestamp);
-    }
-
     drop(device);
 
     Box::pin(mock)

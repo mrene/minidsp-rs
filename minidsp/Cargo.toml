@@ -70,13 +70,7 @@ device = ["minidsp-protocol/devices", "minidsp-protocol/symbols"]
 devices = [
   "minidsp-protocol/devices",
   "minidsp-protocol/symbols",
-  "minidsp-protocol/device_2x4hd",
-  "minidsp-protocol/device_4x10hd",
-  "minidsp-protocol/device_msharc4x8",
-  "minidsp-protocol/device_shd",
-  "minidsp-protocol/device_ddrc24",
-  "minidsp-protocol/device_nanodigi2x8",
-  "minidsp-protocol/device_ddrc88bm"
+  "minidsp-protocol/all_devices",
 ]
 hid = ["hidapi"]
 mock = []

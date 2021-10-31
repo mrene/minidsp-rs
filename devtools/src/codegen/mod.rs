@@ -3,6 +3,8 @@
 pub mod c8x12v2;
 pub mod ddrc24;
 pub mod ddrc88bm;
+pub mod m10x10hd;
+pub mod m2x4;
 pub mod m2x4hd;
 pub mod m4x10hd;
 pub mod msharc4x8;
@@ -52,7 +54,11 @@ fn generate_symbols(symbols: &SymbolMap) -> TokenStream {
     }
 }
 
-fn resolve_symbol<T: AsRef<str>>(symbols: &mut SymbolMap, name: T) -> TokenStream {
+fn resolve_symbol<T: AsRef<str> + std::fmt::Debug>(
+    symbols: &mut SymbolMap,
+    name: T,
+) -> TokenStream {
+    dbg!(&name);
     if name.as_ref().is_empty() {
         panic!("missing item");
         // return quote! { 0 };

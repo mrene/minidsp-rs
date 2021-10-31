@@ -43,17 +43,21 @@ impl Decoder {
     /// Feed a sent frame
     pub fn feed_sent(&mut self, frame: &Bytes) {
         if let Ok(frame) = packet::unframe(frame.clone()) {
-            let _ = self.print_frame(true, &frame);
-            match commands::Commands::from_bytes(frame) {
+            match commands::Commands::from_bytes(frame.clone()) {
                 Ok(cmd) => {
-                    if let commands::Commands::ReadFloats { .. } = cmd {
+                    if matches!(
+                        cmd,
+                        commands::Commands::ReadFloats { .. } | commands::Commands::Read { .. }
+                    ) {
                         if self.quiet {
                             return;
                         }
                     }
+                    let _ = self.print_frame(true, &frame);
                     let _ = self.print_command(cmd);
                 }
                 Err(err) => {
+                    let _ = self.print_frame(true, &frame);
                     let _ = self.print_error(err);
                 }
             };
@@ -63,17 +67,21 @@ impl Decoder {
     /// Feed a received frame
     pub fn feed_recv(&mut self, frame: &Bytes) {
         if let Ok(frame) = packet::unframe(frame.clone()) {
-            let _ = self.print_frame(false, &frame);
-            match commands::Responses::from_bytes(frame) {
+            match commands::Responses::from_bytes(frame.clone()) {
                 Ok(cmd) => {
-                    if let commands::Responses::FloatData(_) = cmd {
+                    if matches!(
+                        cmd,
+                        commands::Responses::FloatData(_) | commands::Responses::Read { .. }
+                    ) {
                         if self.quiet {
                             return;
                         }
                     }
+                    let _ = self.print_frame(false, &frame);
                     let _ = self.print_response(cmd);
                 }
                 Err(err) => {
+                    let _ = self.print_frame(false, &frame);
                     let _ = self.print_error(err);
                 }
             }
@@ -81,9 +89,9 @@ impl Decoder {
     }
 
     fn print_frame(&mut self, sent: bool, frame: &Bytes) -> std::io::Result<()> {
-        if self.quiet {
-            return Ok(());
-        }
+        // if self.quiet {
+        //     return Ok(());
+        // }
         let _ = self.print_direction(sent);
         let _ = self
             .w
@@ -126,7 +134,7 @@ impl Decoder {
 
     fn print_error<T: fmt::Debug>(&mut self, err: T) -> std::io::Result<()> {
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
-        writeln!(self.w, "{:?}", err)?;
+        writeln!(self.w, "Decode error: {:?}", err)?;
         Ok(())
     }
 
