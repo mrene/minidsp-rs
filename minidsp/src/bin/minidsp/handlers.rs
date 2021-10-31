@@ -48,7 +48,16 @@ pub(crate) async fn run_command(
 ) -> Result<()> {
     match cmd {
         // Master
-        Some(&SubCommand::Gain { value }) => device.set_master_volume(value).await?,
+        Some(&SubCommand::Gain {
+            mut value,
+            relative,
+        }) => {
+            if relative {
+                let status = device.get_master_status().await?;
+                value.0 += status.volume.unwrap().0;
+            }
+            device.set_master_volume(value).await?
+        }
         Some(&SubCommand::Mute { value }) => device.set_master_mute(value).await?,
         Some(&SubCommand::Source { value }) => device.set_source(value).await?,
         Some(&SubCommand::Config { value }) => device.set_config(value).await?,

@@ -147,6 +147,10 @@ enum SubCommand {
 
     /// Set the master output gain [-127, 0]
     Gain {
+        #[clap(long, short)]
+        /// Specify the value as a relative increment on top of the current gain.
+        relative: bool,
+
         /// Gain in decibels, between -127 and 0 inclusively
         value: Gain,
     },
