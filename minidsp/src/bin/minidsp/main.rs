@@ -390,7 +390,7 @@ pub struct ProductId {
     pub pid: Option<u16>,
 }
 
-#[derive(Debug, strum::EnumString, strum::ToString, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, strum::EnumString, strum::Display, Clone, Copy, Eq, PartialEq)]
 #[strum(serialize_all = "lowercase")]
 pub enum OutputFormat {
     Text,
