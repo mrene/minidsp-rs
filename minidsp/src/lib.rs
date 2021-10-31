@@ -62,7 +62,9 @@ use async_trait::async_trait;
 use client::Client;
 use futures::{Stream, StreamExt};
 use minidsp_protocol::commands::Addr;
-pub use minidsp_protocol::{eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source};
+pub use minidsp_protocol::{
+    dialect::*, eeprom, Commands, DeviceInfo, FromMemory, MasterStatus, Source,
+};
 use tokio::time::Duration;
 pub use transport::MiniDSPError;
 use utils::ErrInto;
@@ -72,14 +74,22 @@ pub use crate::commands::Gain;
 pub type Result<T, E = MiniDSPError> = core::result::Result<T, E>;
 
 pub mod biquad;
+
 pub use minidsp_protocol::{commands, device, device::Gate, packet};
+
 pub mod tcp_server;
+
 pub use minidsp_protocol::source;
+
 pub mod transport;
 pub mod utils;
+
 pub use biquad::Biquad;
+
 pub mod builder;
+
 pub use builder::Builder;
+
 pub mod client;
 pub mod formats;
 pub mod logging;
@@ -143,18 +153,24 @@ impl MiniDSP<'_> {
 
     // Gets the current input and output level using a single command
     pub async fn get_input_output_levels(&self) -> Result<(Vec<f32>, Vec<f32>)> {
+        let inputs: Vec<_> = self
+            .device
+            .inputs
+            .iter()
+            .filter_map(|idx| idx.meter)
+            .collect();
+        let outputs: Vec<_> = self
+            .device
+            .outputs
+            .iter()
+            .filter_map(|idx| idx.meter)
+            .collect();
         let mut levels = self
             .client
-            .read_floats_multi(
-                self.device
-                    .inputs
-                    .iter()
-                    .filter_map(|idx| idx.meter)
-                    .chain(self.device.outputs.iter().map(|idx| idx.meter)),
-            )
+            .read_floats_multi(inputs.iter().copied().chain(outputs.iter().copied()))
             .await?;
 
-        let outputs = Vec::from(&levels[self.device.inputs.len()..levels.len()]);
+        let outputs = Vec::from(&levels[inputs.len()..levels.len()]);
         levels.truncate(self.device.inputs.len());
 
         Ok((levels, outputs))
@@ -170,7 +186,7 @@ impl MiniDSP<'_> {
     /// Gets the current output levels
     pub async fn get_output_levels(&self) -> Result<Vec<f32>> {
         self.client
-            .read_floats_multi(self.device.outputs.iter().map(|idx| idx.meter))
+            .read_floats_multi(self.device.outputs.iter().filter_map(|idx| idx.meter))
             .await
     }
 
@@ -256,6 +272,34 @@ impl MiniDSP<'_> {
     pub async fn get_device_info(&self) -> Result<DeviceInfo> {
         Ok(self.device_info)
     }
+
+    pub(crate) fn dialect(&self) -> &Dialect {
+        &self.device.dialect
+    }
+
+    pub(crate) async fn write_dsp_float(&self, addr: u16, value: f32) -> Result<(), MiniDSPError> {
+        let dialect = self.dialect();
+        let addr = dialect.addr(addr);
+        let value = dialect.float(value);
+
+        self.client.write_dsp(addr, value).await
+    }
+
+    pub(crate) async fn write_dsp_db(&self, addr: u16, value: f32) -> Result<(), MiniDSPError> {
+        let dialect = self.dialect();
+        let addr = dialect.addr(addr);
+        let value = dialect.db(value);
+
+        self.client.write_dsp(addr, value).await
+    }
+
+    pub(crate) async fn write_dsp_int(&self, addr: u16, value: u16) -> Result<(), MiniDSPError> {
+        let dialect = self.dialect();
+        let addr = dialect.addr(addr);
+        let value = dialect.int(value);
+
+        self.client.write_dsp(addr, value).await
+    }
 }
 
 #[async_trait]
@@ -269,8 +313,13 @@ pub trait Channel {
         let (dsp, gate, _) = self._channel();
         let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
 
+        let dialect = dsp.dialect();
+
         dsp.client
-            .roundtrip(Commands::mute(gate.enable, value))
+            .roundtrip(Commands::Write {
+                addr: dialect.addr(gate.enable),
+                value: dialect.mute(value),
+            })
             .await?
             .into_ack()
             .err_into()
@@ -280,7 +329,9 @@ pub trait Channel {
     async fn set_gain(&self, value: Gain) -> Result<()> {
         let (dsp, gate, _) = self._channel();
         let gate = gate.ok_or(MiniDSPError::NoSuchPeripheral)?;
-        dsp.client.write_dsp(gate.gain, value.0).await
+        let gain = gate.gain.ok_or(MiniDSPError::NoSuchPeripheral)?;
+
+        dsp.write_dsp_db(gain, value.0).await
     }
 
     /// Get an object for configuring the parametric equalizer associated to this channel
@@ -289,14 +340,14 @@ pub trait Channel {
         if index >= peq.len() {
             Err(MiniDSPError::OutOfRange)
         } else {
-            Ok(BiquadFilter::new(dsp, peq[index]))
+            Ok(BiquadFilter::new(dsp, dsp.dialect().addr(peq[index])))
         }
     }
 
     fn peqs_all(&self) -> Vec<BiquadFilter<'_>> {
         let (dsp, _, peq) = self._channel();
         peq.iter()
-            .map(move |x| BiquadFilter::new(dsp, *x))
+            .map(move |&x| BiquadFilter::new(dsp, dsp.dialect().addr(x)))
             .collect()
     }
 }
@@ -310,24 +361,20 @@ pub struct Input<'a> {
 impl<'a> Input<'a> {
     /// Sets whether this input is routed to the given output
     pub async fn set_output_enable(&self, output_index: usize, value: bool) -> Result<()> {
-        self.dsp
-            .client
-            .roundtrip(Commands::mute(
-                self.spec.routing[output_index].enable,
-                value,
-            ))
-            .await?
-            .into_ack()
-            .err_into()
+        let dialect = self.dsp.dialect();
+        let addr = dialect.addr(self.spec.routing[output_index].enable);
+        let value = dialect.mute(!value);
+
+        self.dsp.client.write_dsp(addr, value).await
     }
 
     /// Sets the routing matrix gain for this [input, output_index] pair
     pub async fn set_output_gain(&self, output_index: usize, gain: Gain) -> Result<()> {
-        self.dsp
-            .client
-            .write_dsp(self.spec.routing[output_index].gain, gain.0)
-            .await
-            .err_into()
+        let addr = self.spec.routing[output_index]
+            .gain
+            .ok_or(MiniDSPError::NoSuchPeripheral)?;
+
+        self.dsp.write_dsp_db(addr, gain.0).await.err_into()
     }
 }
 
@@ -346,26 +393,35 @@ pub struct Output<'a> {
 impl<'a> Output<'a> {
     /// Sets the output mute setting
     pub async fn set_invert(&self, value: bool) -> Result<()> {
+        let dialect = self.dsp.dialect();
+
         self.dsp
             .client
-            .write_dsp(self.spec.invert_addr, value as u16)
+            .write_dsp(dialect.addr(self.spec.invert_addr), dialect.invert(value))
             .await
     }
 
     /// Sets the output delay setting
     pub async fn set_delay(&self, value: Duration) -> Result<()> {
-        // Each delay increment is 0.010 ms
-        // let value = value / Duration::from_micros(10);
-        let value = value.as_micros() / 10;
-        if value > 80 {
+        // Convert the duration to a number of samples
+        let value = (value.as_micros() as f64 * self.dsp.device.internal_sampling_rate as f64
+            / 1_000_000_f64)
+            .round() as u64;
+        if value > 8000 {
             return Err(MiniDSPError::InternalError(anyhow!(
-                "Delay should be within [0, 80], was {:?}",
+                "Delay should be within [0, 80] ms was {:?}",
                 value
             )));
         }
 
-        let value = value as u16;
-        self.dsp.client.write_dsp(self.spec.delay_addr, value).await
+        let dialect = self.dsp.dialect();
+        self.dsp
+            .client
+            .write_dsp(
+                dialect.addr(self.spec.delay_addr.ok_or(MiniDSPError::NoSuchPeripheral)?),
+                dialect.delay(value as _),
+            )
+            .await
     }
 
     /// Helper for setting crossover settings
@@ -393,11 +449,11 @@ impl Channel for Output<'_> {
 /// Helper object for controlling an on-device biquad filter
 pub struct BiquadFilter<'a> {
     dsp: &'a MiniDSP<'a>,
-    addr: u16,
+    addr: Addr,
 }
 
 impl<'a> BiquadFilter<'a> {
-    pub(crate) fn new(dsp: &'a MiniDSP<'a>, addr: u16) -> Self {
+    pub(crate) fn new(dsp: &'a MiniDSP<'a>, addr: Addr) -> Self {
         BiquadFilter { dsp, addr }
     }
 
@@ -417,8 +473,13 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquad {
-                addr: Addr::new(self.addr, 2),
-                data: coefficients.try_into().unwrap(),
+                addr: self.addr,
+                data: coefficients
+                    .iter()
+                    .map(|&coeff| self.dsp.dialect().float(coeff))
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
             })
             .await?
             .into_ack()
@@ -430,7 +491,7 @@ impl<'a> BiquadFilter<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr: Addr::new(self.addr, 2),
+                addr: self.addr,
                 value: bypass,
             })
             .await?
@@ -452,7 +513,9 @@ impl<'a> Crossover<'a> {
     pub async fn clear(&self, group: usize) -> Result<()> {
         let start = self.spec.peqs[group];
         for addr in (start..(start + 5 * 4)).step_by(5) {
-            BiquadFilter::new(self.dsp, addr).clear().await?;
+            BiquadFilter::new(self.dsp, self.dsp.dialect().addr(addr))
+                .clear()
+                .await?;
         }
 
         Ok(())
@@ -471,7 +534,7 @@ impl<'a> Crossover<'a> {
         }
 
         let addr = self.spec.peqs[group] + (index as u16) * 5;
-        let filter = BiquadFilter::new(self.dsp, addr);
+        let filter = BiquadFilter::new(self.dsp, self.dsp.dialect().addr(addr));
         filter.set_coefficients(coefficients).await
     }
 
@@ -486,7 +549,7 @@ impl<'a> Crossover<'a> {
         self.dsp
             .client
             .roundtrip(Commands::WriteBiquadBypass {
-                addr: Addr::new(addr, 2),
+                addr: self.dsp.dialect().addr(addr),
                 value: bypass,
             })
             .await?
@@ -514,29 +577,32 @@ impl<'a> Compressor<'a> {
     }
 
     pub async fn set_bypass(&self, value: bool) -> Result<()> {
-        let value = if value {
-            commands::WriteInt::BYPASSED
-        } else {
-            commands::WriteInt::ENABLED
-        };
-
-        self.dsp.client.write_dsp(self.spec.bypass, value).await
+        self.dsp
+            .write_dsp_int(
+                self.spec.bypass,
+                if value {
+                    commands::WriteInt::BYPASSED
+                } else {
+                    commands::WriteInt::ENABLED
+                },
+            )
+            .await
     }
 
     pub async fn set_threshold(&self, value: f32) -> Result<()> {
-        self.dsp.client.write_dsp(self.spec.threshold, value).await
+        self.dsp.write_dsp_float(self.spec.threshold, value).await
     }
 
     pub async fn set_ratio(&self, value: f32) -> Result<()> {
-        self.dsp.client.write_dsp(self.spec.ratio, value).await
+        self.dsp.write_dsp_float(self.spec.ratio, value).await
     }
 
     pub async fn set_attack(&self, value: f32) -> Result<()> {
-        self.dsp.client.write_dsp(self.spec.attack, value).await
+        self.dsp.write_dsp_float(self.spec.attack, value).await
     }
 
     pub async fn set_release(&self, value: f32) -> Result<()> {
-        self.dsp.client.write_dsp(self.spec.release, value).await
+        self.dsp.write_dsp_float(self.spec.release, value).await
     }
 
     pub async fn get_level(&self) -> Result<f32> {
@@ -566,13 +632,16 @@ impl<'a> Fir<'a> {
     }
 
     pub async fn set_bypass(&self, bypass: bool) -> Result<()> {
-        let value = if bypass {
-            commands::WriteInt::BYPASSED
-        } else {
-            commands::WriteInt::ENABLED
-        };
-
-        self.dsp.client.write_dsp(self.spec.bypass, value).await
+        self.dsp
+            .write_dsp_int(
+                self.spec.bypass,
+                if bypass {
+                    commands::WriteInt::BYPASSED
+                } else {
+                    commands::WriteInt::ENABLED
+                },
+            )
+            .await
     }
 
     pub async fn clear(&self) -> Result<()> {
@@ -586,8 +655,7 @@ impl<'a> Fir<'a> {
 
         // Set the number of active coefficients
         self.dsp
-            .client
-            .write_dsp(self.spec.num_coefficients, coefficients.len() as u16)
+            .write_dsp_int(self.spec.num_coefficients, coefficients.len() as u16)
             .await?;
 
         // Get the max number of usable coefficients

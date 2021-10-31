@@ -23,7 +23,7 @@ pub(crate) fn input(input: usize) -> Input {
     Input {
         gate: Some(Gate {
             enable: format!("DGain_{}_0_status", input + 1),
-            gain: format!("DGain_{}_0", input + 1),
+            gain: Some(format!("DGain_{}_0", input + 1)),
         }),
         meter: Some(format!("Meter04_C1_{}", input)),
         peq: (0..10usize)
@@ -32,7 +32,7 @@ pub(crate) fn input(input: usize) -> Input {
         routing: (0..4usize)
             .map(|output| Gate {
                 enable: format!("MixerNxMSmoothed1_{}_{}_status", input, output),
-                gain: format!("MixerNxMSmoothed1_{}_{}", input, output),
+                gain: Some(format!("MixerNxMSmoothed1_{}_{}", input, output)),
             })
             .collect(),
     }
@@ -43,10 +43,10 @@ pub(crate) fn output(output: usize) -> Output {
     Output {
         gate: Gate {
             enable: format!("DGain_{}_0_status", channel_index),
-            gain: format!("DGain_{}_0", channel_index),
+            gain: Some(format!("DGain_{}_0", channel_index)),
         },
-        meter: format!("Meter10_C2_{}", output),
-        delay_addr: format!("Delay_{}_0", channel_index),
+        meter: Some(format!("Meter10_C2_{}", output)),
+        delay_addr: Some(format!("Delay_{}_0", channel_index)),
         invert_addr: format!("polarity_out_1_{}", 4 + output),
         peq: (0..10usize)
             .map(|index| format!("PEQ_{}_{}", channel_index, 10 - index))
@@ -84,6 +84,7 @@ pub fn device() -> Device {
 
         // FIXME: This depends on the installed plugin
         internal_sampling_rate: 96000,
+        ..Default::default()
     }
 }
 

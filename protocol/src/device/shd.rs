@@ -292,19 +292,19 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: MIXER_0_0_STATUS,
-                    gain: MIXER_0_0,
+                    gain: Some(MIXER_0_0),
                 },
                 Gate {
                     enable: MIXER_0_1_STATUS,
-                    gain: MIXER_0_1,
+                    gain: Some(MIXER_0_1),
                 },
                 Gate {
                     enable: MIXER_0_2_STATUS,
-                    gain: MIXER_0_2,
+                    gain: Some(MIXER_0_2),
                 },
                 Gate {
                     enable: MIXER_0_3_STATUS,
-                    gain: MIXER_0_3,
+                    gain: Some(MIXER_0_3),
                 },
             ],
             peq: &[],
@@ -315,19 +315,19 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: MIXER_1_0_STATUS,
-                    gain: MIXER_1_0,
+                    gain: Some(MIXER_1_0),
                 },
                 Gate {
                     enable: MIXER_1_1_STATUS,
-                    gain: MIXER_1_1,
+                    gain: Some(MIXER_1_1),
                 },
                 Gate {
                     enable: MIXER_1_2_STATUS,
-                    gain: MIXER_1_2,
+                    gain: Some(MIXER_1_2),
                 },
                 Gate {
                     enable: MIXER_1_3_STATUS,
-                    gain: MIXER_1_3,
+                    gain: Some(MIXER_1_3),
                 },
             ],
             peq: &[],
@@ -337,10 +337,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_1_0_STATUS,
-                gain: D_GAIN_1_0,
+                gain: Some(D_GAIN_1_0),
             },
-            meter: METER_OUT_1,
-            delay_addr: DELAY_1_0,
+            meter: Some(METER_OUT_1),
+            delay_addr: Some(DELAY_1_0),
             invert_addr: POLARITY_OUT_1_0,
             peq: &[
                 PEQ_1_10, PEQ_1_9, PEQ_1_8, PEQ_1_7, PEQ_1_6, PEQ_1_5, PEQ_1_4, PEQ_1_3, PEQ_1_2,
@@ -362,10 +362,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_2_0_STATUS,
-                gain: D_GAIN_2_0,
+                gain: Some(D_GAIN_2_0),
             },
-            meter: METER_OUT_2,
-            delay_addr: DELAY_2_0,
+            meter: Some(METER_OUT_2),
+            delay_addr: Some(DELAY_2_0),
             invert_addr: POLARITY_OUT_2_0,
             peq: &[
                 PEQ_2_10, PEQ_2_9, PEQ_2_8, PEQ_2_7, PEQ_2_6, PEQ_2_5, PEQ_2_4, PEQ_2_3, PEQ_2_2,
@@ -387,10 +387,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_3_0_STATUS,
-                gain: D_GAIN_3_0,
+                gain: Some(D_GAIN_3_0),
             },
-            meter: METER_OUT_3,
-            delay_addr: DELAY_3_0,
+            meter: Some(METER_OUT_3),
+            delay_addr: Some(DELAY_3_0),
             invert_addr: POLARITY_OUT_3_0,
             peq: &[
                 PEQ_3_10, PEQ_3_9, PEQ_3_8, PEQ_3_7, PEQ_3_6, PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2,
@@ -412,10 +412,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_4_0_STATUS,
-                gain: D_GAIN_4_0,
+                gain: Some(D_GAIN_4_0),
             },
-            meter: METER_OUT_4,
-            delay_addr: DELAY_4_0,
+            meter: Some(METER_OUT_4),
+            delay_addr: Some(DELAY_4_0),
             invert_addr: POLARITY_OUT_4_0,
             peq: &[
                 PEQ_4_10, PEQ_4_9, PEQ_4_8, PEQ_4_7, PEQ_4_6, PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2,
@@ -437,6 +437,10 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 0,
     internal_sampling_rate: 96000,
+    dialect: Dialect {
+        addr_encoding: AddrEncoding::AddrLen3,
+        float_encoding: FloatEncoding::Float32LE,
+    },
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

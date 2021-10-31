@@ -43,17 +43,20 @@ impl Decoder {
     /// Feed a sent frame
     pub fn feed_sent(&mut self, frame: &Bytes) {
         if let Ok(frame) = packet::unframe(frame.clone()) {
-            let _ = self.print_frame(true, &frame);
-            match commands::Commands::from_bytes(frame) {
+            match commands::Commands::from_bytes(frame.clone()) {
                 Ok(cmd) => {
-                    if let commands::Commands::ReadFloats { .. } = cmd {
-                        if self.quiet {
-                            return;
-                        }
+                    if matches!(
+                        cmd,
+                        commands::Commands::ReadFloats { .. } | commands::Commands::Read { .. }
+                    ) && self.quiet
+                    {
+                        return;
                     }
+                    let _ = self.print_frame(true, &frame);
                     let _ = self.print_command(cmd);
                 }
                 Err(err) => {
+                    let _ = self.print_frame(true, &frame);
                     let _ = self.print_error(err);
                 }
             };
@@ -63,17 +66,20 @@ impl Decoder {
     /// Feed a received frame
     pub fn feed_recv(&mut self, frame: &Bytes) {
         if let Ok(frame) = packet::unframe(frame.clone()) {
-            let _ = self.print_frame(false, &frame);
-            match commands::Responses::from_bytes(frame) {
+            match commands::Responses::from_bytes(frame.clone()) {
                 Ok(cmd) => {
-                    if let commands::Responses::FloatData(_) = cmd {
-                        if self.quiet {
-                            return;
-                        }
+                    if matches!(
+                        cmd,
+                        commands::Responses::FloatData(_) | commands::Responses::Read { .. }
+                    ) && self.quiet
+                    {
+                        return;
                     }
+                    let _ = self.print_frame(false, &frame);
                     let _ = self.print_response(cmd);
                 }
                 Err(err) => {
+                    let _ = self.print_frame(false, &frame);
                     let _ = self.print_error(err);
                 }
             }
@@ -81,9 +87,6 @@ impl Decoder {
     }
 
     fn print_frame(&mut self, sent: bool, frame: &Bytes) -> std::io::Result<()> {
-        if self.quiet {
-            return Ok(());
-        }
         let _ = self.print_direction(sent);
         let _ = self
             .w
@@ -126,16 +129,18 @@ impl Decoder {
 
     fn print_error<T: fmt::Debug>(&mut self, err: T) -> std::io::Result<()> {
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
-        writeln!(self.w, "{:?}", err)?;
+        writeln!(self.w, "Decode error: {:?}", err)?;
         Ok(())
     }
 
     fn maybe_print_addr(&mut self, cmd: &ParsedMessage) -> std::io::Result<()> {
-        let addr = match cmd {
+        let addr = match *cmd {
             ParsedMessage::Request(Commands::ReadFloats { addr, .. }) => addr,
-            ParsedMessage::Request(Commands::Write { addr, .. }) => &addr.val,
-            ParsedMessage::Request(Commands::WriteBiquad { addr, .. }) => &addr.val,
-            ParsedMessage::Request(Commands::WriteBiquadBypass { addr, .. }) => &addr.val,
+            ParsedMessage::Request(Commands::Write { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::WriteBiquad { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::WriteBiquadBypass { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::Read { addr, .. }) => addr.val as _,
+            ParsedMessage::Request(Commands::SwitchMux { addr, .. }) => addr.val as _,
             _ => {
                 return writeln!(self.w);
             }
@@ -146,7 +151,7 @@ impl Decoder {
             .set_color(ColorSpec::new().set_fg(Some(Color::Magenta)));
 
         let name = self
-            .resolve_addr(*addr)
+            .resolve_addr(addr)
             .unwrap_or_else(|| "<unknown>".to_string());
         writeln!(self.w, "(0x{:02x?} | {:?}) <> {}", addr, addr, name,)?;
         Ok(())

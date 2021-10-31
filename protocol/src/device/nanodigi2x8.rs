@@ -613,11 +613,221 @@ pub mod sym {
 use sym::*;
 pub const DEVICE: Device = Device {
     product_name: "NanoDigi 2x8",
-    sources: &[],
-    inputs: &[],
-    outputs: &[],
+    sources: &[Toslink, Spdif],
+    inputs: &[
+        Input {
+            gate: Some(Gate {
+                enable: MUTE_NO_SLEW_ALG_7_1MUTE,
+                gain: Some(GAIN_1940_ALG_NS11),
+            }),
+            meter: None,
+            routing: &[
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_1_1MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_1_7MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_2_3MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_2_9MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_3_5MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_4_1MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_4_7MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_5_3MUTE,
+                    gain: None,
+                },
+            ],
+            peq: &[PEQ_11_5, PEQ_11_4, PEQ_11_3, PEQ_11_2, PEQ_11_1],
+        },
+        Input {
+            gate: Some(Gate {
+                enable: MUTE_NO_SLEW_ALG_7_2MUTE,
+                gain: Some(GAIN_1940_ALG_NS12),
+            }),
+            meter: None,
+            routing: &[
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_1_2MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_1_8MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_2_4MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_3_0MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_3_6MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_4_2MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_4_8MUTE,
+                    gain: None,
+                },
+                Gate {
+                    enable: MUTE_NO_SLEW_ALG_5_4MUTE,
+                    gain: None,
+                },
+            ],
+            peq: &[PEQ_12_5, PEQ_12_4, PEQ_12_3, PEQ_12_2, PEQ_12_1],
+        },
+    ],
+    outputs: &[
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_1MUTE,
+                gain: Some(GAIN_1940_ALG_NS1),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_1),
+            invert_addr: EQ1940_INVERT_1GAIN,
+            peq: &[PEQ_1_5, PEQ_1_4, PEQ_1_3, PEQ_1_2, PEQ_1_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_1_1, BPF_1_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_2MUTE,
+                gain: Some(GAIN_1940_ALG_NS2),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_2),
+            invert_addr: EQ1940_INVERT_2GAIN,
+            peq: &[PEQ_2_5, PEQ_2_4, PEQ_2_3, PEQ_2_2, PEQ_2_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_2_1, BPF_2_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_3MUTE,
+                gain: Some(GAIN_1940_ALG_NS3),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_3),
+            invert_addr: EQ1940_INVERT_3GAIN,
+            peq: &[PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2, PEQ_3_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_3_1, BPF_3_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_4MUTE,
+                gain: Some(GAIN_1940_ALG_NS4),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_4),
+            invert_addr: EQ1940_INVERT_4GAIN,
+            peq: &[PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2, PEQ_4_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_4_1, BPF_4_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_5MUTE,
+                gain: Some(GAIN_1940_ALG_NS5),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_5),
+            invert_addr: EQ1940_INVERT_5GAIN,
+            peq: &[PEQ_5_5, PEQ_5_4, PEQ_5_3, PEQ_5_2, PEQ_5_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_5_1, BPF_5_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_6MUTE,
+                gain: Some(GAIN_1940_ALG_NS6),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_6),
+            invert_addr: EQ1940_INVERT_6GAIN,
+            peq: &[PEQ_6_5, PEQ_6_4, PEQ_6_3, PEQ_6_2, PEQ_6_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_6_1, BPF_6_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_7MUTE,
+                gain: Some(GAIN_1940_ALG_NS7),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_7),
+            invert_addr: EQ1940_INVERT_7GAIN,
+            peq: &[PEQ_7_5, PEQ_7_4, PEQ_7_3, PEQ_7_2, PEQ_7_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_7_1, BPF_7_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_8MUTE,
+                gain: Some(GAIN_1940_ALG_NS8),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_8),
+            invert_addr: EQ1940_INVERT_8GAIN,
+            peq: &[PEQ_8_5, PEQ_8_4, PEQ_8_3, PEQ_8_2, PEQ_8_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_8_1, BPF_8_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+    ],
     fir_max_taps: 0,
-    internal_sampling_rate: 0,
+    internal_sampling_rate: 96000,
+    dialect: Dialect {
+        addr_encoding: AddrEncoding::AddrLen2,
+        float_encoding: FloatEncoding::FixedPoint,
+    },
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

@@ -1,0 +1,2108 @@
+<setting version="1.13">
+<timestamp>0</timestamp>
+<dspversion>22</dspversion>
+<mutestatus>0</mutestatus>
+<link>0</link>
+<eq_ctrl name="eq_ch1_1">0</eq_ctrl>
+  <eq_ctrl name="eq_ch1_2">0</eq_ctrl>
+  <eq_ctrl name="eq_ch1_3">0</eq_ctrl>
+  <eq_ctrl name="eq_ch2_1">0</eq_ctrl>
+  <eq_ctrl name="eq_ch2_2">0</eq_ctrl>
+  <eq_ctrl name="eq_ch2_3">0</eq_ctrl>
+  <ch1_lpf1_bypass>0</ch1_lpf1_bypass>
+  <ch1_lpf2_bypass>1</ch1_lpf2_bypass>
+  <ch2_lpf1_bypass>0</ch2_lpf1_bypass>
+  <ch2_lpf2_bypass>1</ch2_lpf2_bypass>
+  <ch1_hpf1_bypass>1</ch1_hpf1_bypass>
+  <ch1_hpf2_bypass>0</ch1_hpf2_bypass>
+  <ch2_hpf1_bypass>1</ch2_hpf1_bypass>
+  <ch2_hpf2_bypass>0</ch2_hpf2_bypass>
+  <ch1_eq_bypass>0</ch1_eq_bypass>
+  <ch2_eq_bypass>0</ch2_eq_bypass>
+<item name="Gain1940AlgNS1" addr="10">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="Gain1940AlgNS2" addr="11">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<filter name="EQ_ch1_1_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+    <A0>1</A0>
+  </filter>
+<item name="EQ_ch1_1_1_B0" addr="12">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ_ch1_1_1_B1" addr="13">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="EQ_ch1_1_1_B2" addr="14">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="EQ_ch1_1_1_A1" addr="15">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="EQ_ch1_1_1_A2" addr="16">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+  <filter name="EQ_ch1_1_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+<item name="EQ_ch1_1_2_B0" addr="17">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ_ch1_1_2_B1" addr="18">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_2_B2" addr="19">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_2_A1" addr="20">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_2_A2" addr="21">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_1_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_1_3_B0" addr="22">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_1_3_B1" addr="23">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_3_B2" addr="24">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_3_A1" addr="25">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_3_A2" addr="26">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_1_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_1_4_B0" addr="27">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_1_4_B1" addr="28">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_4_B2" addr="29">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_4_A1" addr="30">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_4_A2" addr="31">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_1_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_1_5_B0" addr="32">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_1_5_B1" addr="33">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_5_B2" addr="34">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_5_A1" addr="35">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_5_A2" addr="36">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_1_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_1_6_B0" addr="37">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_1_6_B1" addr="38">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_6_B2" addr="39">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_6_A1" addr="40">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_1_6_A2" addr="41">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+<item name="EQ1940Invert1gain" addr="8">
+<dec>-1</dec>
+<hex>0F800000</hex>
+</item>
+<item name="EQ1940Invert2gain" addr="9">
+<dec>-1</dec>
+<hex>0F800000</hex>
+</item>
+<item name="MuteNoSlewAlg1mute" addr="7">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg2mute" addr="6">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg3mute" addr="361">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg4mute" addr="363">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg5mute" addr="360">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg6mute" addr="362">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MuteNoSlewAlg7mute" addr="5">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<filter name="EQ_ch1_4_1">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_4_1_B0" addr="112">
+    <dec>1</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch1_4_1_B1" addr="113">
+    <dec>-1.8951700925827</dec>
+    <hex>0000fa2a</hex>
+  </item>
+  <item name="EQ_ch1_4_1_B2" addr="114">
+    <dec>0.911523461341858</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch1_4_1_A1" addr="115">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_4_1_A2" addr="116">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_4_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_2_B0" addr="117">
+    <dec>1</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch1_4_2_B1" addr="118">
+    <dec>-1.8951700925827</dec>
+    <hex>0000fa2a</hex>
+  </item>
+  <item name="EQ_ch1_4_2_B2" addr="119">
+    <dec>0.911523461341858</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch1_4_2_A1" addr="120">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_4_2_A2" addr="121">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_4_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_3_B0" addr="122">
+    <dec>1</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch1_4_3_B1" addr="123">
+    <dec>-1.8951700925827</dec>
+    <hex>00010aff</hex>
+  </item>
+  <item name="EQ_ch1_4_3_B2" addr="124">
+    <dec>0.911523461341858</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch1_4_3_A1" addr="125">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_4_3_A2" addr="126">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_4_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_4_B0" addr="127">
+    <dec>1</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch1_4_4_B1" addr="128">
+    <dec>-1.8951700925827</dec>
+    <hex>00010aff</hex>
+  </item>
+  <item name="EQ_ch1_4_4_B2" addr="129">
+    <dec>0.911523461341858</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch1_4_4_A1" addr="130">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_4_4_A2" addr="131">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_4_5">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_4_5_B0" addr="132">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_4_5_B1" addr="133">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch1_4_5_B2" addr="134">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_4_5_A1" addr="135">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_4_5_A2" addr="136">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_4_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_6_B0" addr="137">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_4_6_B1" addr="138">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch1_4_6_B2" addr="139">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_4_6_A1" addr="140">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_4_6_A2" addr="141">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_4_7">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_7_B0" addr="142">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_4_7_B1" addr="143">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch1_4_7_B2" addr="144">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_4_7_A1" addr="145">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_4_7_A2" addr="146">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_4_8">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_4_8_B0" addr="147">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_4_8_B1" addr="148">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch1_4_8_B2" addr="149">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_4_8_A1" addr="150">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_4_8_A2" addr="151">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_5_1">
+    <freq>5000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_5_1_B0" addr="152">
+    <dec>1</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch1_5_1_B1" addr="153">
+    <dec>-1.8951700925827</dec>
+    <hex>0010ede9</hex>
+  </item>
+  <item name="EQ_ch1_5_1_B2" addr="154">
+    <dec>0.911523461341858</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch1_5_1_A1" addr="155">
+    <dec>1.8951700925827</dec>
+    <hex>0081fd4e</hex>
+  </item>
+  <item name="EQ_ch1_5_1_A2" addr="156">
+    <dec>-0.911523461341858</dec>
+    <hex>0fdc26df</hex>
+  </item>
+  <filter name="EQ_ch1_5_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_2_B0" addr="157">
+    <dec>1</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch1_5_2_B1" addr="158">
+    <dec>-1.8951700925827</dec>
+    <hex>0010ede9</hex>
+  </item>
+  <item name="EQ_ch1_5_2_B2" addr="159">
+    <dec>0.911523461341858</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch1_5_2_A1" addr="160">
+    <dec>1.8951700925827</dec>
+    <hex>0081fd4e</hex>
+  </item>
+  <item name="EQ_ch1_5_2_A2" addr="161">
+    <dec>-0.911523461341858</dec>
+    <hex>0fdc26df</hex>
+  </item>
+  <filter name="EQ_ch1_5_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_3_B0" addr="162">
+    <dec>1</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch1_5_3_B1" addr="163">
+    <dec>-1.8951700925827</dec>
+    <hex>001573f8</hex>
+  </item>
+  <item name="EQ_ch1_5_3_B2" addr="164">
+    <dec>0.911523461341858</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch1_5_3_A1" addr="165">
+    <dec>1.8951700925827</dec>
+    <hex>00a4b951</hex>
+  </item>
+  <item name="EQ_ch1_5_3_A2" addr="166">
+    <dec>-0.911523461341858</dec>
+    <hex>0fb05ebd</hex>
+  </item>
+  <filter name="EQ_ch1_5_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_4_B0" addr="167">
+    <dec>1</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch1_5_4_B1" addr="168">
+    <dec>-1.8951700925827</dec>
+    <hex>001573f8</hex>
+  </item>
+  <item name="EQ_ch1_5_4_B2" addr="169">
+    <dec>0.911523461341858</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch1_5_4_A1" addr="170">
+    <dec>1.8951700925827</dec>
+    <hex>00a4b951</hex>
+  </item>
+  <item name="EQ_ch1_5_4_A2" addr="171">
+    <dec>-0.911523461341858</dec>
+    <hex>0fb05ebd</hex>
+  </item>
+  <filter name="EQ_ch1_5_5">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_5_5_B0" addr="172">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_5_5_B1" addr="173">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch1_5_5_B2" addr="174">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_5_5_A1" addr="175">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_5_5_A2" addr="176">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_5_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_6_B0" addr="177">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_5_6_B1" addr="178">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch1_5_6_B2" addr="179">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch1_5_6_A1" addr="180">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch1_5_6_A2" addr="181">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch1_5_7">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_7_B0" addr="182">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_5_7_B1" addr="183">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch1_5_7_B2" addr="184">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_5_7_A1" addr="185">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_5_7_A2" addr="186">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_5_8">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch1_5_8_B0" addr="187">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_5_8_B1" addr="188">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch1_5_8_B2" addr="189">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch1_5_8_A1" addr="190">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch1_5_8_A2" addr="191">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <item name="MultCtrlDelGrowAlg1" addr="354">
+    <dec>0</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="MultCtrlDelGrowAlg2" addr="355">
+    <dec>0</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="MultCtrlDelGrowAlg3" addr="353">
+    <dec>0</dec>
+    <hex>00000001</hex>
+  </item>
+  <item name="MultCtrlDelGrowAlg4" addr="352">
+    <dec>0</dec>
+    <hex>00000001</hex>
+  </item>
+<item name="Gain1940AlgNS3" addr="357">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="Gain1940AlgNS4" addr="359">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="Gain1940AlgNS5" addr="358">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="Gain1940AlgNS6" addr="356">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ1940Invert3gain" addr="366">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ1940Invert4gain" addr="364">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ1940Invert5gain" addr="365">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="EQ1940Invert6gain" addr="367">
+<dec>0</dec>
+<hex>00800000</hex>
+</item>
+<item name="stereomux1940ns10" addr="3">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="stereomux1940ns11" addr="4">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="stereomux1940ns20" addr="373">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="stereomux1940ns21" addr="374">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="stereomux1940ns22" addr="375">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<filter name="EQ_ch2_4_1">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_4_1_B0" addr="192">
+    <dec>1</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch2_4_1_B1" addr="193">
+    <dec>-1.8951700925827</dec>
+    <hex>0000fa2a</hex>
+  </item>
+  <item name="EQ_ch2_4_1_B2" addr="194">
+    <dec>0.911523461341858</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch2_4_1_A1" addr="195">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_4_1_A2" addr="196">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_4_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_2_B0" addr="197">
+    <dec>1</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch2_4_2_B1" addr="198">
+    <dec>-1.8951700925827</dec>
+    <hex>0000fa2a</hex>
+  </item>
+  <item name="EQ_ch2_4_2_B2" addr="199">
+    <dec>0.911523461341858</dec>
+    <hex>00007d15</hex>
+  </item>
+  <item name="EQ_ch2_4_2_A1" addr="200">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_4_2_A2" addr="201">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_4_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_3_B0" addr="202">
+    <dec>1</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch2_4_3_B1" addr="203">
+    <dec>-1.8951700925827</dec>
+    <hex>00010aff</hex>
+  </item>
+  <item name="EQ_ch2_4_3_B2" addr="204">
+    <dec>0.911523461341858</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch2_4_3_A1" addr="205">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_4_3_A2" addr="206">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch2_4_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_4_B0" addr="207">
+    <dec>1</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch2_4_4_B1" addr="208">
+    <dec>-1.8951700925827</dec>
+    <hex>00010aff</hex>
+  </item>
+  <item name="EQ_ch2_4_4_B2" addr="209">
+    <dec>0.911523461341858</dec>
+    <hex>0000857f</hex>
+  </item>
+  <item name="EQ_ch2_4_4_A1" addr="210">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_4_4_A2" addr="211">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch2_4_5">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_4_5_B0" addr="212">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_4_5_B1" addr="213">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch2_4_5_B2" addr="214">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_4_5_A1" addr="215">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_4_5_A2" addr="216">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_4_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_6_B0" addr="217">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_4_6_B1" addr="218">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch2_4_6_B2" addr="219">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_4_6_A1" addr="220">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_4_6_A2" addr="221">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_4_7">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_7_B0" addr="222">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_4_7_B1" addr="223">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch2_4_7_B2" addr="224">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_4_7_A1" addr="225">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_4_7_A2" addr="226">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch2_4_8">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_4_8_B0" addr="227">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_4_8_B1" addr="228">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch2_4_8_B2" addr="229">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_4_8_A1" addr="230">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_4_8_A2" addr="231">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch2_5_1">
+    <freq>5000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_5_1_B0" addr="72">
+    <dec>1</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch2_5_1_B1" addr="73">
+    <dec>-1.8951700925827</dec>
+    <hex>0010ede9</hex>
+  </item>
+  <item name="EQ_ch2_5_1_B2" addr="74">
+    <dec>0.911523461341858</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch2_5_1_A1" addr="75">
+    <dec>1.8951700925827</dec>
+    <hex>0081fd4e</hex>
+  </item>
+  <item name="EQ_ch2_5_1_A2" addr="76">
+    <dec>-0.911523461341858</dec>
+    <hex>0fdc26df</hex>
+  </item>
+  <filter name="EQ_ch2_5_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_2_B0" addr="77">
+    <dec>1</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch2_5_2_B1" addr="78">
+    <dec>-1.8951700925827</dec>
+    <hex>0010ede9</hex>
+  </item>
+  <item name="EQ_ch2_5_2_B2" addr="79">
+    <dec>0.911523461341858</dec>
+    <hex>000876f4</hex>
+  </item>
+  <item name="EQ_ch2_5_2_A1" addr="80">
+    <dec>1.8951700925827</dec>
+    <hex>0081fd4e</hex>
+  </item>
+  <item name="EQ_ch2_5_2_A2" addr="81">
+    <dec>-0.911523461341858</dec>
+    <hex>0fdc26df</hex>
+  </item>
+  <filter name="EQ_ch2_5_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_3_B0" addr="82">
+    <dec>1</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch2_5_3_B1" addr="83">
+    <dec>-1.8951700925827</dec>
+    <hex>001573f8</hex>
+  </item>
+  <item name="EQ_ch2_5_3_B2" addr="84">
+    <dec>0.911523461341858</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch2_5_3_A1" addr="85">
+    <dec>1.8951700925827</dec>
+    <hex>00a4b951</hex>
+  </item>
+  <item name="EQ_ch2_5_3_A2" addr="86">
+    <dec>-0.911523461341858</dec>
+    <hex>0fb05ebd</hex>
+  </item>
+  <filter name="EQ_ch2_5_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRLPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_4_B0" addr="87">
+    <dec>1</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch2_5_4_B1" addr="88">
+    <dec>-1.8951700925827</dec>
+    <hex>001573f8</hex>
+  </item>
+  <item name="EQ_ch2_5_4_B2" addr="89">
+    <dec>0.911523461341858</dec>
+    <hex>000ab9fc</hex>
+  </item>
+  <item name="EQ_ch2_5_4_A1" addr="90">
+    <dec>1.8951700925827</dec>
+    <hex>00a4b951</hex>
+  </item>
+  <item name="EQ_ch2_5_4_A2" addr="91">
+    <dec>-0.911523461341858</dec>
+    <hex>0fb05ebd</hex>
+  </item>
+  <filter name="EQ_ch2_5_5">
+    <freq>1000</freq>
+    <q>0</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_5_5_B0" addr="92">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_5_5_B1" addr="93">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch2_5_5_B2" addr="94">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_5_5_A1" addr="95">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_5_5_A2" addr="96">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_5_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_6_B0" addr="97">
+    <dec>1</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_5_6_B1" addr="98">
+    <dec>-1.8951700925827</dec>
+    <hex>0f1c86b6</hex>
+  </item>
+  <item name="EQ_ch2_5_6_B2" addr="99">
+    <dec>0.911523461341858</dec>
+    <hex>0071bca4</hex>
+  </item>
+  <item name="EQ_ch2_5_6_A1" addr="100">
+    <dec>1.8951700925827</dec>
+    <hex>00e27f1e</hex>
+  </item>
+  <item name="EQ_ch2_5_6_A2" addr="101">
+    <dec>-0.911523461341858</dec>
+    <hex>0f9b8c8c</hex>
+  </item>
+  <filter name="EQ_ch2_5_7">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_7_B0" addr="102">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_5_7_B1" addr="103">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch2_5_7_B2" addr="104">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_5_7_A1" addr="105">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_5_7_A2" addr="106">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch2_5_8">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>LRHPF_8</type>
+  </filter>
+  <item name="EQ_ch2_5_8_B0" addr="107">
+    <dec>1</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_5_8_B1" addr="108">
+    <dec>-1.8951700925827</dec>
+    <hex>0f0d38cc</hex>
+  </item>
+  <item name="EQ_ch2_5_8_B2" addr="109">
+    <dec>0.911523461341858</dec>
+    <hex>00796399</hex>
+  </item>
+  <item name="EQ_ch2_5_8_A1" addr="110">
+    <dec>1.8951700925827</dec>
+    <hex>00f1bc33</hex>
+  </item>
+  <item name="EQ_ch2_5_8_A2" addr="111">
+    <dec>-0.911523461341858</dec>
+    <hex>0f8c2dcd</hex>
+  </item>
+  <filter name="EQ_ch1_2_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+    <A0>1</A0>
+  </filter>
+  <item name="EQ_ch1_2_1_B0" addr="322">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_1_B1" addr="323">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_1_B2" addr="324">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_1_A1" addr="325">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_1_A2" addr="326">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_2_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_2_2_B0" addr="327">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_2_B1" addr="328">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_2_B2" addr="329">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_2_A1" addr="330">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_2_A2" addr="331">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_2_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_2_3_B0" addr="332">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_3_B1" addr="333">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_3_B2" addr="334">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_3_A1" addr="335">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_3_A2" addr="336">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_2_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_2_4_B0" addr="337">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_4_B1" addr="338">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_4_B2" addr="339">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_4_A1" addr="340">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_4_A2" addr="341">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_2_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_2_5_B0" addr="342">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_5_B1" addr="343">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_5_B2" addr="344">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_5_A1" addr="345">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_5_A2" addr="346">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_2_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_2_6_B0" addr="347">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_2_6_B1" addr="348">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_6_B2" addr="349">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_6_A1" addr="350">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_2_6_A2" addr="351">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_1_B0" addr="232">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_1_B1" addr="233">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_1_B2" addr="234">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_1_A1" addr="235">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_1_A2" addr="236">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_2_B0" addr="237">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_2_B1" addr="238">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_2_B2" addr="239">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_2_A1" addr="240">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_2_A2" addr="241">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_3_B0" addr="242">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_3_B1" addr="243">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_3_B2" addr="244">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_3_A1" addr="245">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_3_A2" addr="246">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_4_B0" addr="247">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_4_B1" addr="248">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_4_B2" addr="249">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_4_A1" addr="250">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_4_A2" addr="251">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_5_B0" addr="252">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_5_B1" addr="253">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_5_B2" addr="254">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_5_A1" addr="255">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_5_A2" addr="256">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch1_3_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch1_3_6_B0" addr="257">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch1_3_6_B1" addr="258">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_6_B2" addr="259">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_6_A1" addr="260">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch1_3_6_A2" addr="261">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_1_B0" addr="292">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_1_B1" addr="293">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_1_B2" addr="294">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_1_A1" addr="295">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_1_A2" addr="296">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_2_B0" addr="297">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_2_B1" addr="298">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_2_B2" addr="299">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_2_A1" addr="300">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_2_A2" addr="301">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_3_B0" addr="302">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_3_B1" addr="303">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_3_B2" addr="304">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_3_A1" addr="305">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_3_A2" addr="306">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_4_B0" addr="307">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_4_B1" addr="308">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_4_B2" addr="309">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_4_A1" addr="310">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_4_A2" addr="311">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_5_B0" addr="312">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_5_B1" addr="313">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_5_B2" addr="314">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_5_A1" addr="315">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_5_A2" addr="316">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_2_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_2_6_B0" addr="317">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_2_6_B1" addr="318">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_6_B2" addr="319">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_6_A1" addr="320">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_2_6_A2" addr="321">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_1_B0" addr="262">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_1_B1" addr="263">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_1_B2" addr="264">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_1_A1" addr="265">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_1_A2" addr="266">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_2_B0" addr="267">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_2_B1" addr="268">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_2_B2" addr="269">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_2_A1" addr="270">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_2_A2" addr="271">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_3_B0" addr="272">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_3_B1" addr="273">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_3_B2" addr="274">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_3_A1" addr="275">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_3_A2" addr="276">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_4_B0" addr="277">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_4_B1" addr="278">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_4_B2" addr="279">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_4_A1" addr="280">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_4_A2" addr="281">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_5_B0" addr="282">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_5_B1" addr="283">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_5_B2" addr="284">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_5_A1" addr="285">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_5_A2" addr="286">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_3_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_3_6_B0" addr="287">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_3_6_B1" addr="288">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_6_B2" addr="289">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_6_A1" addr="290">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_3_6_A2" addr="291">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_1">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_1_B0" addr="42">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_1_B1" addr="43">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_1_B2" addr="44">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_1_A1" addr="45">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_1_A2" addr="46">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_2">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_2_B0" addr="47">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_2_B1" addr="48">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_2_B2" addr="49">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_2_A1" addr="50">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_2_A2" addr="51">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_3">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_3_B0" addr="52">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_3_B1" addr="53">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_3_B2" addr="54">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_3_A1" addr="55">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_3_A2" addr="56">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_4">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_4_B0" addr="57">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_4_B1" addr="58">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_4_B2" addr="59">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_4_A1" addr="60">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_4_A2" addr="61">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_5">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_5_B0" addr="62">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_5_B1" addr="63">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_5_B2" addr="64">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_5_A1" addr="65">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_5_A2" addr="66">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <filter name="EQ_ch2_1_6">
+    <freq>10</freq>
+    <q>0.5</q>
+    <gain>0</gain>
+    <boost>0</boost>
+    <type>PK</type>
+    <bypass>0</bypass>
+    <basic>true</basic>
+  </filter>
+  <item name="EQ_ch2_1_6_B0" addr="67">
+    <dec>1</dec>
+    <hex>00800000</hex>
+  </item>
+  <item name="EQ_ch2_1_6_B1" addr="68">
+    <dec>-1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_6_B2" addr="69">
+    <dec>0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_6_A1" addr="70">
+    <dec>1.8951700925827</dec>
+    <hex>00000000</hex>
+  </item>
+  <item name="EQ_ch2_1_6_A2" addr="71">
+    <dec>-0.911523461341858</dec>
+    <hex>00000000</hex>
+  </item>
+<item name="stereoDemuxSlew10" addr="369">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="stereoDemuxSlew11" addr="370">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="SingleCtrlMixerNEW19401" addr="371">
+<dec>0.501187205314636</dec>
+<hex>004026E7</hex>
+</item>
+<item name="StMuxSwSlew1coeffname" addr="372">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="ExtSWGainDB1step" addr="368">
+<dec>0.000244140625</dec>
+<hex>00000800</hex>
+</item>
+<item name="DCInpAlg1" addr="0">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="monomux1940ns10" addr="1">
+<dec>0</dec>
+<hex>00000000</hex>
+</item>
+<item name="monomux1940ns11" addr="2">
+<dec>1</dec>
+<hex>00800000</hex>
+</item>
+<item name="MonoEnvelopePeakAlg1hold" addr="378">
+<dec>4800</dec>
+<hex>000012C0</hex>
+</item>
+<item name="MonoEnvelopePeakAlg1decay" addr="379">
+<dec>2.16960906982422E-05</dec>
+<hex>000000B6</hex>
+</item>
+<item name="MonoEnvelopePeakAlg2hold" addr="380">
+<dec>4800</dec>
+<hex>000012C0</hex>
+</item>
+<item name="MonoEnvelopePeakAlg2decay" addr="381">
+<dec>2.16960906982422E-05</dec>
+<hex>000000B6</hex>
+</item>
+<item name="DCBlockAlgDoublePrec1pole" addr="376">
+<dec>0.999899983406067</dec>
+<hex>007FFCB9</hex>
+</item>
+<item name="DCBlockAlgDoublePrec2pole" addr="377">
+<dec>0.999899983406067</dec>
+<hex>007FFCB9</hex>
+</item>
+</setting>

@@ -114,14 +114,11 @@ impl Client {
     }
 
     /// Writes data to the dsp memory area
-    pub async fn write_dsp<T: Into<Value>>(&self, addr: u16, value: T) -> Result<(), MiniDSPError> {
-        self.roundtrip(Commands::Write {
-            addr: Addr::new(addr, 2),
-            value: value.into(),
-        })
-        .await?
-        .into_ack()
-        .err_into()
+    pub async fn write_dsp(&self, addr: Addr, value: Value) -> Result<(), MiniDSPError> {
+        self.roundtrip(Commands::Write { addr, value })
+            .await?
+            .into_ack()
+            .err_into()
     }
 
     /// Reads floats (using `read_floats`) using the least amount of commands possible

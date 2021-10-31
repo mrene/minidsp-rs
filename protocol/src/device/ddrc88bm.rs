@@ -1092,19 +1092,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_1_1_STATUS,
-                    gain: BM_MIXER_1_1,
+                    gain: Some(BM_MIXER_1_1),
                 },
                 Gate {
                     enable: BM_MIXER_1_2_STATUS,
-                    gain: BM_MIXER_1_2,
+                    gain: Some(BM_MIXER_1_2),
                 },
                 Gate {
                     enable: BM_MIXER_1_3_STATUS,
-                    gain: BM_MIXER_1_3,
+                    gain: Some(BM_MIXER_1_3),
                 },
                 Gate {
                     enable: BM_MIXER_1_4_STATUS,
-                    gain: BM_MIXER_1_4,
+                    gain: Some(BM_MIXER_1_4),
+                },
+                Gate {
+                    enable: BM_MIXER_1_5_STATUS,
+                    gain: Some(BM_MIXER_1_5),
+                },
+                Gate {
+                    enable: BM_MIXER_1_6_STATUS,
+                    gain: Some(BM_MIXER_1_6),
+                },
+                Gate {
+                    enable: BM_MIXER_1_7_STATUS,
+                    gain: Some(BM_MIXER_1_7),
+                },
+                Gate {
+                    enable: BM_MIXER_1_8_STATUS,
+                    gain: Some(BM_MIXER_1_8),
                 },
             ],
             peq: &[],
@@ -1115,19 +1131,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_2_1_STATUS,
-                    gain: BM_MIXER_2_1,
+                    gain: Some(BM_MIXER_2_1),
                 },
                 Gate {
                     enable: BM_MIXER_2_2_STATUS,
-                    gain: BM_MIXER_2_2,
+                    gain: Some(BM_MIXER_2_2),
                 },
                 Gate {
                     enable: BM_MIXER_2_3_STATUS,
-                    gain: BM_MIXER_2_3,
+                    gain: Some(BM_MIXER_2_3),
                 },
                 Gate {
                     enable: BM_MIXER_2_4_STATUS,
-                    gain: BM_MIXER_2_4,
+                    gain: Some(BM_MIXER_2_4),
+                },
+                Gate {
+                    enable: BM_MIXER_2_5_STATUS,
+                    gain: Some(BM_MIXER_2_5),
+                },
+                Gate {
+                    enable: BM_MIXER_2_6_STATUS,
+                    gain: Some(BM_MIXER_2_6),
+                },
+                Gate {
+                    enable: BM_MIXER_2_7_STATUS,
+                    gain: Some(BM_MIXER_2_7),
+                },
+                Gate {
+                    enable: BM_MIXER_2_8_STATUS,
+                    gain: Some(BM_MIXER_2_8),
                 },
             ],
             peq: &[],
@@ -1138,19 +1170,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_3_1_STATUS,
-                    gain: BM_MIXER_3_1,
+                    gain: Some(BM_MIXER_3_1),
                 },
                 Gate {
                     enable: BM_MIXER_3_2_STATUS,
-                    gain: BM_MIXER_3_2,
+                    gain: Some(BM_MIXER_3_2),
                 },
                 Gate {
                     enable: BM_MIXER_3_3_STATUS,
-                    gain: BM_MIXER_3_3,
+                    gain: Some(BM_MIXER_3_3),
                 },
                 Gate {
                     enable: BM_MIXER_3_4_STATUS,
-                    gain: BM_MIXER_3_4,
+                    gain: Some(BM_MIXER_3_4),
+                },
+                Gate {
+                    enable: BM_MIXER_3_5_STATUS,
+                    gain: Some(BM_MIXER_3_5),
+                },
+                Gate {
+                    enable: BM_MIXER_3_6_STATUS,
+                    gain: Some(BM_MIXER_3_6),
+                },
+                Gate {
+                    enable: BM_MIXER_3_7_STATUS,
+                    gain: Some(BM_MIXER_3_7),
+                },
+                Gate {
+                    enable: BM_MIXER_3_8_STATUS,
+                    gain: Some(BM_MIXER_3_8),
                 },
             ],
             peq: &[],
@@ -1161,19 +1209,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_4_1_STATUS,
-                    gain: BM_MIXER_4_1,
+                    gain: Some(BM_MIXER_4_1),
                 },
                 Gate {
                     enable: BM_MIXER_4_2_STATUS,
-                    gain: BM_MIXER_4_2,
+                    gain: Some(BM_MIXER_4_2),
                 },
                 Gate {
                     enable: BM_MIXER_4_3_STATUS,
-                    gain: BM_MIXER_4_3,
+                    gain: Some(BM_MIXER_4_3),
                 },
                 Gate {
                     enable: BM_MIXER_4_4_STATUS,
-                    gain: BM_MIXER_4_4,
+                    gain: Some(BM_MIXER_4_4),
+                },
+                Gate {
+                    enable: BM_MIXER_4_5_STATUS,
+                    gain: Some(BM_MIXER_4_5),
+                },
+                Gate {
+                    enable: BM_MIXER_4_6_STATUS,
+                    gain: Some(BM_MIXER_4_6),
+                },
+                Gate {
+                    enable: BM_MIXER_4_7_STATUS,
+                    gain: Some(BM_MIXER_4_7),
+                },
+                Gate {
+                    enable: BM_MIXER_4_8_STATUS,
+                    gain: Some(BM_MIXER_4_8),
                 },
             ],
             peq: &[],
@@ -1184,19 +1248,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_5_1_STATUS,
-                    gain: BM_MIXER_5_1,
+                    gain: Some(BM_MIXER_5_1),
                 },
                 Gate {
                     enable: BM_MIXER_5_2_STATUS,
-                    gain: BM_MIXER_5_2,
+                    gain: Some(BM_MIXER_5_2),
                 },
                 Gate {
                     enable: BM_MIXER_5_3_STATUS,
-                    gain: BM_MIXER_5_3,
+                    gain: Some(BM_MIXER_5_3),
                 },
                 Gate {
                     enable: BM_MIXER_5_4_STATUS,
-                    gain: BM_MIXER_5_4,
+                    gain: Some(BM_MIXER_5_4),
+                },
+                Gate {
+                    enable: BM_MIXER_5_5_STATUS,
+                    gain: Some(BM_MIXER_5_5),
+                },
+                Gate {
+                    enable: BM_MIXER_5_6_STATUS,
+                    gain: Some(BM_MIXER_5_6),
+                },
+                Gate {
+                    enable: BM_MIXER_5_7_STATUS,
+                    gain: Some(BM_MIXER_5_7),
+                },
+                Gate {
+                    enable: BM_MIXER_5_8_STATUS,
+                    gain: Some(BM_MIXER_5_8),
                 },
             ],
             peq: &[],
@@ -1207,19 +1287,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_6_1_STATUS,
-                    gain: BM_MIXER_6_1,
+                    gain: Some(BM_MIXER_6_1),
                 },
                 Gate {
                     enable: BM_MIXER_6_2_STATUS,
-                    gain: BM_MIXER_6_2,
+                    gain: Some(BM_MIXER_6_2),
                 },
                 Gate {
                     enable: BM_MIXER_6_3_STATUS,
-                    gain: BM_MIXER_6_3,
+                    gain: Some(BM_MIXER_6_3),
                 },
                 Gate {
                     enable: BM_MIXER_6_4_STATUS,
-                    gain: BM_MIXER_6_4,
+                    gain: Some(BM_MIXER_6_4),
+                },
+                Gate {
+                    enable: BM_MIXER_6_5_STATUS,
+                    gain: Some(BM_MIXER_6_5),
+                },
+                Gate {
+                    enable: BM_MIXER_6_6_STATUS,
+                    gain: Some(BM_MIXER_6_6),
+                },
+                Gate {
+                    enable: BM_MIXER_6_7_STATUS,
+                    gain: Some(BM_MIXER_6_7),
+                },
+                Gate {
+                    enable: BM_MIXER_6_8_STATUS,
+                    gain: Some(BM_MIXER_6_8),
                 },
             ],
             peq: &[],
@@ -1230,19 +1326,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_7_1_STATUS,
-                    gain: BM_MIXER_7_1,
+                    gain: Some(BM_MIXER_7_1),
                 },
                 Gate {
                     enable: BM_MIXER_7_2_STATUS,
-                    gain: BM_MIXER_7_2,
+                    gain: Some(BM_MIXER_7_2),
                 },
                 Gate {
                     enable: BM_MIXER_7_3_STATUS,
-                    gain: BM_MIXER_7_3,
+                    gain: Some(BM_MIXER_7_3),
                 },
                 Gate {
                     enable: BM_MIXER_7_4_STATUS,
-                    gain: BM_MIXER_7_4,
+                    gain: Some(BM_MIXER_7_4),
+                },
+                Gate {
+                    enable: BM_MIXER_7_5_STATUS,
+                    gain: Some(BM_MIXER_7_5),
+                },
+                Gate {
+                    enable: BM_MIXER_7_6_STATUS,
+                    gain: Some(BM_MIXER_7_6),
+                },
+                Gate {
+                    enable: BM_MIXER_7_7_STATUS,
+                    gain: Some(BM_MIXER_7_7),
+                },
+                Gate {
+                    enable: BM_MIXER_7_8_STATUS,
+                    gain: Some(BM_MIXER_7_8),
                 },
             ],
             peq: &[],
@@ -1253,19 +1365,35 @@ pub const DEVICE: Device = Device {
             routing: &[
                 Gate {
                     enable: BM_MIXER_8_1_STATUS,
-                    gain: BM_MIXER_8_1,
+                    gain: Some(BM_MIXER_8_1),
                 },
                 Gate {
                     enable: BM_MIXER_8_2_STATUS,
-                    gain: BM_MIXER_8_2,
+                    gain: Some(BM_MIXER_8_2),
                 },
                 Gate {
                     enable: BM_MIXER_8_3_STATUS,
-                    gain: BM_MIXER_8_3,
+                    gain: Some(BM_MIXER_8_3),
                 },
                 Gate {
                     enable: BM_MIXER_8_4_STATUS,
-                    gain: BM_MIXER_8_4,
+                    gain: Some(BM_MIXER_8_4),
+                },
+                Gate {
+                    enable: BM_MIXER_8_5_STATUS,
+                    gain: Some(BM_MIXER_8_5),
+                },
+                Gate {
+                    enable: BM_MIXER_8_6_STATUS,
+                    gain: Some(BM_MIXER_8_6),
+                },
+                Gate {
+                    enable: BM_MIXER_8_7_STATUS,
+                    gain: Some(BM_MIXER_8_7),
+                },
+                Gate {
+                    enable: BM_MIXER_8_8_STATUS,
+                    gain: Some(BM_MIXER_8_8),
                 },
             ],
             peq: &[],
@@ -1275,10 +1403,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_1_0_STATUS,
-                gain: D_GAIN_1_0,
+                gain: Some(D_GAIN_1_0),
             },
-            meter: METER_OUT_1,
-            delay_addr: DELAY_1_0,
+            meter: Some(METER_OUT_1),
+            delay_addr: Some(DELAY_1_0),
             invert_addr: POLARITY_OUT_1_0,
             peq: &[
                 PEQ_1_10, PEQ_1_9, PEQ_1_8, PEQ_1_7, PEQ_1_6, PEQ_1_5, PEQ_1_4, PEQ_1_3, PEQ_1_2,
@@ -1300,10 +1428,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_2_0_STATUS,
-                gain: D_GAIN_2_0,
+                gain: Some(D_GAIN_2_0),
             },
-            meter: METER_OUT_2,
-            delay_addr: DELAY_2_0,
+            meter: Some(METER_OUT_2),
+            delay_addr: Some(DELAY_2_0),
             invert_addr: POLARITY_OUT_2_0,
             peq: &[
                 PEQ_2_10, PEQ_2_9, PEQ_2_8, PEQ_2_7, PEQ_2_6, PEQ_2_5, PEQ_2_4, PEQ_2_3, PEQ_2_2,
@@ -1325,10 +1453,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_3_0_STATUS,
-                gain: D_GAIN_3_0,
+                gain: Some(D_GAIN_3_0),
             },
-            meter: METER_OUT_3,
-            delay_addr: DELAY_3_0,
+            meter: Some(METER_OUT_3),
+            delay_addr: Some(DELAY_3_0),
             invert_addr: POLARITY_OUT_3_0,
             peq: &[
                 PEQ_3_10, PEQ_3_9, PEQ_3_8, PEQ_3_7, PEQ_3_6, PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2,
@@ -1350,10 +1478,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_4_0_STATUS,
-                gain: D_GAIN_4_0,
+                gain: Some(D_GAIN_4_0),
             },
-            meter: METER_OUT_4,
-            delay_addr: DELAY_4_0,
+            meter: Some(METER_OUT_4),
+            delay_addr: Some(DELAY_4_0),
             invert_addr: POLARITY_OUT_4_0,
             peq: &[
                 PEQ_4_10, PEQ_4_9, PEQ_4_8, PEQ_4_7, PEQ_4_6, PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2,
@@ -1375,10 +1503,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_5_0_STATUS,
-                gain: D_GAIN_5_0,
+                gain: Some(D_GAIN_5_0),
             },
-            meter: METER_OUT_5,
-            delay_addr: DELAY_5_0,
+            meter: Some(METER_OUT_5),
+            delay_addr: Some(DELAY_5_0),
             invert_addr: POLARITY_OUT_5_0,
             peq: &[
                 PEQ_5_10, PEQ_5_9, PEQ_5_8, PEQ_5_7, PEQ_5_6, PEQ_5_5, PEQ_5_4, PEQ_5_3, PEQ_5_2,
@@ -1400,10 +1528,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_6_0_STATUS,
-                gain: D_GAIN_6_0,
+                gain: Some(D_GAIN_6_0),
             },
-            meter: METER_OUT_6,
-            delay_addr: DELAY_6_0,
+            meter: Some(METER_OUT_6),
+            delay_addr: Some(DELAY_6_0),
             invert_addr: POLARITY_OUT_6_0,
             peq: &[
                 PEQ_6_10, PEQ_6_9, PEQ_6_8, PEQ_6_7, PEQ_6_6, PEQ_6_5, PEQ_6_4, PEQ_6_3, PEQ_6_2,
@@ -1425,10 +1553,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_7_0_STATUS,
-                gain: D_GAIN_7_0,
+                gain: Some(D_GAIN_7_0),
             },
-            meter: METER_OUT_7,
-            delay_addr: DELAY_7_0,
+            meter: Some(METER_OUT_7),
+            delay_addr: Some(DELAY_7_0),
             invert_addr: POLARITY_OUT_7_0,
             peq: &[
                 PEQ_7_10, PEQ_7_9, PEQ_7_8, PEQ_7_7, PEQ_7_6, PEQ_7_5, PEQ_7_4, PEQ_7_3, PEQ_7_2,
@@ -1450,10 +1578,10 @@ pub const DEVICE: Device = Device {
         Output {
             gate: Gate {
                 enable: D_GAIN_8_0_STATUS,
-                gain: D_GAIN_8_0,
+                gain: Some(D_GAIN_8_0),
             },
-            meter: METER_OUT_8,
-            delay_addr: DELAY_8_0,
+            meter: Some(METER_OUT_8),
+            delay_addr: Some(DELAY_8_0),
             invert_addr: POLARITY_OUT_8_0,
             peq: &[
                 PEQ_8_10, PEQ_8_9, PEQ_8_8, PEQ_8_7, PEQ_8_6, PEQ_8_5, PEQ_8_4, PEQ_8_3, PEQ_8_2,
@@ -1475,6 +1603,10 @@ pub const DEVICE: Device = Device {
     ],
     fir_max_taps: 0,
     internal_sampling_rate: 48000,
+    dialect: Dialect {
+        addr_encoding: AddrEncoding::AddrLen3,
+        float_encoding: FloatEncoding::Float32LE,
+    },
     #[cfg(feature = "symbols")]
     symbols: SYMBOLS,
 };

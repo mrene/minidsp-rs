@@ -27,6 +27,12 @@ pub mod device;
 
 pub mod eeprom;
 
+pub mod fixed_point;
+pub use fixed_point::FixedPoint;
+
+pub mod dialect;
+pub use dialect::{AddrEncoding, Dialect, FloatEncoding};
+
 #[derive(Copy, Clone)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(

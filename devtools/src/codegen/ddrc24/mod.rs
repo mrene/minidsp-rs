@@ -28,7 +28,7 @@ pub(crate) fn input(input: usize) -> Input {
         routing: (0..4usize)
             .map(|output| Gate {
                 enable: format!("Mixer_{}_{}_status", input, output),
-                gain: format!("Mixer_{}_{}", input, output),
+                gain: Some(format!("Mixer_{}_{}", input, output)),
             })
             .collect(),
     }
@@ -38,10 +38,10 @@ pub(crate) fn output(output: usize) -> Output {
     Output {
         gate: Gate {
             enable: format!("DGain_{}_0_status", 1 + output),
-            gain: format!("DGain_{}_0", 1 + output),
+            gain: Some(format!("DGain_{}_0", 1 + output)),
         },
-        meter: format!("Meter_Out_{}", 1 + output),
-        delay_addr: format!("Delay_{}_0", 1 + output),
+        meter: Some(format!("Meter_Out_{}", 1 + output)),
+        delay_addr: Some(format!("Delay_{}_0", 1 + output)),
         invert_addr: format!("polarity_out_{}_0", 1 + output),
         peq: (1..=10usize)
             .rev()
@@ -73,6 +73,7 @@ pub fn device() -> Device {
         outputs: (0..4).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 96000,
+        ..Default::default()
     }
 }
 

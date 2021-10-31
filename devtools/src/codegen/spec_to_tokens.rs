@@ -1,3 +1,4 @@
+use minidsp::{AddrEncoding, Dialect, FloatEncoding};
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::quote;
 
@@ -24,6 +25,7 @@ impl ToSymbolTokens for Device {
             .map(|name| Ident::new(name, Span::call_site()));
         let fir_max_taps = Literal::usize_unsuffixed(self.fir_max_taps as usize);
         let internal_sampling_rate = Literal::u32_unsuffixed(self.internal_sampling_rate);
+        let dialect = self.dialect.to_symbol_tokens(|x| resolve(x));
         resolve_sym!(self, resolve, inputs, outputs);
 
         quote! {
@@ -34,6 +36,7 @@ impl ToSymbolTokens for Device {
                 outputs: #outputs,
                 fir_max_taps: #fir_max_taps,
                 internal_sampling_rate: #internal_sampling_rate,
+                dialect: #dialect,
                 #[cfg(feature="symbols")]
                 symbols: SYMBOLS,
             };
@@ -173,6 +176,38 @@ impl ToSymbolTokens for Fir {
                 bypass: #bypass,
                 num_coefficients: #num_coefficients,
                 max_coefficients: #max_coefficients,
+            }
+        }
+    }
+}
+
+impl ToSymbolTokens for AddrEncoding {
+    fn to_symbol_tokens<F: FnMut(&str) -> TokenStream>(&self, _: F) -> TokenStream {
+        match self {
+            AddrEncoding::AddrLen2 => quote! { AddrEncoding::AddrLen2 },
+            AddrEncoding::AddrLen3 => quote! { AddrEncoding::AddrLen3 },
+        }
+    }
+}
+
+impl ToSymbolTokens for FloatEncoding {
+    fn to_symbol_tokens<F: FnMut(&str) -> TokenStream>(&self, _: F) -> TokenStream {
+        match self {
+            FloatEncoding::Float32LE => quote! { FloatEncoding::Float32LE },
+            FloatEncoding::FixedPoint => quote! { FloatEncoding::FixedPoint },
+        }
+    }
+}
+
+impl ToSymbolTokens for Dialect {
+    fn to_symbol_tokens<F: FnMut(&str) -> TokenStream>(&self, mut resolve: F) -> TokenStream {
+        let addr_encoding = self.addr_encoding.to_symbol_tokens(|x| resolve(x));
+        let float_encoding = self.float_encoding.to_symbol_tokens(|x| resolve(x));
+
+        quote! {
+            Dialect {
+                addr_encoding: #addr_encoding,
+                float_encoding: #float_encoding,
             }
         }
     }

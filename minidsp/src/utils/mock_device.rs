@@ -4,15 +4,15 @@ use std::convert::TryInto;
 
 use bytes::{Buf, BufMut, BytesMut};
 use minidsp_protocol::{
-    commands::{BytesWrap, FloatView, MemoryView, Responses},
+    commands::{BytesWrap, FloatView, MemoryView, Responses, Value},
     device::{Device, DeviceKind},
-    eeprom, Commands,
+    eeprom, Commands, FixedPoint,
 };
 
 pub struct MockDevice {
     pub hw_id: u8,
     pub dsp_version: u8,
-    pub firmware_version: u8,
+    pub firmware_version: (u8, u8),
 
     /// Emulated device kind
     pub kind: DeviceKind,
@@ -36,7 +36,7 @@ impl Default for MockDevice {
             // FIXME: hardcoded values for the 2x4hd
             hw_id: 10,
             dsp_version: 100,
-            firmware_version: 13,
+            firmware_version: (1, 13),
 
             kind: DeviceKind::default(),
             spec: &crate::device::m2x4hd::DEVICE,
@@ -79,7 +79,7 @@ impl MockDevice {
 
         let meters = {
             let inputs = device.spec.inputs.iter().filter_map(|i| i.meter);
-            let outputs = device.spec.outputs.iter().map(|i| i.meter);
+            let outputs = device.spec.outputs.iter().filter_map(|i| i.meter);
             let compressors = device
                 .spec
                 .outputs
@@ -90,7 +90,7 @@ impl MockDevice {
         };
 
         for addr in meters {
-            device.settings[addr as usize] = u32::from_le_bytes((-127f32).to_le_bytes());
+            device.settings[addr as usize] = u32::from_le_bytes((-60f32).to_le_bytes());
         }
 
         device
@@ -116,6 +116,7 @@ impl MockDevice {
 
     pub fn set_timestamp(&mut self, value: u32) {
         self.write_eeprom_u32(eeprom::TIMESTAMP, value);
+        self.write_eeprom_u16(eeprom::TIMESTAMP_2X4, value as u16);
     }
 
     // Executes a command and response with the appropriate response, while updating
@@ -125,8 +126,8 @@ impl MockDevice {
             Commands::ReadHardwareId => Responses::HardwareId {
                 payload: {
                     let mut b = BytesMut::new();
-                    b.put_u8(0x1);
-                    b.put_u8(self.firmware_version);
+                    b.put_u8(self.firmware_version.0);
+                    b.put_u8(self.firmware_version.1);
                     b.put_u8(self.hw_id);
                     BytesWrap(b.freeze())
                 },
@@ -172,8 +173,12 @@ impl MockDevice {
             &Commands::Write { addr, ref value } => {
                 let addr = addr.val as usize;
                 let data = value.clone().into_bytes();
-                assert!(data.len() == 4);
-                self.settings[addr] = u32::from_le_bytes(data.as_ref().try_into().unwrap());
+                let byte_slice = data.as_ref().try_into();
+                if let Ok(byte_slice) = byte_slice {
+                    self.settings[addr] = u32::from_le_bytes(byte_slice);
+                } else {
+                    // log::error!("Unable to unwrap u32 value {:#?}", data.as_ref());
+                }
 
                 Responses::Ack
             }
@@ -194,12 +199,16 @@ impl MockDevice {
                 Responses::Ack
             }
             &Commands::FirLoadStart { .. } => {
-                // TODO:: Capture Fir state
+                // TODO: Capture Fir state
                 Responses::FirLoadSize {
                     size: self.spec.fir_max_taps,
                 }
             }
             &Commands::Unk07 { .. } => Responses::Unk02,
+            &Commands::Read { addr, .. } => Responses::Read {
+                addr,
+                data: vec![Value::FixedPoint(FixedPoint::from_db(-10.0))],
+            },
             _ => Responses::Ack,
         }
     }

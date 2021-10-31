@@ -8,6 +8,8 @@ pub const FIRMWARE_VERSION: u16 = 0xFFA1;
 // Value that gets updated to a random value whenever a setting is changed.
 pub const TIMESTAMP: u16 = 0xFFC8;
 
+pub const TIMESTAMP_2X4: u16 = 0x3FFC;
+
 // u8 Preset
 // Current input preset
 pub const PRESET: u16 = 0xFFD8;
