@@ -58,7 +58,6 @@ fn resolve_symbol<T: AsRef<str> + std::fmt::Debug>(
     symbols: &mut SymbolMap,
     name: T,
 ) -> TokenStream {
-    dbg!(&name);
     if name.as_ref().is_empty() {
         panic!("missing item");
         // return quote! { 0 };

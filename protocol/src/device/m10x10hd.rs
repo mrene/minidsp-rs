@@ -1454,7 +1454,158 @@ pub const DEVICE: Device = Device {
             peq: &[PEQ_20_5, PEQ_20_4, PEQ_20_3, PEQ_20_2, PEQ_20_1],
         },
     ],
-    outputs: &[],
+    outputs: &[
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_1MUTE,
+                gain: Some(GAIN_1940_ALG_NS1),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_1),
+            invert_addr: EQ1940_INVERT_1GAIN,
+            peq: &[PEQ_1_5, PEQ_1_4, PEQ_1_3, PEQ_1_2, PEQ_1_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_1_1, BPF_1_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_2MUTE,
+                gain: Some(GAIN_1940_ALG_NS2),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_2),
+            invert_addr: EQ1940_INVERT_2GAIN,
+            peq: &[PEQ_2_5, PEQ_2_4, PEQ_2_3, PEQ_2_2, PEQ_2_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_2_1, BPF_2_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_3MUTE,
+                gain: Some(GAIN_1940_ALG_NS3),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_3),
+            invert_addr: EQ1940_INVERT_3GAIN,
+            peq: &[PEQ_3_5, PEQ_3_4, PEQ_3_3, PEQ_3_2, PEQ_3_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_3_1, BPF_3_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_4MUTE,
+                gain: Some(GAIN_1940_ALG_NS4),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_4),
+            invert_addr: EQ1940_INVERT_4GAIN,
+            peq: &[PEQ_4_5, PEQ_4_4, PEQ_4_3, PEQ_4_2, PEQ_4_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_4_1, BPF_4_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_5MUTE,
+                gain: Some(GAIN_1940_ALG_NS5),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_5),
+            invert_addr: EQ1940_INVERT_5GAIN,
+            peq: &[PEQ_5_5, PEQ_5_4, PEQ_5_3, PEQ_5_2, PEQ_5_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_5_1, BPF_5_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_6MUTE,
+                gain: Some(GAIN_1940_ALG_NS6),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_6),
+            invert_addr: EQ1940_INVERT_6GAIN,
+            peq: &[PEQ_6_5, PEQ_6_4, PEQ_6_3, PEQ_6_2, PEQ_6_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_6_1, BPF_6_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_7MUTE,
+                gain: Some(GAIN_1940_ALG_NS7),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_7),
+            invert_addr: EQ1940_INVERT_7GAIN,
+            peq: &[PEQ_7_5, PEQ_7_4, PEQ_7_3, PEQ_7_2, PEQ_7_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_7_1, BPF_7_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_8MUTE,
+                gain: Some(GAIN_1940_ALG_NS8),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_8),
+            invert_addr: EQ1940_INVERT_8GAIN,
+            peq: &[PEQ_8_5, PEQ_8_4, PEQ_8_3, PEQ_8_2, PEQ_8_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_8_1, BPF_8_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_9MUTE,
+                gain: Some(GAIN_1940_ALG_NS9),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_9),
+            invert_addr: EQ1940_INVERT_9GAIN,
+            peq: &[PEQ_9_5, PEQ_9_4, PEQ_9_3, PEQ_9_2, PEQ_9_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_9_1, BPF_9_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+        Output {
+            gate: Gate {
+                enable: MUTE_NO_SLEW_ALG_1_0MUTE,
+                gain: Some(GAIN_1940_ALG_NS10),
+            },
+            meter: None,
+            delay_addr: Some(MULT_CTRL_DEL_GROW_ALG_10),
+            invert_addr: EQ1940_INVERT_1_0GAIN,
+            peq: &[PEQ_10_5, PEQ_10_4, PEQ_10_3, PEQ_10_2, PEQ_10_1],
+            xover: Some(Crossover {
+                peqs: &[BPF_10_1, BPF_10_5],
+            }),
+            compressor: None,
+            fir: None,
+        },
+    ],
     fir_max_taps: 0,
     internal_sampling_rate: 96000,
     dialect: Dialect {

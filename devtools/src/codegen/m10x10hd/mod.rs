@@ -73,11 +73,7 @@ pub(crate) fn output(output: usize) -> Output {
             gain: Some(format!("Gain1940AlgNS{}", output + 1)),
         },
         meter: None,
-        delay_addr: if output < 8 {
-            Some(format!("MultCtrlDelGrowAlg{}", output + 1))
-        } else {
-            None
-        },
+        delay_addr: Some(format!("MultCtrlDelGrowAlg{}", output + 1)),
         invert_addr: format!("EQ1940Invert{}gain", output + 1),
         peq: (1..=5usize)
             .rev()
@@ -89,6 +85,7 @@ pub(crate) fn output(output: usize) -> Output {
                 .map(|group| format!("BPF_{}_{}", output + 1, group))
                 .collect(),
         }),
+        // This device has output compressors, but uses specific commands that haven't been reversed yet
         compressor: None,
         fir: None,
     }
@@ -100,8 +97,7 @@ pub fn device() -> Device {
         product_name: "MiniDSP 10x10HD".into(),
         sources: vec!["Toslink".into(), "Spdif".into()],
         inputs: (0..10).map(|n| input(n, 10, 10, 10)).collect(),
-        // TODO: Add compressor
-        outputs: vec![], //(0..10).map(m4x10hd::output).collect(),
+        outputs: (0..10).map(output).collect(),
         fir_max_taps: 0,
         internal_sampling_rate: 96000,
         dialect: Dialect {

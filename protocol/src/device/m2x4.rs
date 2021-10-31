@@ -787,7 +787,7 @@ pub mod sym {
 #[allow(unused_imports)]
 use sym::*;
 pub const DEVICE: Device = Device {
-    product_name: "MiniDSP 2x2",
+    product_name: "MiniDSP 2x4",
     sources: &[Toslink, Spdif],
     inputs: &[],
     outputs: &[],

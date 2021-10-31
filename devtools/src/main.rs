@@ -165,7 +165,6 @@ pub trait Target {
 
 fn gen<T: Target>() -> String {
     let device = T::device();
-    dbg!(&device);
 
     let mut symbols = T::symbols();
     let s = generate_static_config(&mut symbols, &device).to_string();
@@ -188,7 +187,7 @@ fn codegen_main(output: PathBuf) -> Result<()> {
     gen_write::<nanodigi2x8::Target>(&output)?;
     gen_write::<ddrc88bm::Target>(&output)?;
     gen_write::<c8x12v2::Target>(&output)?;
-    // gen_write::<m2x4::Target>(&output)?;
+    gen_write::<m2x4::Target>(&output)?;
     gen_write::<m10x10hd::Target>(&output)?;
     Ok(())
 }
