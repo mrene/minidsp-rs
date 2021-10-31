@@ -1224,13 +1224,4 @@ mod test {
         assert_eq!(m1.data.len(), 20);
         assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
     }
-
-    #[test]
-    // Tests real world crashes seen with other versions
-    fn test_problematic() {
-        let data = Bytes::from_static(&[02, 02, 04]);
-
-        let cmd = Commands::from_bytes(data);
-        assert!(cmd.is_ok());
-    }
 }

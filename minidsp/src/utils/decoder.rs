@@ -48,10 +48,9 @@ impl Decoder {
                     if matches!(
                         cmd,
                         commands::Commands::ReadFloats { .. } | commands::Commands::Read { .. }
-                    ) {
-                        if self.quiet {
-                            return;
-                        }
+                    ) && self.quiet
+                    {
+                        return;
                     }
                     let _ = self.print_frame(true, &frame);
                     let _ = self.print_command(cmd);
@@ -72,10 +71,9 @@ impl Decoder {
                     if matches!(
                         cmd,
                         commands::Responses::FloatData(_) | commands::Responses::Read { .. }
-                    ) {
-                        if self.quiet {
-                            return;
-                        }
+                    ) && self.quiet
+                    {
+                        return;
                     }
                     let _ = self.print_frame(false, &frame);
                     let _ = self.print_response(cmd);

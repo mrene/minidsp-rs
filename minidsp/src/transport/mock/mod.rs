@@ -7,13 +7,11 @@ use minidsp_protocol::{
     device::probe_kind,
     packet, Commands, DeviceInfo,
 };
-use strong_xml::XmlRead;
 use tokio::sync::Mutex;
 use url2::Url2;
 
 use super::Transport;
 use crate::{
-    formats::xml_config::Setting,
     utils::{mock_device::MockDevice, Combine, OwnedJoinHandle},
     MiniDSPError,
 };
