@@ -15,6 +15,22 @@ Single binary builds are also provided for common operating systems:
 - MacOS: minidsp.x86_64-apple-darwin.tar.gz
 - Windows: minidsp.x86_64-pc-windows-msvc.zip
 
+
+### Building from source
+This is only required if you want to make changes to minidsp-rs. If you're just trying to control your device, use one of the [pre-built packages](https://github.com/mrene/minidsp-rs/releases)
+
+If you don't have rust setup, the quickest way to get started is with [rustup](https://rustup.rs/). This is preferred over install rust via your distro's package manager because these are often out of date and will have issues compiling recent code.
+
+```bash
+cargo build --release --bin minidsp
+# The binary will then available as target/release/minidsp
+
+# If you want to build a debian package
+cargo install cargo-deb
+cargo deb
+# Then look under target/debian/
+```
+
 ## Usage
 See the [complete documentation](https://minidsp-rs.pages.dev/) for more examples.
 
@@ -43,6 +59,10 @@ minidsp config 1
 These device support the full feature set. See the [documentation](https://minidsp-rs.pages.dev/devices) for a more complete list.
 
 - miniDSP 2x4HD
+- DDRC-24
+- DDRC-88A/D
 - miniSHARC series
-- DDRC-24 (experimental)
-- SHD series (experimental)
+- miniDSP 2x8/8x8/4x10/10x10
+- nanoDIGI 2x8
+- SHD series
+- C-DSP 8x12 v2
