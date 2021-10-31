@@ -87,9 +87,6 @@ impl Decoder {
     }
 
     fn print_frame(&mut self, sent: bool, frame: &Bytes) -> std::io::Result<()> {
-        // if self.quiet {
-        //     return Ok(());
-        // }
         let _ = self.print_direction(sent);
         let _ = self
             .w
