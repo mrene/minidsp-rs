@@ -92,7 +92,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
             let value: u16 = (value - 900000).try_into().unwrap();
             device
                 .client
-                .write_u32(eeprom::SERIAL, value as u32)
+                .write_u16(eeprom::SERIAL_SHORT, value)
                 .await?;
         }
     }

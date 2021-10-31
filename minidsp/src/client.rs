@@ -66,11 +66,11 @@ impl Client {
             .into_hardware_id()?;
 
         let dsp_version_view = self.read_memory(eeprom::FIRMWARE_VERSION, 1).await?;
-        let serial_view = self.read_memory(eeprom::SERIAL, 2).await?;
+        let serial_view = self.read_memory(eeprom::SERIAL_SHORT, 2).await?;
         let info = DeviceInfo {
             hw_id,
             dsp_version: dsp_version_view.read_u8(eeprom::FIRMWARE_VERSION).unwrap(),
-            serial: 900000 + (serial_view.read_u16(eeprom::SERIAL).unwrap() as u32),
+            serial: 900000 + (serial_view.read_u16(eeprom::SERIAL_SHORT).unwrap() as u32),
         };
         Ok(info)
     }
