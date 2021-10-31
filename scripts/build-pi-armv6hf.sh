@@ -8,9 +8,9 @@ set -eux
 # Get alsa lib and headers
 HIDAPI_VER="0.8.0~rc1+git20140818.d17db57+dfsg-2"
 LIBUSB_VER="1.0.22-2"
-LIBUDEV_VER="241-7~deb10u7+rpi1"
+LIBUDEV_VER="241-7~deb10u8+rpi1"
 LIBC_VER="2.28-10+rpi1"
-OPENSSL_VER="1.1.1k-1"
+OPENSSL_VER="1.1.1l-1"
 DEPS=( \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-libusb0_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-dev_${HIDAPI_VER}_armhf.deb" \
