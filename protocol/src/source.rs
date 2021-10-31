@@ -9,7 +9,7 @@ use super::DeviceInfo;
     feature = "use_serde",
     derive(
         strum::EnumString,
-        strum::ToString,
+        strum::Display,
         serde::Serialize,
         serde::Deserialize,
         schemars::JsonSchema,
