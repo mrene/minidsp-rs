@@ -147,6 +147,9 @@ enum SubCommand {
 
     /// Set the master output gain [-127, 0]
     Gain {
+        #[clap(long, short)]
+        relative: bool,
+
         /// Gain in decibels, between -127 and 0 inclusively
         value: Gain,
     },
