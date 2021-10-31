@@ -8,9 +8,13 @@ These devices support the full feature set (input, output, routing, peqs, etc.)
 
 ### Devices
 - miniDSP 2x4HD
+- DDRC-24
+- DDRC-88A/D
 - miniSHARC series
-- DDRC-24 (experimental)
-- SHD series (experimental)
+- miniDSP 2x8/8x8/4x10/10x10
+- nanoDIGI 2x8
+- SHD series
+- C-DSP 8x12
 
 ## Basic support
 For these devices, only the following settings can be changed:
@@ -21,13 +25,9 @@ For these devices, only the following settings can be changed:
 - Dirac Live Status
 
 ### Devices
-- miniDSP 2x8/8x8/4x10/10x10
-- nanoDIGI 2x8
 - C-DSP 6x8 
-- C-DSP 8x12
 - nanoSHARC series
-- OpenDRC series
-- DDRC-88A/D 
+- OpenDRC series 
 - nanoAVR HD/HDA
 
 # Adding support for new devices
