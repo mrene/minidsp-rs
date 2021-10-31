@@ -7,7 +7,7 @@ keywords = ["minidsp", "audio", "dsp"]
 license = "Apache-2.0"
 name = "minidsp"
 repository = "https://github.com/mrene/minidsp-rs"
-version = "0.1.2"
+version = "0.1.3"
 
 [dependencies]
 anyhow = "1.0.44"
