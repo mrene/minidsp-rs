@@ -59,8 +59,8 @@ pub(crate) fn input(
             gain: Some(format!("Gain1940AlgNS{}", input + 11)),
         }),
         meter: None,
-        peq: (0..5usize)
-            .map(|index| format!("PEQ_{}_{}", input + 11, 5 - index))
+        peq: (0..6usize)
+            .map(|index| format!("PEQ_{}_{}", input + 11, 6 - index))
             .collect(),
         routing: routing(input, num_inputs, num_outputs, routing_spacing),
     }

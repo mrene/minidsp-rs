@@ -1001,7 +1001,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_11_5, PEQ_11_4, PEQ_11_3, PEQ_11_2, PEQ_11_1],
+            peq: &[PEQ_11_6, PEQ_11_5, PEQ_11_4, PEQ_11_3, PEQ_11_2, PEQ_11_1],
         },
         Input {
             gate: Some(Gate {
@@ -1051,7 +1051,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_12_5, PEQ_12_4, PEQ_12_3, PEQ_12_2, PEQ_12_1],
+            peq: &[PEQ_12_6, PEQ_12_5, PEQ_12_4, PEQ_12_3, PEQ_12_2, PEQ_12_1],
         },
         Input {
             gate: Some(Gate {
@@ -1101,7 +1101,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_13_5, PEQ_13_4, PEQ_13_3, PEQ_13_2, PEQ_13_1],
+            peq: &[PEQ_13_6, PEQ_13_5, PEQ_13_4, PEQ_13_3, PEQ_13_2, PEQ_13_1],
         },
         Input {
             gate: Some(Gate {
@@ -1151,7 +1151,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_14_5, PEQ_14_4, PEQ_14_3, PEQ_14_2, PEQ_14_1],
+            peq: &[PEQ_14_6, PEQ_14_5, PEQ_14_4, PEQ_14_3, PEQ_14_2, PEQ_14_1],
         },
         Input {
             gate: Some(Gate {
@@ -1201,7 +1201,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_15_5, PEQ_15_4, PEQ_15_3, PEQ_15_2, PEQ_15_1],
+            peq: &[PEQ_15_6, PEQ_15_5, PEQ_15_4, PEQ_15_3, PEQ_15_2, PEQ_15_1],
         },
         Input {
             gate: Some(Gate {
@@ -1251,7 +1251,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_16_5, PEQ_16_4, PEQ_16_3, PEQ_16_2, PEQ_16_1],
+            peq: &[PEQ_16_6, PEQ_16_5, PEQ_16_4, PEQ_16_3, PEQ_16_2, PEQ_16_1],
         },
         Input {
             gate: Some(Gate {
@@ -1301,7 +1301,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_17_5, PEQ_17_4, PEQ_17_3, PEQ_17_2, PEQ_17_1],
+            peq: &[PEQ_17_6, PEQ_17_5, PEQ_17_4, PEQ_17_3, PEQ_17_2, PEQ_17_1],
         },
         Input {
             gate: Some(Gate {
@@ -1351,7 +1351,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_18_5, PEQ_18_4, PEQ_18_3, PEQ_18_2, PEQ_18_1],
+            peq: &[PEQ_18_6, PEQ_18_5, PEQ_18_4, PEQ_18_3, PEQ_18_2, PEQ_18_1],
         },
         Input {
             gate: Some(Gate {
@@ -1401,7 +1401,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_19_5, PEQ_19_4, PEQ_19_3, PEQ_19_2, PEQ_19_1],
+            peq: &[PEQ_19_6, PEQ_19_5, PEQ_19_4, PEQ_19_3, PEQ_19_2, PEQ_19_1],
         },
         Input {
             gate: Some(Gate {
@@ -1451,7 +1451,7 @@ pub const DEVICE: Device = Device {
                     gain: None,
                 },
             ],
-            peq: &[PEQ_20_5, PEQ_20_4, PEQ_20_3, PEQ_20_2, PEQ_20_1],
+            peq: &[PEQ_20_6, PEQ_20_5, PEQ_20_4, PEQ_20_3, PEQ_20_2, PEQ_20_1],
         },
     ],
     outputs: &[
