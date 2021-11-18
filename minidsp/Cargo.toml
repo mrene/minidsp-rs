@@ -36,7 +36,7 @@ strum = {version = "0.22.0", features = ["derive"]}
 termcolor = "1.1.2"
 thiserror = "1.0.30"
 tokio-stream = {version = "0.1.8", features = ["sync"]}
-tokio-tungstenite = "0.15.0"
+tokio-tungstenite = "0.16.0"
 tower = {version = "0.4.10", features = ["util", "timeout"]}
 url2 = "0.0.6"
 urlencoding = "2.1.0"
