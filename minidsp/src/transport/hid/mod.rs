@@ -52,7 +52,7 @@ impl HidTransport {
         // If we have a path, decode it.
         let path = url.path();
         if !path.is_empty() {
-            let path = urlencoding::decode(path).map_err(|_| HidError::OpenHidDeviceError)?;
+            let path = urlencoding::decode(path).map_err(|_| HidError::HidApiErrorEmpty)?;
             return HidTransport::with_path(hid, path.to_string());
         }
 
