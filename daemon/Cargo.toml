@@ -32,7 +32,7 @@ routerify = "2.2.0"
 routerify-query = "2.0.0"
 schemars = {version = "0.8.8", optional = true}
 serde = {version = "1.0.132", features = ["derive"], optional = true}
-serde_json = "1.0.71"
+serde_json = "1.0.73"
 strum = {version = "0.23.0", features = ["derive"], optional = true}
 termcolor = "1.1.2"
 thiserror = "1.0.30"
