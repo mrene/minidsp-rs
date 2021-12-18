@@ -41,7 +41,7 @@ url2 = "0.0.6"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.14.0"
+version = "1.15.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
