@@ -1,4 +1,4 @@
-//! Allows talking with the [crate::server] component
+//! Allows talking with the [crate::tcp_server] component
 use std::{collections::HashMap, fmt, net::SocketAddr, time::Duration};
 
 use anyhow::Result;

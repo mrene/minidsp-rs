@@ -1,5 +1,5 @@
 //! OpenAPI Specification Generator
-//! Most code here was adapter from https://github.com/GREsau/okapi so it works outside of rocket with some more code
+//! Most code here was adapter from <https://github.com/GREsau/okapi> so it works outside of rocket with some more code
 use std::collections::HashMap;
 
 use hyper::http::Method;

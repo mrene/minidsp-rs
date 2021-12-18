@@ -23,8 +23,8 @@ use crate::{
 /// Discovers, probes and instantiate device instances.
 ///
 /// - Configure what devices to probe using the `with_` methods
-/// - Consume builder into a vec of transports using [`probe`]
-/// - Get an instance of [`MiniDSP`] using [`to_minidsp`]
+/// - Consume builder into a vec of transports using [`Builder::probe`]
+/// - Get an instance of [`MiniDSP`] using [`DeviceHandle::to_minidsp`]
 #[derive(Default)]
 pub struct Builder {
     /// The candidate device pool, devices get added when their helper methods

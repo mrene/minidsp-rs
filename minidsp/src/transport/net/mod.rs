@@ -1,4 +1,4 @@
-//! Allows talking with the [crate::server] component
+//! Allows talking with the TCP server component
 mod codec;
 mod discover;
 pub mod discovery;

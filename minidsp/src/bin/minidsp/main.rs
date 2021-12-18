@@ -467,7 +467,7 @@ async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::builder().format_timestamp_millis().init();
     let opts: Opts = Opts::parse();
     let mut builder = Builder::new();
     opts.apply_builder(&mut builder).await?;

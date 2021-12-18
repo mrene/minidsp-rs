@@ -78,6 +78,7 @@ where
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
+#[allow(dead_code)]
 struct Device {
     url: String,
     version: Option<crate::DeviceInfo>,

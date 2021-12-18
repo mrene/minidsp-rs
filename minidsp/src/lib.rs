@@ -1,7 +1,7 @@
 //! This crate provides a high level API for accessing and configuring a MiniDSP device.
 //! To get started, start by instantiating the right transport. If the device is locally
 //! connected via USB, use [`transport::hid::HidTransport`]. If using the `WI-DG` or connecting to
-//! an instance of this program running the `server` component, see [`transport::net::NetTransport`].
+//! an instance of this program running the `server` component, see [`transport::net::StreamTransport`].
 //!
 //! ```no_run
 //! use anyhow::Result;

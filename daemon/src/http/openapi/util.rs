@@ -1,4 +1,4 @@
-//! Utils verbatim from https://github.com/GREsau/okapi
+//! Utils verbatim from <https://github.com/GREsau/okapi>
 
 #![allow(dead_code)]
 use anyhow::{anyhow, Result};
