@@ -9,7 +9,7 @@ license = "Apache-2.0"
 anyhow = "1.0.51"
 bytes = "1.1.0"
 schemars = {version = "0.8.8", optional = true}
-serde = {version = "1.0.132", features = ["derive"], optional = true}
+serde = {version = "1.0.133", features = ["derive"], optional = true}
 strum = {version = "0.23.0", features = ["derive"], optional = true}
 thiserror = "1.0.30"
 
