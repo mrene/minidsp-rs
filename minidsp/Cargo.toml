@@ -26,7 +26,7 @@ hyper = "0.14.16"
 lazy_static = "1.4.0"
 log = "0.4.14"
 minidsp-protocol = {path = "../protocol", default-features = false, features = ["use_serde", "debug", "devices"]}
-pin-project = "1.0.8"
+pin-project = "1.0.10"
 schemars = "0.8.8"
 serde = {version = "1.0.132", features = ["derive"]}
 serde_json = "1.0.73"
