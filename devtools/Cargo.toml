@@ -13,7 +13,7 @@ devices = ["minidsp/devices"]
 [dependencies]
 anyhow = "1.0.52"
 bimap = "0.6.1"
-clap = "3.0.0"
+clap = "3.0.7"
 env_logger = "0.9.0"
 futures = "0.3.16"
 futures-sink = "0.3.19"
