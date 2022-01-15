@@ -4,6 +4,8 @@ edition = "2018"
 name = "minidsp-protocol"
 version = "0.1.4"
 license = "Apache-2.0"
+description = "A control interface for some MiniDSP products"
+repository = "https://github.com/mrene/minidsp-rs"
 
 [dependencies]
 anyhow = "1.0.52"
