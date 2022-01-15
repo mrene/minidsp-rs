@@ -23,9 +23,9 @@ strong-xml = "0.6.3"
 termcolor = "1.1.2"
 
 # Codegen
-Inflector = {version = "0.11.4"}
-proc-macro2 = {version = "1.0.36"}
-quote = {version = "1.0.14"}
+Inflector = "0.11.4"
+proc-macro2 = "1.0.36"
+quote = "1.0.14"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]

@@ -15,7 +15,7 @@ async-trait = "0.1.52"
 atomic_refcell = "0.1.8"
 bimap = "0.6.1"
 bytes = "1.1.0"
-clap = { version= "3.0.7", features = ["derive", "env"] }
+clap = { version = "3.0.7", features = ["derive", "env"] }
 env_logger = "0.9.0"
 futures = "0.3.19"
 futures-sink = "0.3.19"
@@ -28,16 +28,16 @@ log = "0.4.14"
 minidsp-protocol = {path = "../protocol", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.10"
 schemars = "0.8.8"
-serde = {version = "1.0.133", features = ["derive"]}
+serde = { version = "1.0.133", features = ["derive"] }
 serde_json = "1.0.74"
 shellwords = "1.1.0"
 strong-xml = "0.6.3"
-strum = {version = "0.23.0", features = ["derive"]}
+strum = { version = "0.23.0", features = ["derive"] }
 termcolor = "1.1.2"
 thiserror = "1.0.30"
-tokio-stream = {version = "0.1.8", features = ["sync"]}
+tokio-stream = { version = "0.1.8", features = ["sync"] }
 tokio-tungstenite = "0.16.1"
-tower = {version = "0.4.11", features = ["util", "timeout"]}
+tower = { version = "0.4.11", features = ["util", "timeout"] }
 url2 = "0.0.6"
 urlencoding = "2.1.0"
 wav = "1.0.0"
