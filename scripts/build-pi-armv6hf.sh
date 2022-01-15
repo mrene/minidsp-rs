@@ -10,7 +10,7 @@ HIDAPI_VER="0.8.0~rc1+git20140818.d17db57+dfsg-2"
 LIBUSB_VER="1.0.22-2"
 LIBUDEV_VER="241-7~deb10u8+rpi1"
 LIBC_VER="2.28-10+rpi1"
-OPENSSL_VER="1.1.1l-1"
+OPENSSL_VER="1.1.1m-1"
 DEPS=( \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-libusb0_${HIDAPI_VER}_armhf.deb" \
   "http://mirrordirector.raspbian.org/raspbian/pool/main/h/hidapi/libhidapi-dev_${HIDAPI_VER}_armhf.deb" \
@@ -63,6 +63,9 @@ echo -e '[target.arm-unknown-linux-gnueabihf]\nlinker = "gcc-sysroot"\nstrip = {
 export RUSTFLAGS="-C linker=gcc-sysroot"
 export CC_arm_unknown_linux_gnueabihf=gcc-sysroot
 export CARGO_TARGET_arm_unknown_linux_gnueabihf_LINKER="gcc-sysroot"
+
+# fix hidapi build issue
+export CFLAGS="-std=c99"
 
 # Overwrite libc and libpthread with the new ones since the sysroot ones are outdated
 cp $SYSROOT/lib/arm-linux-gnueabihf/libc-2.28.so $SYSROOT/lib/libc.so.6

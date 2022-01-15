@@ -3,7 +3,7 @@ name: Release build
 on:
   push:
     branches:
-      - 'win-daemon-build'
+      - 'force-build'
     tags:
       - 'v0.*'
       - 'v1.*'
