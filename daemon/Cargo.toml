@@ -28,7 +28,7 @@ log = "0.4.14"
 minidsp = {path = "../minidsp"}
 okapi = "0.7.0-rc.1"
 once_cell = "1.9.0"
-routerify = "2.2.0"
+routerify = "3.0.0"
 routerify-query = "2.0.0"
 schemars = {version = "0.8.8", optional = true}
 serde = {version = "1.0.133", features = ["derive"], optional = true}
