@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 default-run = "minidsp"
 description = "A control interface for some MiniDSP products"
-edition = "2018"
+edition = "2021"
 keywords = ["minidsp", "audio", "dsp"]
 license = "Apache-2.0"
 name = "minidsp"
