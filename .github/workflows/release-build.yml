@@ -3,7 +3,7 @@ name: Release build
 on:
   push:
     branches:
-      - 'fix/reads'
+      - 'force-build'
     tags:
       - 'v0.*'
       - 'v1.*'
@@ -132,6 +132,7 @@ jobs:
         run: |
           mkdir archive
           cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.bin }} archive
+          cp target/${{ matrix.pair.target }}/release/${{ matrix.pair.svc_bin }} archive
           cd archive/
           compress-archive -Path *.exe -DestinationPath ../minidsp.${{ matrix.pair.target }}.zip
 
