@@ -62,11 +62,16 @@ impl HidStream {
         let device = self.device.clone();
         async move {
             tokio::task::block_in_place(|| {
-                let result = device.write(&buf);
-                if let Err(e) = result {
+                let mut remaining_tries = 10;
+                let mut result = device.write(&buf);
+                while let Err(e) = result {
                     log::warn!("retrying usb write: {:?}", e);
                     thread::sleep(time::Duration::from_millis(250));
-                    return device.write(&buf);
+                    result = device.write(&buf);
+                    remaining_tries -= 1;
+                    if remaining_tries == 0 {
+                        return result;
+                    }
                 }
                 result
             })?;
