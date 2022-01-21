@@ -56,6 +56,8 @@ jobs:
             bin: minidsp
             svc_bin: minidspd
             cross: true
+            cross_image: local/aarch64-unknown-linux-gnu-0.2.1
+            cross_dockerfile: Dockerfile.aarch64
             archive: tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
@@ -84,8 +86,13 @@ jobs:
           override: true
 
       - name: Install native packages
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.pair.cross == false
         run: sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev
+
+      - name: Build cross image
+        if: runner.os == 'Linux' && matrix.pair.cross == true
+        run: |
+          docker build -t ${{ matrix.pair.cross_image }} -f ${{ matrix.pair.cross_dockerfile }} scripts/
 
       # From https://github.com/NLnetLabs/krill/blob/master/.github/workflows/pkg.yml
       # Speed up cargo-deb installation by only re-downloading and re-building its
