@@ -92,7 +92,7 @@ jobs:
       - name: Build cross image
         if: runner.os == 'Linux' && matrix.pair.cross == true
         run: |
-          docker build -t ${{ matrix.pair.cross_image }} -f ${{ matrix.pair.cross_dockerfile }} scripts/
+          docker build -t ${{ matrix.pair.cross_image }} -f scripts/${{ matrix.pair.cross_dockerfile }} scripts/
 
       # From https://github.com/NLnetLabs/krill/blob/master/.github/workflows/pkg.yml
       # Speed up cargo-deb installation by only re-downloading and re-building its
