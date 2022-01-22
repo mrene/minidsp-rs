@@ -74,7 +74,7 @@ jobs:
 
     runs-on: ${{ matrix.pair.os }}
     env:
-      CARGO_DEB_VER: 1.28.2
+      CARGO_DEB_VER: 1.35.0
 
     steps:
       - uses: actions/checkout@v2.3.4
