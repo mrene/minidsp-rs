@@ -120,7 +120,7 @@ jobs:
       - name: Create debian package
         if: runner.os == 'Linux'
         run: |
-          cargo deb --target ${{ matrix.pair.target }} -p minidsp
+          cargo deb --target ${{ matrix.pair.target }} -p minidsp --no-build --no-strip
           cp -v target/${{ matrix.pair.target }}/debian/${{ matrix.pair.bin }}* .
 
       - name: Upload debian package
