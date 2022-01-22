@@ -3,7 +3,7 @@ name: Release build
 on:
   push:
     branches:
-      - 'force-build'
+      - 'arm64'
     tags:
       - 'v0.*'
       - 'v1.*'
@@ -51,6 +51,14 @@ jobs:
             svc_bin: minidspd
             cross: false
             archive: tar.gz
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            bin: minidsp
+            svc_bin: minidspd
+            cross: true
+            cross_image: local/aarch64-unknown-linux-gnu-0.2.1
+            cross_dockerfile: Dockerfile.aarch64
+            archive: tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
             bin: minidsp
@@ -66,7 +74,7 @@ jobs:
 
     runs-on: ${{ matrix.pair.os }}
     env:
-      CARGO_DEB_VER: 1.28.2
+      CARGO_DEB_VER: 1.35.0
 
     steps:
       - uses: actions/checkout@v2.3.4
@@ -78,8 +86,13 @@ jobs:
           override: true
 
       - name: Install native packages
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.pair.cross == false
         run: sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev
+
+      - name: Build cross image
+        if: runner.os == 'Linux' && matrix.pair.cross == true
+        run: |
+          docker build -t ${{ matrix.pair.cross_image }} -f scripts/${{ matrix.pair.cross_dockerfile }} scripts/
 
       # From https://github.com/NLnetLabs/krill/blob/master/.github/workflows/pkg.yml
       # Speed up cargo-deb installation by only re-downloading and re-building its
@@ -107,7 +120,7 @@ jobs:
       - name: Create debian package
         if: runner.os == 'Linux'
         run: |
-          cargo deb --target ${{ matrix.pair.target }} -p minidsp
+          cargo deb --target ${{ matrix.pair.target }} -p minidsp --no-build --no-strip
           cp -v target/${{ matrix.pair.target }}/debian/${{ matrix.pair.bin }}* .
 
       - name: Upload debian package
