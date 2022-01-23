@@ -1,0 +1,11 @@
+[package]
+name = "v2test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+minidsp-protocol = { path="../protocol", version="0.1.4"}
+bimap = "0.6.1"
+strum = { version = "0.23.0", features = ["derive"] }
