@@ -20,10 +20,13 @@ use tokio_util::codec::{Decoder, Encoder};
 #[derive(Copy, Clone)]
 pub struct Codec {
     server: bool,
-    // If true, we have received a frame smaller than 64 bytes, and we
+    // If true, we have received a frame smaller than the fixed packet size, and we
     // should not discard extraneous data after a packet, even though the
-    // total available data size is a multiple of 64
+    // total available data size is a multiple of the fixed packet size
     received_small_packet: bool,
+
+    // Represents the size of a single packet, when in fixed length mode
+    fixed_packet_size: Option<usize>,
 }
 
 impl Codec {
@@ -31,6 +34,7 @@ impl Codec {
         Codec {
             server: true,
             received_small_packet: false,
+            fixed_packet_size: None,
         }
     }
 
@@ -38,6 +42,7 @@ impl Codec {
         Codec {
             server: false,
             received_small_packet: false,
+            fixed_packet_size: None,
         }
     }
 }
@@ -47,15 +52,25 @@ impl Decoder for Codec {
     type Error = io::Error;
 
     fn decode(&mut self, src: &mut bytes::BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        // If `src` is strictly 64 bytes long, we are probably dealing with a raw hid frame being forwarded over the network.
-        // This behaviour is different depending on the device doing the network to hid translation.
+        // If we didn't get a small packet, we're operating in fixed packet size mode, and we do not use the packet's length header to determine packet boundaries.
         // See [`widg_nonzero_padding`] for more details.
         if !self.server && !self.received_small_packet && !src.is_empty() {
-            if src.len() % 64 == 0 {
-                let mut buf = src.split_to(64);
+            if src.len() >= 64 {
+                // The first packet received determines the length used by this specific device, unless it's smaller than an HID frame (64 bytes)
+                if self.fixed_packet_size.is_none() {
+                    // Because we can receive multiple packets at once, assume that the real size is < 100
+                    // Valid packet sizes at this time are: 64 bytes (wi-dg), 70 bytes (PWR-ICE)
+                    let mut len = src.len();
+                    while len > 100 && len % 2 == 0 {
+                        len /= 2
+                    }
+                    self.fixed_packet_size.replace(len);
+                }
+
+                let mut buf = src.split_to(self.fixed_packet_size.unwrap());
                 return Ok(Some(buf.split_to(buf[0] as usize).freeze()));
             } else {
-                // If a single received frame is not 64 bytes long, drop out of this hack, as it may hinder
+                // If a single received frame is not >= 64 bytes, drop out of this hack, as it may hinder
                 // properly behaving servers under certain circumstances, where their packets could be 64 bytes too.
                 self.received_small_packet = true
             }
@@ -174,6 +189,30 @@ mod test {
 
         let decoded = codec.decode(&mut packet).unwrap().unwrap();
         assert_eq!(hex::encode(decoded), "0505ffa164");
+
+        let decoded = codec.decode(&mut packet).unwrap();
+        assert_eq!(decoded, None);
+    }
+
+    #[test]
+    fn pwr_ice() {
+        let parts = [
+            "04310300ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa3f40797f63302",
+            "0505ffa133ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa3f40797f6ab02",
+        ];
+
+        let mut packet: BytesMut = parts
+            .iter()
+            .flat_map(|s| hex::decode(s).unwrap().into_iter())
+            .collect();
+
+        let mut codec = Codec::new_client();
+
+        let decoded = codec.decode(&mut packet).unwrap().unwrap();
+        assert_eq!(hex::encode(decoded), "04310300");
+
+        let decoded = codec.decode(&mut packet).unwrap().unwrap();
+        assert_eq!(hex::encode(decoded), "0505ffa133");
 
         let decoded = codec.decode(&mut packet).unwrap();
         assert_eq!(decoded, None);
