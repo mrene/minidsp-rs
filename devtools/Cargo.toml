@@ -25,7 +25,7 @@ termcolor = "1.1.2"
 # Codegen
 Inflector = "0.11.4"
 proc-macro2 = "1.0.36"
-quote = "1.0.14"
+quote = "1.0.15"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
