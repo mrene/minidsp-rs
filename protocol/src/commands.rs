@@ -624,6 +624,18 @@ impl Commands {
         f.freeze()
     }
 
+    pub fn addr(&self) -> Option<Addr> {
+        Some(match self {
+            &Commands::ReadFloats { addr, .. } => Addr::new(addr, 2),
+            &Commands::Write { addr, .. } => addr,
+            &Commands::WriteBiquad { addr, .. } => addr,
+            &Commands::WriteBiquadBypass { addr, .. } => addr,
+            &Commands::Read { addr, .. } => addr,
+            &Commands::SwitchMux { addr, .. } => addr,
+            _ => None?,
+        })
+    }
+
     pub fn matches_response(&self, response: &Responses) -> bool {
         match self {
             &Commands::ReadMemory { addr, size } => {
@@ -643,8 +655,8 @@ impl Commands {
             Commands::ReadHardwareId => matches!(response, Responses::HardwareId { .. }),
             Commands::SetConfig { .. } => matches!(response, Responses::ConfigChanged),
             Commands::FirLoadStart { .. } => matches!(response, Responses::FirLoadSize { .. }),
-            &Commands::Unk07 { .. } => matches!(response, Responses::Unk02 { .. }),
-            &Commands::Read { .. } => matches!(response, Responses::Read { .. }),
+            Commands::Unk07 { .. } => matches!(response, Responses::Unk02 { .. }),
+            Commands::Read { .. } => matches!(response, Responses::Read { .. }),
             Commands::WriteMemory { .. }
             | Commands::SetSource { .. }
             | Commands::SetMute { .. }

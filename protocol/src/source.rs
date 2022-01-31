@@ -3,7 +3,7 @@
 
 use super::DeviceInfo;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[cfg_attr(
     feature = "use_serde",

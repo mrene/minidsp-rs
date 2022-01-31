@@ -12,7 +12,7 @@ anyhow = "1.0.52"
 bytes = "1.1.0"
 schemars = { version = "0.8.8", optional = true }
 serde = { version = "1.0.134", features = ["derive"], optional = true }
-strum = { version = "0.23.0", features = ["derive"], optional = true }
+strum = { version = "0.23.0", features = ["derive"] }
 thiserror = "1.0.30"
 
 [features]
@@ -31,6 +31,6 @@ device_c8x12v2 = ["devices"]
 device_m2x4 = ["devices"]
 devices = []
 std = []
-use_serde = ["std", "serde", "schemars", "strum"]
+use_serde = ["std", "serde", "schemars"]
 # Provides a name mapping for every symbol in every device spec
 symbols = []
