@@ -15,7 +15,7 @@ path = "src/main.rs"
 default = ["serde", "strum", "schemars"]
 
 [dependencies]
-anyhow = "1.0.52"
+anyhow = "1.0.54"
 bytes = "1.1.0"
 clap = "3.0.10"
 confy = "0.4.0"
