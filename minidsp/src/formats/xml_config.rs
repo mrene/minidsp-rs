@@ -1,3 +1,5 @@
+#![allow(clippy::needless_late_init)]
+
 //! Utilities for dealing with xml configuration files
 use std::{fmt, str::FromStr};
 

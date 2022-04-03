@@ -24,11 +24,9 @@ pub async fn parse_body<'de, T: DeserializeOwned>(req: &mut Request<Body>) -> Re
             reason: e.to_string(),
         })?;
 
-    Ok(
-        serde_json::from_slice(data.as_ref()).map_err(|e| Error::ParseError {
-            reason: e.to_string(),
-        })?,
-    )
+    serde_json::from_slice(data.as_ref()).map_err(|e| Error::ParseError {
+        reason: e.to_string(),
+    })
 }
 
 pub fn serialize_response<T: serde::Serialize>(

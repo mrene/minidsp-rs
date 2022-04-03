@@ -124,11 +124,9 @@ impl MiniDSP<'_> {
         let device_info = self.device_info;
         let memory = self.client.read_memory(eeprom::PRESET, 9).await?;
 
-        Ok(
-            MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
-                MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
-            })?,
-        )
+        MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
+            MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+        })
     }
 
     pub async fn subscribe_master_status(
