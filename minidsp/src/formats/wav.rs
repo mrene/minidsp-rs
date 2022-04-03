@@ -26,28 +26,22 @@ pub fn read_wav_filter<T: AsRef<Path>>(
 }
 
 fn convert_data(data: wav::BitDepth) -> Result<Vec<f32>, WavReadError> {
-    let samples: Vec<f32>;
+    // let samples: Vec<f32>;
 
-    match data {
-        wav::BitDepth::Eight(data) => {
-            samples = data.iter().map(|x| (*x as f32 - 128.) / 128f32).collect();
-        }
+    let samples: Vec<f32> = match data {
+        wav::BitDepth::Eight(data) => data.iter().map(|x| (*x as f32 - 128.) / 128f32).collect(),
         wav::BitDepth::Sixteen(data) => {
-            samples = data.iter().map(|x| *x as f32 / (i16::MAX as f32)).collect();
+            data.iter().map(|x| *x as f32 / (i16::MAX as f32)).collect()
         }
-        wav::BitDepth::TwentyFour(data) => {
-            samples = data
-                .iter()
-                .map(|x| *x as f32 / ((1 << 23) as f32))
-                .collect();
-        }
+        wav::BitDepth::TwentyFour(data) => data
+            .iter()
+            .map(|x| *x as f32 / ((1 << 23) as f32))
+            .collect(),
         wav::BitDepth::Empty => {
             return Err(WavReadError::NoData);
         }
-        wav::BitDepth::ThirtyTwoFloat(data) => {
-            samples = data;
-        }
-    }
+        wav::BitDepth::ThirtyTwoFloat(data) => data,
+    };
 
     Ok(samples)
 }

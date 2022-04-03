@@ -579,7 +579,7 @@ fn on_or_off(s: &str) -> Result<bool, &'static str> {
 }
 
 fn parse_hex(s: &str) -> Result<Bytes, hex::FromHexError> {
-    Ok(Bytes::from(hex::decode(s.replace(" ", ""))?))
+    Ok(Bytes::from(hex::decode(s.replace(' ', ""))?))
 }
 
 fn parse_hex_u16(src: &str) -> Result<u16, ParseIntError> {

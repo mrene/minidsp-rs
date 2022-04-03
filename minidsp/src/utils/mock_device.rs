@@ -84,7 +84,7 @@ impl MockDevice {
                 .spec
                 .outputs
                 .iter()
-                .filter_map(|i| i.compressor.as_ref().map(|c| c.meter).flatten());
+                .filter_map(|i| i.compressor.as_ref().and_then(|c| c.meter));
 
             inputs.chain(outputs).chain(compressors)
         };
