@@ -15,18 +15,18 @@ path = "src/main.rs"
 default = ["serde", "strum", "schemars"]
 
 [dependencies]
-anyhow = "1.0.55"
+anyhow = "1.0.56"
 bytes = "1.1.0"
-clap = "3.1.5"
+clap = "3.1.8"
 confy = "0.4.0"
 env_logger = "0.9.0"
 futures = "0.3.21"
 futures-sink = "0.3.21"
 futures-util = "0.3.21"
-hyper = "0.14.17"
+hyper = "0.14.18"
 hyper-tungstenite = "0.6.0"
 lazy_static = "1.4.0"
-log = "0.4.14"
+log = "0.4.16"
 minidsp = { version="0.1.4", path="../minidsp" }
 okapi = "0.7.0-rc.1"
 once_cell = "1.10.0"
@@ -47,7 +47,7 @@ version = "1.17.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
-version = "0.7.0"
+version = "0.7.1"
 
 [target.'cfg(target_family="unix")'.dependencies]
 hyperlocal = "0.8.0"
