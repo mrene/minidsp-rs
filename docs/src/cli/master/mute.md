@@ -10,6 +10,10 @@ minidsp mute on
 ```
 minidsp mute off
 ```
+#### toggle
+```
+minidsp mute toggle
+```
 
 ## Usage
 ```

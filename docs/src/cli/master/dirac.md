@@ -12,6 +12,11 @@ minidsp dirac on
 minidsp dirac off
 ```
 
+#### Toggle Dirac Live
+```
+minidsp dirac toggle
+```
+
 ## Usage
 ```
 {{#include ../../outputs.txt:dirac_help}}
