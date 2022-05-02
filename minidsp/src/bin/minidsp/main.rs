@@ -157,9 +157,8 @@ enum SubCommand {
 
     /// Set the master mute status
     Mute {
-        #[clap(parse(try_from_str = on_or_off))]
-        /// on | off
-        value: bool,
+        /// on, off, toggle
+        value: ToggleBool,
     },
     /// Set the active input source
     Source {
@@ -176,9 +175,8 @@ enum SubCommand {
 
     /// Sets whether Dirac Live is enabled
     Dirac {
-        #[clap(parse(try_from_str = on_or_off))]
-        /// on | off
-        value: bool,
+        /// on, off, toggle
+        value: ToggleBool,
     },
 
     /// Control settings regarding input channels
@@ -214,6 +212,28 @@ enum SubCommand {
         #[clap(subcommand)]
         cmd: DebugCommands,
     },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ToggleBool {
+    On,
+    Off,
+    Toggle
+}
+
+impl FromStr for ToggleBool {
+    type Err = &'static str;
+
+    fn from_str(mute: &str) -> Result<Self, Self::Err> {
+        match mute {
+            "on" => Ok(ToggleBool::On),
+            "true" => Ok(ToggleBool::On),
+            "off" => Ok(ToggleBool::Off),
+            "false" => Ok(ToggleBool::Off),
+            "toggle" => Ok(ToggleBool::Toggle),
+            _ => Err("expected `on`, `true`, `off`, `false`, `toggle`"),
+        }
+    }
 }
 
 #[derive(Clone, Parser, Debug)]

@@ -8,7 +8,7 @@ use minidsp::{
 };
 
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand};
+use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand, ToggleBool};
 
 pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
     if let SubCommand::Server {
@@ -58,10 +58,24 @@ pub(crate) async fn run_command(
             }
             device.set_master_volume(value).await?
         }
-        Some(&SubCommand::Mute { value }) => device.set_master_mute(value).await?,
+        Some(&SubCommand::Mute { value }) => {
+            let mute: bool = match value {
+                ToggleBool::On => true,
+                ToggleBool::Off => false,
+                ToggleBool::Toggle => !device.get_master_status().await?.mute.unwrap(),
+            };
+            device.set_master_mute(mute).await?
+        }
         Some(&SubCommand::Source { value }) => device.set_source(value).await?,
         Some(&SubCommand::Config { value }) => device.set_config(value).await?,
-        Some(&SubCommand::Dirac { value }) => device.set_dirac(value).await?,
+        Some(&SubCommand::Dirac { value }) => {
+            let dirac: bool = match value {
+                ToggleBool::On => true,
+                ToggleBool::Off => false,
+                ToggleBool::Toggle => !device.get_master_status().await?.dirac.unwrap(),
+            };
+            device.set_dirac(dirac).await?
+        }
         Some(&SubCommand::Input {
             input_index,
             ref cmd,
