@@ -218,7 +218,7 @@ enum SubCommand {
 pub enum ToggleBool {
     On,
     Off,
-    Toggle
+    Toggle,
 }
 
 impl FromStr for ToggleBool {
