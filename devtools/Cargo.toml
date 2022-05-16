@@ -33,4 +33,4 @@ version = "1.18.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
-version = "0.7.1"
+version = "0.7.2"
