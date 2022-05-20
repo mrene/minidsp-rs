@@ -37,6 +37,8 @@ pub enum DeviceKind {
     C8x12v2,
     #[cfg(feature = "device_m2x4")]
     M2x4,
+    #[cfg(feature = "device_flex")]
+    Flex,
 }
 
 impl Default for DeviceKind {
@@ -74,6 +76,8 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         // TODO: Figure out hw id and dsp version
         #[cfg(feature = "device_m2x4")]
         (2, 22) => M2x4,
+        #[cfg(feature = "device_flex")]
+        (27, 100) => Flex,
         _ => Generic,
     }
 }
@@ -112,5 +116,8 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_10x10hd")]
         M10x10Hd => &super::m10x10hd::DEVICE,
+
+        #[cfg(feature = "device_flex")]
+        Flex => &super::flex::DEVICE,
     }
 }

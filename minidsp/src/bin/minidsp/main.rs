@@ -163,7 +163,7 @@ enum SubCommand {
     /// Set the active input source
     Source {
         /// The source to use:
-        /// analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s
+        /// analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s, bluetooth
         value: Source,
     },
 

@@ -10,6 +10,7 @@ pub mod m4x10hd;
 pub mod msharc4x8;
 pub mod nanodigi2x8;
 pub mod shd;
+pub mod flex;
 
 pub mod spec;
 pub mod spec_to_tokens;
