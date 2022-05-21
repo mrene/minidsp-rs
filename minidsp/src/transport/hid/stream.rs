@@ -171,10 +171,13 @@ mod test {
     #[tokio::test]
     #[ignore]
     async fn test_hid() {
-        let api = initialize_api().unwrap();
-        let api = api.lock().unwrap();
-        let device = api.open(0x2752, 0x0011).unwrap();
-        let mut device = Box::pin(HidStream::new(device));
+        let mut device = {
+            let api = initialize_api().unwrap();
+            let api = api.lock().unwrap();
+            let device = api.open(0x2752, 0x0011).unwrap();
+            Box::pin(HidStream::new(device))
+        };
+
         device
             .send(Bytes::from_static(&[0x02, 0x31, 0x33]))
             .await
@@ -186,10 +189,12 @@ mod test {
     #[tokio::test(flavor = "multi_thread")]
     #[ignore]
     async fn test_multi() {
-        let api = initialize_api().unwrap();
-        let api = api.lock().unwrap();
-        let device = api.open(0x2752, 0x0011).unwrap();
-        let device = Box::new(HidStream::new(device));
+        let device = {
+            let api = initialize_api().unwrap();
+            let api = api.lock().unwrap();
+            let device = api.open(0x2752, 0x0011).unwrap();
+            Box::new(HidStream::new(device))
+        };
 
         let (mut sink, mut stream) = device.split();
         tokio::spawn(async move {
