@@ -3,6 +3,7 @@
 pub mod c8x12v2;
 pub mod ddrc24;
 pub mod ddrc88bm;
+pub mod flex;
 pub mod m10x10hd;
 pub mod m2x4;
 pub mod m2x4hd;
