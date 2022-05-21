@@ -59,6 +59,7 @@ minidsp config 1
 These device support the full feature set. See the [documentation](https://minidsp-rs.pages.dev/devices) for a more complete list.
 
 - miniDSP 2x4HD
+- miniDSP Flex
 - DDRC-24
 - DDRC-88A/D
 - miniSHARC series

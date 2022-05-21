@@ -1,7 +1,6 @@
 # ANCHOR: help
 $ minidsp --help
-minidsp 0.1.2
-
+minidsp 0.1.5
 Mathieu Rene <mathieu.rene@gmail.com>
 
 USAGE:
@@ -42,14 +41,13 @@ SUBCOMMANDS:
     output    Control settings regarding output channels
     probe     Try to find reachable devices
     server    (deprecated) Launch a server usable with `--tcp`, the mobile application, and the
-              official client
+                  official client
     source    Set the active input source
     status    Prints the master status and current levels
 # ANCHOR_END: help
 # ANCHOR: config_help
 $ minidsp config --help
 minidsp-config 
-
 Set the current active configuration,
 
 USAGE:
@@ -64,7 +62,6 @@ OPTIONS:
 # ANCHOR: gain_help
 $ minidsp gain --help
 minidsp-gain 
-
 Set the master output gain [-127, 0]
 
 USAGE:
@@ -80,14 +77,13 @@ OPTIONS:
 # ANCHOR: mute_help
 $ minidsp mute --help
 minidsp-mute 
-
 Set the master mute status
 
 USAGE:
     minidsp mute <VALUE>
 
 ARGS:
-    <VALUE>    on | off
+    <VALUE>    on, off, toggle
 
 OPTIONS:
     -h, --help    Print help information
@@ -95,14 +91,14 @@ OPTIONS:
 # ANCHOR: source_help
 $ minidsp source --help
 minidsp-source 
-
 Set the active input source
 
 USAGE:
     minidsp source <VALUE>
 
 ARGS:
-    <VALUE>    The source to use: analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s
+    <VALUE>    The source to use: analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s,
+               bluetooth
 
 OPTIONS:
     -h, --help    Print help information
@@ -110,14 +106,13 @@ OPTIONS:
 # ANCHOR: dirac_help
 $ minidsp dirac --help
 minidsp-dirac 
-
 Sets whether Dirac Live is enabled
 
 USAGE:
     minidsp dirac <VALUE>
 
 ARGS:
-    <VALUE>    on | off
+    <VALUE>    on, off, toggle
 
 OPTIONS:
     -h, --help    Print help information
@@ -125,7 +120,6 @@ OPTIONS:
 # ANCHOR: input_help
 $ minidsp input --help
 minidsp-input 
-
 Control settings regarding input channels
 
 USAGE:
@@ -147,7 +141,6 @@ SUBCOMMANDS:
 # ANCHOR: input_gain_help
 $ minidsp input 0 gain --help
 minidsp-input-gain 
-
 Set the input gain for this channel
 
 USAGE:
@@ -162,7 +155,6 @@ OPTIONS:
 # ANCHOR: input_mute_help
 $ minidsp input 0 mute --help
 minidsp-input-mute 
-
 Set the master mute status
 
 USAGE:
@@ -177,7 +169,6 @@ OPTIONS:
 # ANCHOR: input_peq_help
 $ minidsp input 0 peq --help
 minidsp-input-peq 
-
 Control the parametric equalizer
 
 USAGE:
@@ -199,7 +190,6 @@ SUBCOMMANDS:
 # ANCHOR: input_routing_help
 $ minidsp input 0 routing --help
 minidsp-input-routing 
-
 Controls signal routing from this input
 
 USAGE:
@@ -213,14 +203,13 @@ OPTIONS:
 
 SUBCOMMANDS:
     enable    Controls whether the output matrix for this input is enabled for the given output
-              index
+                  index
     gain      
     help      Print this message or the help of the given subcommand(s)
 # ANCHOR_END: input_routing_help
 # ANCHOR: output_help
 $ minidsp output --help
 minidsp-output 
-
 Control settings regarding output channels
 
 USAGE:
@@ -246,7 +235,6 @@ SUBCOMMANDS:
 # ANCHOR: output_delay_help
 $ minidsp output 0 delay --help
 minidsp-output-delay 
-
 Set the delay associated to this channel
 
 USAGE:
@@ -261,7 +249,6 @@ OPTIONS:
 # ANCHOR: output_fir_help
 $ minidsp output 0 fir --help
 minidsp-output-fir 
-
 Control the FIR filter
 
 USAGE:
@@ -280,7 +267,6 @@ SUBCOMMANDS:
 # ANCHOR: output_invert_help
 $ minidsp output 0 invert --help
 minidsp-output-invert 
-
 Set phase inversion on this channel
 
 USAGE:
@@ -295,7 +281,6 @@ OPTIONS:
 # ANCHOR: output_crossover_help
 $ minidsp output 0 crossover --help
 minidsp-output-crossover 
-
 Control crossovers (2x 4 biquads)
 
 USAGE:
@@ -318,7 +303,6 @@ SUBCOMMANDS:
 # ANCHOR: output_compressor_help
 $ minidsp output 0 compressor --help
 minidsp-output-compressor 
-
 Control the compressor
 
 USAGE:
@@ -335,7 +319,6 @@ OPTIONS:
 # ANCHOR: output_mute_help
 $ minidsp output 0 mute --help
 minidsp-output-mute 
-
 Set the master mute status
 
 USAGE:
@@ -350,7 +333,6 @@ OPTIONS:
 # ANCHOR: output_peq_help
 $ minidsp output 0 peq --help
 minidsp-output-peq 
-
 Control the parametric equalizer
 
 USAGE:

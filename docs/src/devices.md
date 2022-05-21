@@ -8,6 +8,7 @@ These devices support the full feature set (input, output, routing, peqs, etc.)
 
 ### Devices
 - miniDSP 2x4HD
+- miniDSP Flex
 - DDRC-24
 - DDRC-88A/D
 - miniSHARC series
