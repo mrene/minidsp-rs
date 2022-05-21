@@ -51,7 +51,13 @@ impl Source {
                 (Lan, 6),
             ],
             17 | 18 => &[(Toslink, 0), (Spdif, 1), (Aesebu, 2), (Usb, 3), (Lan, 4)],
-            27 => &[(Analog, 0), (Toslink, 1), (Spdif, 2), (Usb, 3), (Bluetooth, 4)],
+            27 => &[
+                (Analog, 0),
+                (Toslink, 1),
+                (Spdif, 2),
+                (Usb, 3),
+                (Bluetooth, 4),
+            ],
             _ => &[(NotInstalled, 0)],
         }
     }

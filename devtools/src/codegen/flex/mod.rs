@@ -77,7 +77,13 @@ pub(crate) fn output(output: usize) -> Output {
 pub fn device() -> Device {
     Device {
         product_name: "Flex".into(),
-        sources: vec!["Analog".into(), "Toslink".into(), "Spdif".into(), "Usb".into(), "Bluetooth".into()],
+        sources: vec![
+            "Analog".into(),
+            "Toslink".into(),
+            "Spdif".into(),
+            "Usb".into(),
+            "Bluetooth".into(),
+        ],
         inputs: (0..2).map(input).collect(),
         outputs: (0..4).map(output).collect(),
         fir_max_taps: 4096,
