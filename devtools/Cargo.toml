@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2021"
 name = "minidsp-devtools"
-version = "0.1.5"
+version = "0.1.6"
 license = "Apache-2.0"
 
 [features]
