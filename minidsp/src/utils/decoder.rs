@@ -196,11 +196,7 @@ mod test {
     #[test]
     fn test_print() {
         let writer = Box::new(StandardStream::stderr(ColorChoice::Always));
-        let mut d = Decoder {
-            w: writer,
-            quiet: false,
-            name_map: None,
-        };
+        let mut d = Decoder::new(writer, false, None);
         d.feed_sent(&Bytes::from_static(&[0x05, 0x14, 0x00, 0x46, 0x04, 0x63]));
         d.feed_recv(&Bytes::from_static(&[
             0x05, 0x14, 0x00, 0x46, 0x00, 0x00, 0x00,
