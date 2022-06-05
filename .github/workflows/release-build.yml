@@ -3,7 +3,7 @@ name: Release build
 on:
   push:
     branches:
-      - 'arm64'
+      - 'fix/flex-config-apply'
     tags:
       - 'v0.*'
       - 'v1.*'
