@@ -20,6 +20,7 @@ pub struct Decoder {
     quiet: bool,
     w: Box<dyn WriteColor + Send + Sync>,
     name_map: Option<BiMap<String, usize>>,
+    start_instant: std::time::Instant,
 }
 
 impl Decoder {
@@ -28,7 +29,12 @@ impl Decoder {
         quiet: bool,
         name_map: Option<BiMap<String, usize>>,
     ) -> Self {
-        Decoder { quiet, w, name_map }
+        Decoder {
+            quiet,
+            w,
+            name_map,
+            start_instant: std::time::Instant::now(),
+        }
     }
 
     /// Sets the symbol names to be printed
@@ -86,6 +92,14 @@ impl Decoder {
         }
     }
 
+    fn print_time(&mut self) -> std::io::Result<()> {
+        let elapsed = self.start_instant.elapsed();
+        let secs = elapsed.as_secs();
+        let millis = elapsed.subsec_millis();
+        let _ = write!(self.w, "[{}.{:03}s] ", secs, millis);
+        Ok(())
+    }
+
     fn print_frame(&mut self, sent: bool, frame: &Bytes) -> std::io::Result<()> {
         let _ = self.print_direction(sent);
         let _ = self
@@ -122,6 +136,7 @@ impl Decoder {
             let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Blue)));
             "Recv: "
         };
+        let _ = self.print_time();
         write!(self.w, "{}", direction)?;
 
         Ok(())
@@ -129,6 +144,7 @@ impl Decoder {
 
     fn print_error<T: fmt::Debug>(&mut self, err: T) -> std::io::Result<()> {
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
+        let _ = self.print_time();
         writeln!(self.w, "Decode error: {:?}", err)?;
         Ok(())
     }
@@ -180,11 +196,7 @@ mod test {
     #[test]
     fn test_print() {
         let writer = Box::new(StandardStream::stderr(ColorChoice::Always));
-        let mut d = Decoder {
-            w: writer,
-            quiet: false,
-            name_map: None,
-        };
+        let mut d = Decoder::new(writer, false, None);
         d.feed_sent(&Bytes::from_static(&[0x05, 0x14, 0x00, 0x46, 0x04, 0x63]));
         d.feed_recv(&Bytes::from_static(&[
             0x05, 0x14, 0x00, 0x46, 0x00, 0x00, 0x00,

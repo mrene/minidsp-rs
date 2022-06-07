@@ -227,8 +227,22 @@ impl MiniDSP<'_> {
                 reset: true,
             })
             .await?
-            .into_config_changed()
-            .err_into()
+            .into_config_changed()?;
+
+        // The MiniDSP Flex is immediately responding to `SetConfig` without waiting for it to be applied
+        // Try polling the master status until the new config is reported
+        loop {
+            let status = self.get_master_status().await?;
+            let preset = status.preset.unwrap();
+
+            if preset == config {
+                break;
+            }
+
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+
+        Ok(())
     }
 
     /// Enables or disables Dirac Live
