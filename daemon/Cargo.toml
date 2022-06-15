@@ -24,7 +24,7 @@ futures = "0.3.21"
 futures-sink = "0.3.21"
 futures-util = "0.3.21"
 hyper = "0.14.19"
-hyper-tungstenite = "0.8.0"
+hyper-tungstenite = "0.8.1"
 lazy_static = "1.4.0"
 log = "0.4.17"
 minidsp = { version="0.1.4", path="../minidsp" }
