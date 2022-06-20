@@ -37,7 +37,7 @@ termcolor = "1.1.3"
 thiserror = "1.0.31"
 tokio-stream = { version = "0.1.9", features = ["sync"] }
 tokio-tungstenite = "0.17.1"
-tower = { version = "0.4.12", features = ["util", "timeout"] }
+tower = { version = "0.4.13", features = ["util", "timeout"] }
 url2 = "0.0.6"
 urlencoding = "2.1.0"
 wav = "1.0.0"
