@@ -11,7 +11,7 @@ repository = "https://github.com/mrene/minidsp-rs"
 anyhow = "1.0.57"
 bytes = "1.1.0"
 schemars = { version = "0.8.10", optional = true }
-serde = { version = "1.0.137", features = ["derive"], optional = true }
+serde = { version = "1.0.142", features = ["derive"], optional = true }
 strum = { version = "0.24.0", features = ["derive"], optional = true }
 thiserror = "1.0.31"
 
