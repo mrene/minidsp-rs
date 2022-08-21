@@ -53,7 +53,7 @@ struct Opts {
     all_local_devices: bool,
 
     /// Use the given device 0-based index (use minidsp probe for a list of available devices)
-    #[clap(name="device-index", env="MINIDSP_INDEX", long, short = 'd')]
+    #[clap(name = "device-index", env = "MINIDSP_INDEX", long, short = 'd')]
     device_index: Option<usize>,
 
     /// The USB vendor and product id (2752:0011 for the 2x4HD)

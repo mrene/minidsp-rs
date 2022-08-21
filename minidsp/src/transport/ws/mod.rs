@@ -93,10 +93,11 @@ pub async fn discover(base_url: &Url2) -> Result<Vec<Url2>, Error> {
     let mut resp = client
         .get(
             Uri::from_str(
-                &base_url
+                base_url
                     .join("/devices")
                     .map_err(Url2Error::from)?
-                    .to_string(),
+                    .to_string()
+                    .as_str(),
             )
             .expect("parsing generated url failed"),
         )

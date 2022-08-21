@@ -148,7 +148,7 @@ impl RestoreBlob {
     }
 }
 
-#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
+#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq, Eq)]
 #[xml(default, tag = "label")]
 pub struct Label {
     #[xml(attr = "name")]
@@ -202,7 +202,7 @@ pub enum AddressableElement {
     },
 }
 
-#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
+#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq, Eq)]
 #[xml(default, tag = "para")]
 pub struct Para {
     #[xml(attr = "count")]
@@ -213,7 +213,7 @@ pub struct Para {
     pub subpara: Vec<Subpara>,
 }
 
-#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq)]
+#[derive(Debug, Clone, XmlRead, XmlWrite, PartialEq, Eq)]
 #[xml(default, tag = "subpara")]
 pub struct Subpara {
     #[xml(attr = "row")]
@@ -223,7 +223,7 @@ pub struct Subpara {
 }
 
 /// Wrapper class holding a list of comma-separated values
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommaSeparatedList<T> {
     pub inner: Vec<T>,
 }
@@ -263,7 +263,7 @@ impl<T: fmt::Display> fmt::Display for CommaSeparatedList<T> {
 }
 
 /// Wrapper class to support deserializing bytes using FromStr
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HexString {
     pub inner: Bytes,
 }
