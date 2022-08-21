@@ -52,6 +52,10 @@ struct Opts {
     #[clap(long)]
     all_local_devices: bool,
 
+    /// Use the given device 0-based index (use minidsp probe for a list of available devices)
+    #[clap(name="device-index", env="MINIDSP_INDEX", long, short = 'd')]
+    device_index: Option<usize>,
+
     /// The USB vendor and product id (2752:0011 for the 2x4HD)
     #[clap(name = "usb", env = "MINIDSP_USB", long)]
     #[cfg(feature = "hid")]
@@ -459,9 +463,10 @@ impl FromStr for ProductId {
 }
 
 async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
-    for dev in &devices {
+    for (index, dev) in devices.iter().enumerate() {
         println!(
-            "Found {} with serial {} at {} [hw_id: {}, dsp_version: {}]",
+            "{}: Found {} with serial {} at {} [hw_id: {}, dsp_version: {}]",
+            index,
             dev.device_spec.product_name,
             dev.device_info.serial,
             dev.url,
@@ -506,6 +511,11 @@ async fn main() -> Result<()> {
     }
 
     if !opts.all_local_devices {
+        if let Some(index) = opts.device_index {
+            let dev = devices.remove(index);
+            devices.clear();
+            devices.push(dev);
+        }
         devices.truncate(1);
     }
 
