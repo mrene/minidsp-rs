@@ -8,7 +8,7 @@ description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
 
 [dependencies]
-anyhow = "1.0.62"
+anyhow = "1.0.64"
 bytes = "1.2.1"
 schemars = { version = "0.8.10", optional = true }
 serde = { version = "1.0.144", features = ["derive"], optional = true }
