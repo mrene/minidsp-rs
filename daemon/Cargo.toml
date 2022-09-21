@@ -29,7 +29,7 @@ lazy_static = "1.4.0"
 log = "0.4.17"
 minidsp = { version="0.1.4", path="../minidsp" }
 okapi = "0.7.0-rc.1"
-once_cell = "1.13.1"
+once_cell = "1.15.0"
 routerify = "3.0.0"
 routerify-query = "3.0.0"
 schemars = { version = "0.8.10", optional = true }
