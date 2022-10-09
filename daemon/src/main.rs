@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::{Parser, ArgAction};
+use clap::{ArgAction, Parser};
 use confy::load_path;
 use minidsp::utils::OwnedJoinHandle;
 use once_cell::sync::OnceCell;

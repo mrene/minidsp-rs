@@ -13,7 +13,7 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
-use clap::{Parser, ArgAction};
+use clap::{ArgAction, Parser};
 use debug::DebugCommands;
 use futures::{stream, StreamExt};
 use handlers::run_server;
