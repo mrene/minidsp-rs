@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{Parser, ArgAction};
 use confy::load_path;
 use minidsp::utils::OwnedJoinHandle;
 use once_cell::sync::OnceCell;
@@ -32,8 +32,8 @@ pub struct Opts {
     config: Option<String>,
 
     /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
-    #[clap(short, long, parse(from_occurrences))]
-    verbose: i32,
+    #[clap(short, long, action = ArgAction::Count)]
+    verbose: u8,
 
     /// Log commands and responses to a file
     #[clap(long, env = "MINIDSP_LOG")]

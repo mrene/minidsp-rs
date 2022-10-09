@@ -13,7 +13,7 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
-use clap::Parser;
+use clap::{Parser, ArgAction};
 use debug::DebugCommands;
 use futures::{stream, StreamExt};
 use handlers::run_server;
@@ -37,8 +37,8 @@ use minidsp::transport::hid;
 #[clap(version=env!("CARGO_PKG_VERSION"), author=env!("CARGO_PKG_AUTHORS"))]
 struct Opts {
     /// Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
-    #[clap(short, long, parse(from_occurrences))]
-    verbose: i32,
+    #[clap(short, long, action = ArgAction::Count)]
+    verbose: u8,
 
     /// Output response format (text (default), json, jsonline)
     #[clap(long = "output", short = 'o', default_value = "text")]
@@ -250,7 +250,7 @@ enum InputCommand {
 
     /// Set the master mute status
     Mute {
-        #[clap(parse(try_from_str = on_or_off))]
+        #[clap(value_parser = on_or_off)]
         /// on | off
         value: bool,
     },
@@ -278,7 +278,7 @@ enum InputCommand {
 enum RoutingCommand {
     /// Controls whether the output matrix for this input is enabled for the given output index
     Enable {
-        #[clap(parse(try_from_str = on_or_off))]
+        #[clap(value_parser = on_or_off)]
         /// Whether this input is enabled for the given output channel
         value: bool,
     },
@@ -299,7 +299,7 @@ enum OutputCommand {
     /// Set the master mute status
     Mute {
         /// on | off
-        #[clap(parse(try_from_str = on_or_off))]
+        #[clap(value_parser = on_or_off)]
         value: bool,
     },
 
@@ -311,7 +311,7 @@ enum OutputCommand {
 
     /// Set phase inversion on this channel
     Invert {
-        #[clap(parse(try_from_str = on_or_off))]
+        #[clap(value_parser = on_or_off)]
         /// on | off
         value: bool,
     },
@@ -346,7 +346,7 @@ enum OutputCommand {
     /// Control the compressor
     Compressor {
         /// Bypasses the compressor (on | off)
-        #[clap(short='b', long, parse(try_from_str = on_or_off))]
+        #[clap(short='b', long, value_parser = on_or_off)]
         bypass: Option<bool>,
 
         /// Sets the threshold in dBFS
@@ -395,7 +395,7 @@ enum FilterCommand {
 
     /// Sets the bypass toggle
     Bypass {
-        #[clap(parse(try_from_str = on_or_off))]
+        #[clap(value_parser = on_or_off)]
         /// on | off
         value: bool,
     },

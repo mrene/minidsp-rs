@@ -120,23 +120,23 @@ fn dump_floats(view: &FloatView) {
 pub enum DebugCommands {
     /// Send a hex-encoded command
     Send {
-        #[clap(parse(try_from_str = parse_hex))]
+        #[clap(value_parser = parse_hex)]
         value: Bytes,
     },
 
     /// Dumps memory starting at a given address
     Dump {
-        #[clap(parse(try_from_str = parse_hex_u16))]
+        #[clap(value_parser = parse_hex_u16)]
         addr: u16,
-        #[clap(parse(try_from_str = parse_hex_u16))]
+        #[clap(value_parser = parse_hex_u16)]
         end_addr: Option<u16>,
     },
 
     /// Dumps contiguous float data starting at a given address
     DumpFloat {
-        #[clap(parse(try_from_str = parse_hex_u16))]
+        #[clap(value_parser = parse_hex_u16)]
         addr: u16,
-        #[clap(parse(try_from_str = parse_hex_u16))]
+        #[clap(value_parser = parse_hex_u16)]
         end_addr: Option<u16>,
     },
 
