@@ -189,12 +189,11 @@ impl std::ops::Deref for MultiplexerService {
 
 #[cfg(test)]
 mod test {
-    
+
     use futures::channel::mpsc;
     use minidsp_protocol::HardwareId;
 
     use super::*;
-    
 
     #[tokio::test]
     async fn test_golden_path() {
@@ -213,7 +212,7 @@ mod test {
             let cmd = sink_rx.next().await.unwrap();
             assert!(matches!(cmd, Commands::ReadHardwareId { .. }));
             stream_tx
-                .send(Ok(Responses::HardwareId(HardwareId{
+                .send(Ok(Responses::HardwareId(HardwareId {
                     fw_major: 1,
                     fw_minor: 10,
                     hw_id: 10,

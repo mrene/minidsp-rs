@@ -20,7 +20,8 @@ use thiserror::Error;
 
 use super::DeviceInfo;
 use crate::{
-    eeprom, packet::ParseError, util::TryBuf, util::TryBufError, FixedPoint, MasterStatus, HardwareId,
+    eeprom, packet::ParseError, util::TryBuf, util::TryBufError, FixedPoint, HardwareId,
+    MasterStatus,
 };
 
 /// Maximum number of floats that can be read in a single command
@@ -724,11 +725,15 @@ impl Responses {
             },
             0x05 => Responses::MemoryData(MemoryView::from_packet(frame)?),
             0x14 => Responses::FloatData(FloatView::from_packet(frame)?),
-            0x31 => Responses::HardwareId(HardwareId {
-                fw_major: frame.try_get_u8()?,
-                fw_minor: frame.try_get_u8()?,
-                hw_id: frame.try_get_u8()?,
-            }),
+            0x31 => {
+                // Consume command id
+                frame.try_get_u8()?;
+                Responses::HardwareId(HardwareId {
+                    fw_major: frame.try_get_u8()?,
+                    fw_minor: frame.try_get_u8()?,
+                    hw_id: frame.try_get_u8()?,
+                })
+            }
             0x39 => Responses::FirLoadSize {
                 size: {
                     frame.try_get_u8()?; // Consume command id
@@ -822,9 +827,7 @@ impl Responses {
 
     pub fn into_hardware_id(self) -> Result<HardwareId, ProtocolError> {
         match self {
-            Responses::HardwareId(id) => {
-                Ok(id)
-            }
+            Responses::HardwareId(id) => Ok(id),
             _ => Err(ProtocolError::UnexpectedResponseType),
         }
     }

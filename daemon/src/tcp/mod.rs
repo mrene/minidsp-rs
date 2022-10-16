@@ -82,10 +82,10 @@ pub fn start_advertise(
                 mac_address: [10, 20, 30, 40, 50, 60],
                 ip_address: Ipv4Addr::from_str(&advertise.ip)?,
                 hwid: 27,
+                dsp_id: 100,
                 fw_major: 1,
                 fw_minor: 53,
-                dsp_id: 0,
-                sn: 65535,
+                sn: 1234,
                 hostname: advertise.name.to_string(),
             };
             let interval = Duration::from_secs(1);

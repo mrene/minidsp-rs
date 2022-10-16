@@ -123,7 +123,7 @@ impl MockDevice {
     // the internal state.
     pub fn execute(&mut self, cmd: &Commands) -> Responses {
         match cmd {
-            Commands::ReadHardwareId => Responses::HardwareId(HardwareId{
+            Commands::ReadHardwareId => Responses::HardwareId(HardwareId {
                 fw_major: self.firmware_version.0,
                 fw_minor: self.firmware_version.1,
                 hw_id: self.hw_id,
