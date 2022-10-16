@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration, net::ToSocketAddrs};
 
 use minidsp::{
     formats::{rew::FromRew, wav::read_wav_filter},
@@ -23,9 +23,12 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
             use crate::discovery;
             let mut packet = discovery::DiscoveryPacket {
                 mac_address: [10, 20, 30, 40, 50, 60],
-                ip_address: Ipv4Addr::UNSPECIFIED,
-                hwid: 0,
-                typ: 0,
+                ip_address: Ipv4Addr::from_str(&hostname)?,
+                // FIXME: This is hardcoded to the Flex for testing purposes
+                hwid: 27,
+                dsp_id: 100,
+                fw_major: 1,
+                fw_minor: 53,
                 sn: 0,
                 hostname,
             };
@@ -33,7 +36,10 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
                 packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
             }
             let interval = Duration::from_secs(1);
-            tokio::spawn(discovery::server::advertise_packet(packet, interval));
+            let bind_addr = bind_address.to_socket_addrs()?
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("bind adddress didn't resolve to a usable address") )?;
+            tokio::spawn(discovery::server::advertise_packet(bind_addr, packet, interval));
         }
         use crate::tcp_server;
         tcp_server::serve(bind_address.as_str(), Box::pin(transport)).await?;

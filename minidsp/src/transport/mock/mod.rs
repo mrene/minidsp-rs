@@ -31,6 +31,8 @@ impl MockTransport {
             dsp_version,
             hw_id,
             serial: 0,
+            fw_major: 1,
+            fw_minor: 13,
         });
         let device: Arc<Mutex<MockDevice>> =
             Arc::new(Mutex::new(MockDevice::new(hw_id, dsp_version, kind)));

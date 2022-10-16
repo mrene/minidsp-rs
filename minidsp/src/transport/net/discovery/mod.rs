@@ -16,8 +16,10 @@ pub struct DiscoveryPacket {
     pub mac_address: [u8; 6],
     pub ip_address: Ipv4Addr,
     pub hwid: u8,
-    pub typ: u8,
+    pub dsp_id: u8,
     pub sn: u16,
+    pub fw_major: u8,
+    pub fw_minor: u8,
     pub hostname: String,
 }
 
@@ -35,8 +37,10 @@ impl DiscoveryPacket {
         let ip_array: [u8; 4] = packet[14..18].try_into().unwrap();
         let p = DiscoveryPacket {
             hwid: packet[18],
-            typ: packet[21],
+            dsp_id: packet[21],
             sn: ((packet[22] as u16) << 8) | (packet[23] as u16),
+            fw_major: packet[19],
+            fw_minor: packet[20],
             ip_address: Ipv4Addr::from(ip_array),
             mac_address: packet[6..12].try_into().unwrap(),
             hostname: String::from_utf8_lossy(&packet[36..36 + packet[35] as usize]).to_string(),
@@ -54,7 +58,9 @@ impl DiscoveryPacket {
             .as_ref()
             .copy_to_slice(&mut p[14..18]);
         p[18] = self.hwid;
-        p[21] = self.typ;
+        p[19] = self.fw_major;
+        p[20] = self.fw_minor;
+        p[21] = self.dsp_id;
         p[22] = (self.sn >> 8) as u8;
         p[23] = (self.sn & 0xFF) as u8;
         if self.hostname.len() > u8::MAX as usize {
@@ -109,8 +115,10 @@ mod test {
             mac_address: [10, 20, 30, 40, 50, 60],
             ip_address: Ipv4Addr::new(192, 168, 1, 100),
             hwid: 222,
-            typ: 51,
+            dsp_id: 51,
             sn: 1234,
+            fw_major: 1,
+            fw_minor: 2,
             hostname: "Living room TV".to_string(),
         };
 

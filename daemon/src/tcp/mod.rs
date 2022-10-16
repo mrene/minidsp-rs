@@ -1,5 +1,9 @@
 //! TCP server compatible with the official mobile and desktop application
-use std::{net::Ipv4Addr, str::FromStr, time::Duration};
+use std::{
+    net::{Ipv4Addr, SocketAddr, ToSocketAddrs},
+    str::FromStr,
+    time::Duration,
+};
 
 use anyhow::{Context, Result};
 use futures::{pin_mut, SinkExt, StreamExt};
@@ -68,19 +72,26 @@ where
     }
 }
 
-pub fn start_advertise(config: &config::Config) -> Result<(), anyhow::Error> {
+pub fn start_advertise(
+    bind_addr: SocketAddr,
+    config: &config::Config,
+) -> Result<(), anyhow::Error> {
     for srv in &config.tcp_servers {
         if let Some(ref advertise) = srv.advertise {
             let packet = discovery::DiscoveryPacket {
                 mac_address: [10, 20, 30, 40, 50, 60],
                 ip_address: Ipv4Addr::from_str(&advertise.ip)?,
-                hwid: 10,
-                typ: 0,
+                hwid: 27,
+                fw_major: 1,
+                fw_minor: 53,
+                dsp_id: 0,
                 sn: 65535,
                 hostname: advertise.name.to_string(),
             };
             let interval = Duration::from_secs(1);
-            tokio::spawn(discovery::server::advertise_packet(packet, interval));
+            tokio::spawn(discovery::server::advertise_packet(
+                bind_addr, packet, interval,
+            ));
         }
     }
     Ok(())
@@ -90,13 +101,19 @@ pub async fn main(cfg: config::TcpServer) -> Result<(), MiniDSPError> {
     let app = super::APP.get().unwrap();
     let app = app.read().await;
 
-    if let Err(adv_err) = start_advertise(&app.config) {
-        log::error!("error launching advertisement task: {:?}", adv_err);
-    }
-
     let bind_address = cfg
         .bind_address
         .unwrap_or_else(|| "0.0.0.0:5333".to_string());
+
+    let bind_addr = bind_address
+        .to_socket_addrs()?
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("bind adddress didn't resolve to a usable address"))?;
+
+    if let Err(adv_err) = start_advertise(bind_addr, &app.config) {
+        log::error!("error launching advertisement task: {:?}", adv_err);
+    }
+
     let listener = TcpListener::bind(&bind_address).await?;
     log::info!("Listening on {}", &bind_address);
     loop {

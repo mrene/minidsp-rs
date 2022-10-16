@@ -42,8 +42,17 @@ pub use dialect::{AddrEncoding, Dialect, FloatEncoding};
 /// Hardware id and dsp version
 pub struct DeviceInfo {
     pub hw_id: u8,
+    pub fw_major: u8,
+    pub fw_minor: u8,
     pub dsp_version: u8,
     pub serial: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct HardwareId {
+    pub fw_major: u8,
+    pub fw_minor: u8,
+    pub hw_id: u8,
 }
 
 impl DeviceInfo {

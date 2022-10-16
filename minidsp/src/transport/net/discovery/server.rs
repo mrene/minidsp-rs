@@ -10,8 +10,8 @@ use tokio::{
 use super::{DiscoveryPacket, DISCOVERY_PORT};
 
 /// Advertises the given discovery packet at a specified interval
-pub async fn advertise_packet(packet: DiscoveryPacket, interval: Duration) -> Result<()> {
-    let socket = UdpSocket::bind(SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 0u16)).await?;
+pub async fn advertise_packet(bind_addr: SocketAddr, packet: DiscoveryPacket, interval: Duration) -> Result<()> {
+    let socket = UdpSocket::bind(bind_addr).await?;
     socket.set_broadcast(true)?;
 
     let target_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::BROADCAST), DISCOVERY_PORT);

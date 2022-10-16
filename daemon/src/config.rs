@@ -70,4 +70,7 @@ pub struct Advertise {
 
     /// Defines the name used in the advertisement packets
     pub name: String,
+
+    /// Bind address to use when sending broadcast packets
+    pub bind: String,
 }
