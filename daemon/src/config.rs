@@ -16,6 +16,10 @@ pub struct Config {
     /// If a remote device is not being discovered, it can be added to this list.
     #[serde(rename = "static_device")]
     pub static_devices: Vec<StaticDevice>,
+
+    /// Set to ignore network devices that broadcast advertisement packets (such as the WI-DG).
+    /// It's still possible to add them using `[[static_device]]`
+    pub ignore_advertisements: bool,
 }
 
 impl Default for Config {
@@ -26,6 +30,7 @@ impl Default for Config {
             }),
             tcp_servers: Vec::new(),
             static_devices: Vec::new(),
+            ignore_advertisements: false,
         }
     }
 }
@@ -72,5 +77,5 @@ pub struct Advertise {
     pub name: String,
 
     /// Bind address to use when sending broadcast packets
-    pub bind: String,
+    pub bind_address: Option<String>,
 }

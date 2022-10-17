@@ -86,7 +86,7 @@ impl App {
             })
             .collect();
 
-        let device_mgr = DeviceManager::new(registry, our_ips);
+        let device_mgr = DeviceManager::new(registry, our_ips, self.config.ignore_advertisements);
 
         let http_server = self.config.http_server.clone();
         self.handles.push(

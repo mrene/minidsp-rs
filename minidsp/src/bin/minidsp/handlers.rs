@@ -1,4 +1,4 @@
-use std::{net::ToSocketAddrs, str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration};
 
 use minidsp::{
     formats::{rew::FromRew, wav::read_wav_filter},
@@ -45,12 +45,10 @@ pub(crate) async fn run_server(
                 return Err(anyhow::anyhow!("--ip is required if --advertise is used"));
             }
             let interval = Duration::from_secs(1);
-            let bind_addr = bind_address.to_socket_addrs()?.next().ok_or_else(|| {
-                anyhow::anyhow!("bind adddress didn't resolve to a usable address")
-            })?;
-            dbg!(&packet);
             tokio::spawn(discovery::server::advertise_packet(
-                bind_addr, packet, interval,
+                None,
+                move || Some(packet.clone()),
+                interval,
             ));
         }
         use crate::tcp_server;
