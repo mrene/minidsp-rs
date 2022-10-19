@@ -11,7 +11,7 @@ version = "0.1.7"
 
 [dependencies]
 anyhow = "1.0.65"
-async-trait = "0.1.57"
+async-trait = "0.1.58"
 atomic_refcell = "0.1.8"
 bimap = "0.6.2"
 bytes = "1.2.1"
