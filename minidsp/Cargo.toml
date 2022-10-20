@@ -18,7 +18,7 @@ bytes = "1.2.1"
 clap = { version = "4.0.11", features = ["derive", "env"] }
 env_logger = "0.9.1"
 futures = "0.3.24"
-futures-sink = "0.3.24"
+futures-sink = "0.3.25"
 futures-util = "0.3.24"
 hex = "0.4.3"
 hexplay = "0.2.1"
