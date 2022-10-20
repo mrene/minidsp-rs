@@ -17,7 +17,7 @@ bimap = "0.6.2"
 bytes = "1.2.1"
 clap = { version = "4.0.11", features = ["derive", "env"] }
 env_logger = "0.9.1"
-futures = "0.3.24"
+futures = "0.3.25"
 futures-sink = "0.3.24"
 futures-util = "0.3.24"
 hex = "0.4.3"
