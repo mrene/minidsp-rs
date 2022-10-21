@@ -15,7 +15,7 @@ async-trait = "0.1.57"
 atomic_refcell = "0.1.8"
 bimap = "0.6.2"
 bytes = "1.2.1"
-clap = { version = "4.0.11", features = ["derive", "env"] }
+clap = { version = "4.0.18", features = ["derive", "env"] }
 env_logger = "0.9.1"
 futures = "0.3.24"
 futures-sink = "0.3.24"
