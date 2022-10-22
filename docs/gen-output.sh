@@ -38,3 +38,5 @@ cli_cmd "output_crossover_help" output 0 crossover --help
 cli_cmd "output_compressor_help" output 0 compressor --help
 cli_cmd "output_mute_help" output 0 mute --help
 cli_cmd "output_peq_help" output 0 peq --help
+cli_cmd "output_gain_help" output 0 gain --help
+

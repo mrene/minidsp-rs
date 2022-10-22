@@ -314,3 +314,15 @@ Arguments:
 Options:
   -h, --help  Print help information
 # ANCHOR_END: output_peq_help
+# ANCHOR: output_gain_help
+$ minidsp output 0 gain --help
+Set the output gain for this channel
+
+Usage: minidsp output <OUTPUT_INDEX> gain <VALUE>
+
+Arguments:
+  <VALUE>  Output gain in dB
+
+Options:
+  -h, --help  Print help information
+# ANCHOR_END: output_gain_help
