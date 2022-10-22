@@ -7,7 +7,7 @@ keywords = ["minidsp", "audio", "dsp"]
 license = "Apache-2.0"
 name = "minidsp"
 repository = "https://github.com/mrene/minidsp-rs"
-version = "0.1.7"
+version = "0.1.8"
 
 [dependencies]
 anyhow = "1.0.65"
@@ -25,7 +25,7 @@ hexplay = "0.2.1"
 hyper = "0.14.20"
 lazy_static = "1.4.0"
 log = "0.4.17"
-minidsp-protocol = {path = "../protocol", version = "0.1.7", default-features = false, features = ["use_serde", "debug", "devices"]}
+minidsp-protocol = {path = "../protocol", version = "0.1.8", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.12"
 schemars = "0.8.11"
 serde = { version = "1.0.145", features = ["derive"] }
@@ -84,6 +84,7 @@ assets = [
   ["../debian/minidsp.service", "lib/systemd/system/minidsp.service", "644"],
   ["../debian/minidsp.udev", "lib/udev/rules.d/99-minidsp.rules", "644"],
 ]
+conf-files = ["etc/minidsp/config.toml"]
 copyright = "2021, Mathieu Rene <mathieu.rene@gmail.com>"
 depends = "libusb-1.0-0 (>= 2:1.0.21), libc6 (>= 2.17), libudev1 (>= 183)"
 extended-description = """\

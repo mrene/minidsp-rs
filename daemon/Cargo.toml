@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2021"
 name = "minidsp-daemon"
-version = "0.1.7"
+version = "0.1.8"
 license = "Apache-2.0"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
