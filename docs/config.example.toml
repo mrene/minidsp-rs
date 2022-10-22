@@ -3,6 +3,11 @@
 #
 # A default HTTP server is exposed via a unix socket at /tmp/minidsp.sock
 
+# If set, the daemon will ignore network broadcasts for discovering devices, which can be inconvenient when dealing with complex multi-device setups
+# The desired remote devices can then be manually added using `[[static_device]]` sections
+# ignore_advertisements = true
+
+
 # If desired, an api can be exposed over the local network
 [http_server]
 bind_address = "127.0.0.1:5380"
