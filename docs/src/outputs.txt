@@ -1,353 +1,328 @@
 # ANCHOR: help
 $ minidsp --help
-minidsp 0.1.5
-Mathieu Rene <mathieu.rene@gmail.com>
+Usage: minidsp [OPTIONS] [COMMAND]
 
-USAGE:
-    minidsp [OPTIONS] [SUBCOMMAND]
+Commands:
+  probe   Try to find reachable devices
+  status  Prints the master status and current levels
+  gain    Set the master output gain [-127, 0]
+  mute    Set the master mute status
+  source  Set the active input source
+  config  Set the current active configuration,
+  dirac   Sets whether Dirac Live is enabled
+  input   Control settings regarding input channels
+  output  Control settings regarding output channels
+  server  (deprecated) Launch a server usable with `--tcp`, the mobile application, and the official client
+  debug   Low-level debug utilities
+  help    Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-        --all-local-devices            Apply the given commands to all matching local usb devices
-        --daemon-sock <DAEMON_SOCK>    Discover devices that are managed by the local instance of
-                                       minidspd [env: MINIDSP_SOCK=]
-        --daemon-url <DAEMON_URL>      Discover devices that are managed by the remote instance of
-                                       minidspd [env: MINIDSPD_URL=]
-    -f <FILE>                          Read commands to run from the given filename (use - for
-                                       stdin)
-        --force-kind <force-kind>      Force the device to a specific product instead of probing its
-                                       hardware id. May break things, use at your own risk
-    -h, --help                         Print help information
-        --log <LOG>                    Log commands and responses to a file [env: MINIDSP_LOG=]
-    -o, --output <OUTPUT_FORMAT>       Output response format (text (default), json, jsonline)
-                                       [default: text]
-        --tcp <tcp>                    The target address of the server component [env:
-                                       MINIDSP_TCP=]
-        --url <URL>                    Directly connect to this transport url [env: MINIDSP_URL=]
-        --usb <usb>                    The USB vendor and product id (2752:0011 for the 2x4HD) [env:
-                                       MINIDSP_USB=]
-    -v, --verbose                      Verbosity level. -v display decoded commands and responses
-                                       -vv display decoded commands including readfloats -vvv
-                                       display hex data frames
-    -V, --version                      Print version information
-
-SUBCOMMANDS:
-    config    Set the current active configuration,
-    debug     Low-level debug utilities
-    dirac     Sets whether Dirac Live is enabled
-    gain      Set the master output gain [-127, 0]
-    help      Print this message or the help of the given subcommand(s)
-    input     Control settings regarding input channels
-    mute      Set the master mute status
-    output    Control settings regarding output channels
-    probe     Try to find reachable devices
-    server    (deprecated) Launch a server usable with `--tcp`, the mobile application, and the
-                  official client
-    source    Set the active input source
-    status    Prints the master status and current levels
+Options:
+  -v, --verbose...
+          Verbosity level. -v display decoded commands and responses -vv display decoded commands including readfloats -vvv display hex data frames
+  -o, --output <OUTPUT_FORMAT>
+          Output response format (text (default), json, jsonline) [default: text]
+      --log <LOG>
+          Log commands and responses to a file [env: MINIDSP_LOG=]
+      --all-local-devices
+          Apply the given commands to all matching local usb devices
+  -d, --device-index <device-index>
+          Use the given device 0-based index (use minidsp probe for a list of available devices) [env: MINIDSP_INDEX=]
+      --usb <usb>
+          The USB vendor and product id (2752:0011 for the 2x4HD) [env: MINIDSP_USB=]
+      --tcp <tcp>
+          The target address of the server component [env: MINIDSP_TCP=]
+      --force-kind <force-kind>
+          Force the device to a specific product instead of probing its hardware id. May break things, use at your own risk
+      --url <URL>
+          Directly connect to this transport url [env: MINIDSP_URL=]
+      --daemon-url <DAEMON_URL>
+          Discover devices that are managed by the remote instance of minidspd [env: MINIDSPD_URL=]
+      --daemon-sock <DAEMON_SOCK>
+          Discover devices that are managed by the local instance of minidspd [env: MINIDSP_SOCK=]
+  -f <FILE>
+          Read commands to run from the given filename (use - for stdin)
+  -h, --help
+          Print help information
+  -V, --version
+          Print version information
 # ANCHOR_END: help
 # ANCHOR: config_help
 $ minidsp config --help
-minidsp-config 
 Set the current active configuration,
 
-USAGE:
-    minidsp config <VALUE>
+Usage: minidsp config <VALUE>
 
-ARGS:
-    <VALUE>    0-indexed configuation preset value (0, 1, 2, 3)
+Arguments:
+  <VALUE>  0-indexed configuation preset value (0, 1, 2, 3)
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: config_help
 # ANCHOR: gain_help
 $ minidsp gain --help
-minidsp-gain 
 Set the master output gain [-127, 0]
 
-USAGE:
-    minidsp gain [OPTIONS] <VALUE>
+Usage: minidsp gain [OPTIONS] <VALUE>
 
-ARGS:
-    <VALUE>    Gain in decibels, between -127 and 0 inclusively
+Arguments:
+  <VALUE>  Gain in decibels, between -127 and 0 inclusively
 
-OPTIONS:
-    -h, --help        Print help information
-    -r, --relative    Specify the value as a relative increment on top of the current gain
+Options:
+  -r, --relative  Specify the value as a relative increment on top of the current gain
+  -h, --help      Print help information
 # ANCHOR_END: gain_help
 # ANCHOR: mute_help
 $ minidsp mute --help
-minidsp-mute 
 Set the master mute status
 
-USAGE:
-    minidsp mute <VALUE>
+Usage: minidsp mute <VALUE>
 
-ARGS:
-    <VALUE>    on, off, toggle
+Arguments:
+  <VALUE>  on, off, toggle
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: mute_help
 # ANCHOR: source_help
 $ minidsp source --help
-minidsp-source 
 Set the active input source
 
-USAGE:
-    minidsp source <VALUE>
+Usage: minidsp source <VALUE>
 
-ARGS:
-    <VALUE>    The source to use: analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s,
-               bluetooth
+Arguments:
+  <VALUE>  The source to use: analog, toslink, spdif, usb, aesebu, rca, xlr, lan, i2s, bluetooth
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: source_help
 # ANCHOR: dirac_help
 $ minidsp dirac --help
-minidsp-dirac 
 Sets whether Dirac Live is enabled
 
-USAGE:
-    minidsp dirac <VALUE>
+Usage: minidsp dirac <VALUE>
 
-ARGS:
-    <VALUE>    on, off, toggle
+Arguments:
+  <VALUE>  on, off, toggle
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: dirac_help
 # ANCHOR: input_help
 $ minidsp input --help
-minidsp-input 
 Control settings regarding input channels
 
-USAGE:
-    minidsp input <INPUT_INDEX> <SUBCOMMAND>
+Usage: minidsp input <INPUT_INDEX> <COMMAND>
 
-ARGS:
-    <INPUT_INDEX>    Index of the input channel, starting at 0
+Commands:
+  gain     Set the input gain for this channel
+  mute     Set the master mute status
+  routing  Controls signal routing from this input
+  peq      Control the parametric equalizer
+  help     Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <INPUT_INDEX>  Index of the input channel, starting at 0
 
-SUBCOMMANDS:
-    gain       Set the input gain for this channel
-    help       Print this message or the help of the given subcommand(s)
-    mute       Set the master mute status
-    peq        Control the parametric equalizer
-    routing    Controls signal routing from this input
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: input_help
 # ANCHOR: input_gain_help
 $ minidsp input 0 gain --help
-minidsp-input-gain 
 Set the input gain for this channel
 
-USAGE:
-    minidsp input <INPUT_INDEX> gain <VALUE>
+Usage: minidsp input <INPUT_INDEX> gain <VALUE>
 
-ARGS:
-    <VALUE>    Gain in dB
+Arguments:
+  <VALUE>  Gain in dB
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: input_gain_help
 # ANCHOR: input_mute_help
 $ minidsp input 0 mute --help
-minidsp-input-mute 
 Set the master mute status
 
-USAGE:
-    minidsp input <INPUT_INDEX> mute <VALUE>
+Usage: minidsp input <INPUT_INDEX> mute [VALUE]
 
-ARGS:
-    <VALUE>    on | off
+Arguments:
+  [VALUE]  on | off
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: input_mute_help
 # ANCHOR: input_peq_help
 $ minidsp input 0 peq --help
-minidsp-input-peq 
 Control the parametric equalizer
 
-USAGE:
-    minidsp input <INPUT_INDEX> peq <INDEX> <SUBCOMMAND>
+Usage: minidsp input <INPUT_INDEX> peq <INDEX> <COMMAND>
 
-ARGS:
-    <INDEX>    Parametric EQ index (all | <id>) (0 to 9 inclusively)
+Commands:
+  set     Set coefficients
+  bypass  Sets the bypass toggle
+  clear   Sets all coefficients back to their default values and un-bypass them
+  import  Imports the coefficients from the given file
+  help    Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <INDEX>  Parametric EQ index (all | <id>) (0 to 9 inclusively)
 
-SUBCOMMANDS:
-    bypass    Sets the bypass toggle
-    clear     Sets all coefficients back to their default values and un-bypass them
-    help      Print this message or the help of the given subcommand(s)
-    import    Imports the coefficients from the given file
-    set       Set coefficients
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: input_peq_help
 # ANCHOR: input_routing_help
 $ minidsp input 0 routing --help
-minidsp-input-routing 
 Controls signal routing from this input
 
-USAGE:
-    minidsp input <INPUT_INDEX> routing <OUTPUT_INDEX> <SUBCOMMAND>
+Usage: minidsp input <INPUT_INDEX> routing <OUTPUT_INDEX> <COMMAND>
 
-ARGS:
-    <OUTPUT_INDEX>    Index of the output channel starting at 0
+Commands:
+  enable  Controls whether the output matrix for this input is enabled for the given output index
+  gain    
+  help    Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <OUTPUT_INDEX>  Index of the output channel starting at 0
 
-SUBCOMMANDS:
-    enable    Controls whether the output matrix for this input is enabled for the given output
-                  index
-    gain      
-    help      Print this message or the help of the given subcommand(s)
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: input_routing_help
 # ANCHOR: output_help
 $ minidsp output --help
-minidsp-output 
 Control settings regarding output channels
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> <SUBCOMMAND>
+Usage: minidsp output <OUTPUT_INDEX> <COMMAND>
 
-ARGS:
-    <OUTPUT_INDEX>    Index of the output channel, starting at 0
+Commands:
+  gain        Set the output gain for this channel
+  mute        Set the master mute status
+  delay       Set the delay associated to this channel
+  invert      Set phase inversion on this channel
+  peq         Control the parametric equalizer
+  fir         Control the FIR filter
+  crossover   Control crossovers (2x 4 biquads)
+  compressor  Control the compressor
+  help        Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <OUTPUT_INDEX>  Index of the output channel, starting at 0
 
-SUBCOMMANDS:
-    compressor    Control the compressor
-    crossover     Control crossovers (2x 4 biquads)
-    delay         Set the delay associated to this channel
-    fir           Control the FIR filter
-    gain          Set the output gain for this channel
-    help          Print this message or the help of the given subcommand(s)
-    invert        Set phase inversion on this channel
-    mute          Set the master mute status
-    peq           Control the parametric equalizer
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_help
 # ANCHOR: output_delay_help
 $ minidsp output 0 delay --help
-minidsp-output-delay 
 Set the delay associated to this channel
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> delay <DELAY>
+Usage: minidsp output <OUTPUT_INDEX> delay <DELAY>
 
-ARGS:
-    <DELAY>    Delay in milliseconds
+Arguments:
+  <DELAY>  Delay in milliseconds
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_delay_help
 # ANCHOR: output_fir_help
 $ minidsp output 0 fir --help
-minidsp-output-fir 
 Control the FIR filter
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> fir <SUBCOMMAND>
+Usage: minidsp output <OUTPUT_INDEX> fir <COMMAND>
 
-OPTIONS:
-    -h, --help    Print help information
+Commands:
+  set     Set coefficients
+  bypass  Sets the bypass toggle
+  clear   Sets all coefficients back to their default values and un-bypass them
+  import  Imports the coefficients from the given file
+  help    Print this message or the help of the given subcommand(s)
 
-SUBCOMMANDS:
-    bypass    Sets the bypass toggle
-    clear     Sets all coefficients back to their default values and un-bypass them
-    help      Print this message or the help of the given subcommand(s)
-    import    Imports the coefficients from the given file
-    set       Set coefficients
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_fir_help
 # ANCHOR: output_invert_help
 $ minidsp output 0 invert --help
-minidsp-output-invert 
 Set phase inversion on this channel
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> invert <VALUE>
+Usage: minidsp output <OUTPUT_INDEX> invert [VALUE]
 
-ARGS:
-    <VALUE>    on | off
+Arguments:
+  [VALUE]  on | off
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_invert_help
 # ANCHOR: output_crossover_help
 $ minidsp output 0 crossover --help
-minidsp-output-crossover 
 Control crossovers (2x 4 biquads)
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> crossover <GROUP> <INDEX> <SUBCOMMAND>
+Usage: minidsp output <OUTPUT_INDEX> crossover <GROUP> <INDEX> <COMMAND>
 
-ARGS:
-    <GROUP>    Group index (0 or 1)
-    <INDEX>    Filter index (all | 0 | 1 | 3)
+Commands:
+  set     Set coefficients
+  bypass  Sets the bypass toggle
+  clear   Sets all coefficients back to their default values and un-bypass them
+  import  Imports the coefficients from the given file
+  help    Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <GROUP>  Group index (0 or 1)
+  <INDEX>  Filter index (all | 0 | 1 | 3)
 
-SUBCOMMANDS:
-    bypass    Sets the bypass toggle
-    clear     Sets all coefficients back to their default values and un-bypass them
-    help      Print this message or the help of the given subcommand(s)
-    import    Imports the coefficients from the given file
-    set       Set coefficients
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_crossover_help
 # ANCHOR: output_compressor_help
 $ minidsp output 0 compressor --help
-minidsp-output-compressor 
 Control the compressor
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> compressor [OPTIONS]
+Usage: minidsp output <OUTPUT_INDEX> compressor [OPTIONS]
 
-OPTIONS:
-    -a, --attack <ATTACK>          Sets the attack time in ms
-    -b, --bypass <BYPASS>          Bypasses the compressor (on | off)
-    -h, --help                     Print help information
-    -k, --ratio <RATIO>            Sets the ratio
-    -r, --release <RELEASE>        Sets the release time in ms
-    -t, --threshold <THRESHOLD>    Sets the threshold in dBFS
+Options:
+  -b, --bypass <BYPASS>        Bypasses the compressor (on | off)
+  -t, --threshold <THRESHOLD>  Sets the threshold in dBFS
+  -k, --ratio <RATIO>          Sets the ratio
+  -a, --attack <ATTACK>        Sets the attack time in ms
+  -r, --release <RELEASE>      Sets the release time in ms
+  -h, --help                   Print help information
 # ANCHOR_END: output_compressor_help
 # ANCHOR: output_mute_help
 $ minidsp output 0 mute --help
-minidsp-output-mute 
 Set the master mute status
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> mute <VALUE>
+Usage: minidsp output <OUTPUT_INDEX> mute [VALUE]
 
-ARGS:
-    <VALUE>    on | off
+Arguments:
+  [VALUE]  on | off
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_mute_help
 # ANCHOR: output_peq_help
 $ minidsp output 0 peq --help
-minidsp-output-peq 
 Control the parametric equalizer
 
-USAGE:
-    minidsp output <OUTPUT_INDEX> peq <INDEX> <SUBCOMMAND>
+Usage: minidsp output <OUTPUT_INDEX> peq <INDEX> <COMMAND>
 
-ARGS:
-    <INDEX>    Parametric EQ index (all | <id>) (0 to 9 inclusively)
+Commands:
+  set     Set coefficients
+  bypass  Sets the bypass toggle
+  clear   Sets all coefficients back to their default values and un-bypass them
+  import  Imports the coefficients from the given file
+  help    Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help    Print help information
+Arguments:
+  <INDEX>  Parametric EQ index (all | <id>) (0 to 9 inclusively)
 
-SUBCOMMANDS:
-    bypass    Sets the bypass toggle
-    clear     Sets all coefficients back to their default values and un-bypass them
-    help      Print this message or the help of the given subcommand(s)
-    import    Imports the coefficients from the given file
-    set       Set coefficients
+Options:
+  -h, --help  Print help information
 # ANCHOR_END: output_peq_help
+# ANCHOR: output_gain_help
+$ minidsp output 0 gain --help
+Set the output gain for this channel
+
+Usage: minidsp output <OUTPUT_INDEX> gain <VALUE>
+
+Arguments:
+  <VALUE>  Output gain in dB
+
+Options:
+  -h, --help  Print help information
+# ANCHOR_END: output_gain_help

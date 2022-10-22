@@ -28,7 +28,11 @@ pub struct DeviceManager {
 }
 
 impl DeviceManager {
-    pub fn new(registry: Registry, ignore_net_ip: HashSet<IpAddr>) -> Self {
+    pub fn new(
+        registry: Registry,
+        ignore_net_ip: HashSet<IpAddr>,
+        ignore_advertisements: bool,
+    ) -> Self {
         let inner = DeviceManagerInner {
             registry,
             ..Default::default()
@@ -52,18 +56,20 @@ impl DeviceManager {
             };
             handles.push(discovery_hid);
 
-            let discovery_net = {
-                let inner = inner.clone();
-                tokio::spawn(super::discovery::tasks::net_discovery_task(
-                    move |dev| {
-                        let inner = inner.read().unwrap();
-                        inner.registry.register(dev, false);
-                    },
-                    ignore_net_ip,
-                ))
-                .into()
-            };
-            handles.push(discovery_net);
+            if !ignore_advertisements {
+                let discovery_net = {
+                    let inner = inner.clone();
+                    tokio::spawn(super::discovery::tasks::net_discovery_task(
+                        move |dev| {
+                            let inner = inner.read().unwrap();
+                            inner.registry.register(dev, false);
+                        },
+                        ignore_net_ip,
+                    ))
+                    .into()
+                };
+                handles.push(discovery_net);
+            }
 
             let task = {
                 let inner = inner.clone();

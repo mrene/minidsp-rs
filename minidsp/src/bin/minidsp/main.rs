@@ -522,14 +522,19 @@ async fn main() -> Result<()> {
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
         log::warn!("The `server` command is deprecated and will be removed in a future release. Use `minidspd` instead.");
 
-        let transport = devices
-            .first()
-            .ok_or_else(|| anyhow!("No devices found"))?
+        let device = devices.first().ok_or_else(|| anyhow!("No devices found"))?;
+
+        let transport = device
             .transport
             .try_clone()
             .expect("device has disappeared");
 
-        run_server(opts.subcmd.unwrap(), Box::pin(transport)).await?;
+        run_server(
+            opts.subcmd.unwrap(),
+            Box::pin(transport),
+            device.device_info,
+        )
+        .await?;
         return Ok(());
     }
 

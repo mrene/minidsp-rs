@@ -2,7 +2,7 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2021"
 name = "minidsp-devtools"
-version = "0.1.7"
+version = "0.1.8"
 license = "Apache-2.0"
 
 [features]
@@ -11,20 +11,20 @@ symbols = ["minidsp/device"]
 devices = ["minidsp/devices"]
 
 [dependencies]
-anyhow = "1.0.65"
+anyhow = "1.0.66"
 bimap = "0.6.2"
-clap = "4.0.11"
+clap = "4.0.18"
 env_logger = "0.9.1"
-futures = "0.3.24"
-futures-sink = "0.3.24"
-futures-util = "0.3.24"
+futures = "0.3.25"
+futures-sink = "0.3.25"
+futures-util = "0.3.25"
 minidsp = {path = "../minidsp", version="0.1.4", default-features = false, features = []}
 strong-xml = "0.6.3"
 termcolor = "1.1.3"
 
 # Codegen
 Inflector = "0.11.4"
-proc-macro2 = "1.0.46"
+proc-macro2 = "1.0.47"
 quote = "1.0.21"
 
 [dependencies.tokio]

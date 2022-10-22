@@ -2,16 +2,16 @@
 authors = ["Mathieu Rene <mathieu.rene@gmail.com>"]
 edition = "2021"
 name = "minidsp-protocol"
-version = "0.1.7"
+version = "0.1.8"
 license = "Apache-2.0"
 description = "A control interface for some MiniDSP products"
 repository = "https://github.com/mrene/minidsp-rs"
 
 [dependencies]
-anyhow = "1.0.65"
+anyhow = "1.0.66"
 bytes = "1.2.1"
 schemars = { version = "0.8.11", optional = true }
-serde = { version = "1.0.145", features = ["derive"], optional = true }
+serde = { version = "1.0.147", features = ["derive"], optional = true }
 strum = { version = "0.24.1", features = ["derive"], optional = true }
 thiserror = "1.0.37"
 

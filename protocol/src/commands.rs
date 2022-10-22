@@ -20,7 +20,8 @@ use thiserror::Error;
 
 use super::DeviceInfo;
 use crate::{
-    eeprom, packet::ParseError, util::TryBuf, util::TryBufError, FixedPoint, MasterStatus,
+    eeprom, packet::ParseError, util::TryBuf, util::TryBufError, FixedPoint, HardwareId,
+    MasterStatus,
 };
 
 /// Maximum number of floats that can be read in a single command
@@ -686,9 +687,7 @@ pub enum Responses {
     },
     MemoryData(MemoryView),
     FloatData(FloatView),
-    HardwareId {
-        payload: BytesWrap,
-    },
+    HardwareId(HardwareId),
     FirLoadSize {
         size: u16,
     },
@@ -726,12 +725,15 @@ impl Responses {
             },
             0x05 => Responses::MemoryData(MemoryView::from_packet(frame)?),
             0x14 => Responses::FloatData(FloatView::from_packet(frame)?),
-            0x31 => Responses::HardwareId {
-                payload: {
-                    frame.try_get_u8()?;
-                    BytesWrap(frame)
-                },
-            },
+            0x31 => {
+                // Consume command id
+                frame.try_get_u8()?;
+                Responses::HardwareId(HardwareId {
+                    fw_major: frame.try_get_u8()?,
+                    fw_minor: frame.try_get_u8()?,
+                    hw_id: frame.try_get_u8()?,
+                })
+            }
             0x39 => Responses::FirLoadSize {
                 size: {
                     frame.try_get_u8()?; // Consume command id
@@ -770,9 +772,11 @@ impl Responses {
                 f.put_u8(cmd_id);
                 f.put(payload.0.clone());
             }
-            Responses::HardwareId { payload } => {
+            Responses::HardwareId(hwid) => {
                 f.put_u8(0x31);
-                f.put(payload.0.clone());
+                f.put_u8(hwid.fw_major);
+                f.put_u8(hwid.fw_minor);
+                f.put_u8(hwid.hw_id);
             }
             &Responses::FirLoadSize { size } => {
                 f.put_u8(0x39);
@@ -821,11 +825,9 @@ impl Responses {
         matches!(self, Responses::HardwareId { .. })
     }
 
-    pub fn into_hardware_id(self) -> Result<u8, ProtocolError> {
+    pub fn into_hardware_id(self) -> Result<HardwareId, ProtocolError> {
         match self {
-            Responses::HardwareId { payload } => {
-                Ok(*payload.last().ok_or(ProtocolError::MalformedHardwareId)?)
-            }
+            Responses::HardwareId(id) => Ok(id),
             _ => Err(ProtocolError::UnexpectedResponseType),
         }
     }
@@ -1178,6 +1180,8 @@ mod test {
             hw_id: 10,
             dsp_version: 100,
             serial: 0,
+            fw_major: 1,
+            fw_minor: 10,
         };
         let status = MasterStatus::from_memory(&device_info, &memory).unwrap();
         assert!(status.eq(&MasterStatus {

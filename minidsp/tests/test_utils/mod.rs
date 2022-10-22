@@ -51,6 +51,8 @@ impl TestDevice {
         let device_info = DeviceInfo {
             hw_id,
             dsp_version,
+            fw_major: 1,
+            fw_minor: 13,
             serial: 0,
         };
         let device = probe(&device_info);

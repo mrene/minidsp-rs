@@ -196,6 +196,8 @@ pub fn schema() -> OpenApi {
                 hw_id: 10,
                 dsp_version: 100,
                 serial: 91234,
+                fw_major: 1,
+                fw_minor: 53,
             }),
             product_name: Some("2x4 HD".into()),
         };

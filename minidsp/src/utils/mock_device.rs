@@ -2,11 +2,11 @@
 
 use std::convert::TryInto;
 
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{Buf, BytesMut};
 use minidsp_protocol::{
-    commands::{BytesWrap, FloatView, MemoryView, Responses, Value},
+    commands::{FloatView, MemoryView, Responses, Value},
     device::{Device, DeviceKind},
-    eeprom, Commands, FixedPoint,
+    eeprom, Commands, FixedPoint, HardwareId,
 };
 
 pub struct MockDevice {
@@ -123,15 +123,11 @@ impl MockDevice {
     // the internal state.
     pub fn execute(&mut self, cmd: &Commands) -> Responses {
         match cmd {
-            Commands::ReadHardwareId => Responses::HardwareId {
-                payload: {
-                    let mut b = BytesMut::new();
-                    b.put_u8(self.firmware_version.0);
-                    b.put_u8(self.firmware_version.1);
-                    b.put_u8(self.hw_id);
-                    BytesWrap(b.freeze())
-                },
-            },
+            Commands::ReadHardwareId => Responses::HardwareId(HardwareId {
+                fw_major: self.firmware_version.0,
+                fw_minor: self.firmware_version.1,
+                hw_id: self.hw_id,
+            }),
             &Commands::ReadMemory { addr, size } => {
                 let addr = addr as usize;
                 let size = size as usize;

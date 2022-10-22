@@ -4,13 +4,19 @@ use minidsp::{
     formats::{rew::FromRew, wav::read_wav_filter},
     model::StatusSummary,
     transport::Transport,
-    Biquad, BiquadFilter, Channel, Crossover, Fir, MiniDSPError,
+    Biquad, BiquadFilter, Channel, Crossover, DeviceInfo, Fir, MiniDSPError,
 };
 
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
 use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand, ToggleBool};
 
-pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Result<()> {
+pub(crate) async fn run_server(
+    subcmd: SubCommand,
+    transport: Transport,
+    device_info: DeviceInfo,
+) -> Result<()> {
+    let transport = Box::pin(transport);
+
     if let SubCommand::Server {
         bind_address,
         advertise,
@@ -22,21 +28,31 @@ pub(crate) async fn run_server(subcmd: SubCommand, transport: Transport) -> Resu
 
             use crate::discovery;
             let mut packet = discovery::DiscoveryPacket {
-                mac_address: [10, 20, 30, 40, 50, 60],
+                // The mac address is used to distinguish between devices on the *device list* page in the MiniDSP Device Console app
+                mac_address: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00],
                 ip_address: Ipv4Addr::UNSPECIFIED,
-                hwid: 0,
-                typ: 0,
-                sn: 0,
+                hwid: device_info.hw_id,
+                dsp_id: device_info.dsp_version,
+                fw_major: device_info.fw_major,
+                fw_minor: device_info.fw_minor,
+                sn: ((device_info.serial - 900000) & 0xFFFF) as u16,
                 hostname,
             };
             if let Some(ip) = ip {
-                packet.ip_address = Ipv4Addr::from_str(ip.as_str())?;
+                packet.ip_address = Ipv4Addr::from_str(&ip)?;
+                packet.mac_address[2..].copy_from_slice(&packet.ip_address.octets());
+            } else {
+                return Err(anyhow::anyhow!("--ip is required if --advertise is used"));
             }
             let interval = Duration::from_secs(1);
-            tokio::spawn(discovery::server::advertise_packet(packet, interval));
+            tokio::spawn(discovery::server::advertise_packet(
+                None,
+                move || Some(packet.clone()),
+                interval,
+            ));
         }
         use crate::tcp_server;
-        tcp_server::serve(bind_address.as_str(), Box::pin(transport)).await?;
+        tcp_server::serve(bind_address.as_str(), transport).await?;
     }
     Ok(())
 }
