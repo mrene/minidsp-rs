@@ -129,12 +129,12 @@ pub(crate) async fn run_input(
     let input = dsp.input(input_index)?;
     match *cmd {
         InputCommand::Gain { value } => input.set_gain(value).await?,
-        Mute { value } => input.set_mute(value).await?,
+        Mute { value } => input.set_mute(value.0).await?,
         Routing {
             output_index,
             ref cmd,
         } => match *cmd {
-            Enable { value } => input.set_output_enable(output_index, value).await?,
+            Enable { value } => input.set_output_enable(output_index, value.0).await?,
             RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
         },
         PEQ { index, ref cmd } => match index {
@@ -158,12 +158,12 @@ pub(crate) async fn run_output(
 
     match cmd {
         &OutputCommand::Gain { value } => output.set_gain(value).await?,
-        &Mute { value } => output.set_mute(value).await?,
+        &Mute { value } => output.set_mute(value.0).await?,
         &Delay { delay } => {
             let delay = Duration::from_secs_f32(delay / 1000.);
             output.set_delay(delay).await?
         }
-        &Invert { value } => output.set_invert(value).await?,
+        &Invert { value } => output.set_invert(value.0).await?,
         &PEQ { index, ref cmd } => match index {
             PEQTarget::One(index) => run_peq(&[output.peq(index)?], cmd).await?,
             PEQTarget::All => {
@@ -201,7 +201,7 @@ pub(crate) async fn run_output(
         } => {
             let compressor = output.compressor().ok_or(MiniDSPError::NoSuchPeripheral)?;
             if let Some(bypass) = bypass {
-                compressor.set_bypass(bypass).await?;
+                compressor.set_bypass(bypass.0).await?;
             }
             if let Some(threshold) = threshold {
                 compressor.set_threshold(threshold).await?;
@@ -234,7 +234,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> R
         }
         &Bypass { value } => {
             for peq in peqs {
-                peq.set_bypass(value).await?;
+                peq.set_bypass(value.0).await?;
             }
         }
         Clear => {
@@ -287,7 +287,7 @@ pub(crate) async fn run_xover(
             }
         },
         &FilterCommand::Bypass { value } => {
-            xover.set_bypass(group, value).await?;
+            xover.set_bypass(group, value.0).await?;
         }
         &FilterCommand::Clear => {
             xover.clear(group).await?;
@@ -335,7 +335,7 @@ pub(crate) async fn run_fir(dsp: &MiniDSP<'_>, fir: &Fir<'_>, cmd: &FilterComman
             fir.set_coefficients(coeff.as_ref()).await?;
         }
         &FilterCommand::Bypass { value } => {
-            fir.set_bypass(value).await?;
+            fir.set_bypass(value.0).await?;
         }
         &FilterCommand::Clear => {
             fir.clear().await?;
