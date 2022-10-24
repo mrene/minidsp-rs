@@ -240,6 +240,22 @@ impl FromStr for ToggleBool {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Bool(bool);
+impl FromStr for Bool {
+    type Err = &'static str;
+
+    fn from_str(mute: &str) -> Result<Self, Self::Err> {
+        match mute {
+            "on" => Ok(Bool(true)),
+            "true" => Ok(Bool(true)),
+            "off" => Ok(Bool(false)),
+            "false" => Ok(Bool(false)),
+            _ => Err("expected `on`, `true`, `off`, `false`"),
+        }
+    }
+}
+
 #[derive(Clone, Parser, Debug)]
 enum InputCommand {
     /// Set the input gain for this channel
@@ -250,9 +266,8 @@ enum InputCommand {
 
     /// Set the master mute status
     Mute {
-        #[clap(value_parser = on_or_off)]
         /// on | off
-        value: bool,
+        value: Bool,
     },
 
     /// Controls signal routing from this input
@@ -278,9 +293,8 @@ enum InputCommand {
 enum RoutingCommand {
     /// Controls whether the output matrix for this input is enabled for the given output index
     Enable {
-        #[clap(value_parser = on_or_off)]
         /// Whether this input is enabled for the given output channel
-        value: bool,
+        value: Bool,
     },
     Gain {
         /// Output gain in dB
@@ -299,8 +313,7 @@ enum OutputCommand {
     /// Set the master mute status
     Mute {
         /// on | off
-        #[clap(value_parser = on_or_off)]
-        value: bool,
+        value: Bool,
     },
 
     /// Set the delay associated to this channel
@@ -311,9 +324,8 @@ enum OutputCommand {
 
     /// Set phase inversion on this channel
     Invert {
-        #[clap(value_parser = on_or_off)]
         /// on | off
-        value: bool,
+        value: Bool,
     },
 
     /// Control the parametric equalizer
@@ -346,8 +358,8 @@ enum OutputCommand {
     /// Control the compressor
     Compressor {
         /// Bypasses the compressor (on | off)
-        #[clap(short='b', long, value_parser = on_or_off)]
-        bypass: Option<bool>,
+        #[clap(short = 'b', long)]
+        bypass: Option<Bool>,
 
         /// Sets the threshold in dBFS
         #[clap(short = 't', long, allow_hyphen_values(true))]
@@ -395,9 +407,8 @@ enum FilterCommand {
 
     /// Sets the bypass toggle
     Bypass {
-        #[clap(value_parser = on_or_off)]
         /// on | off
-        value: bool,
+        value: Bool,
     },
 
     /// Sets all coefficients back to their default values and un-bypass them
@@ -603,20 +614,33 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn on_or_off(s: &str) -> Result<bool, &'static str> {
-    match s {
-        "on" => Ok(true),
-        "true" => Ok(true),
-        "off" => Ok(false),
-        "false" => Ok(false),
-        _ => Err("expected `on`, `true`, `off`, `false`"),
-    }
-}
-
 fn parse_hex(s: &str) -> Result<Bytes, hex::FromHexError> {
     Ok(Bytes::from(hex::decode(s.replace(' ', ""))?))
 }
 
 fn parse_hex_u16(src: &str) -> Result<u16, ParseIntError> {
     u16::from_str_radix(src, 16)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_nested_bool() {
+        let v = Opts::try_parse_from(&["minidsp", "input", "0", "peq", "0", "bypass", "off"]);
+        assert!(matches!(
+            v,
+            Ok(Opts {
+                subcmd: Some(SubCommand::Input {
+                    input_index: 0,
+                    cmd: InputCommand::PEQ {
+                        index: PEQTarget::One(0),
+                        cmd: FilterCommand::Bypass { value: Bool(false) },
+                    },
+                }),
+                ..
+            })
+        ));
+    }
 }
