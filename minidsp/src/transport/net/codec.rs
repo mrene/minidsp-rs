@@ -77,7 +77,7 @@ impl Decoder for Codec {
         }
 
         while !src.is_empty() {
-            let additional_length = if self.server { 1 } else { 0 };
+            let additional_length = usize::from(self.server);
 
             if src[0] != 0 {
                 let n = src[0] as usize + additional_length;

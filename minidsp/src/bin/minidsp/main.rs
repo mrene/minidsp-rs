@@ -628,7 +628,7 @@ mod tests {
 
     #[test]
     fn test_parse_nested_bool() {
-        let v = Opts::try_parse_from(&["minidsp", "input", "0", "peq", "0", "bypass", "off"]);
+        let v = Opts::try_parse_from(["minidsp", "input", "0", "peq", "0", "bypass", "off"]);
         assert!(matches!(
             v,
             Ok(Opts {
