@@ -67,10 +67,18 @@ impl Multiplexer {
         {
             let transport = transport.clone();
             let receiver_tx = transport.event_tx.clone();
+            let pending_commands = transport.pending_command.clone();
+
             tokio::spawn(async move {
                 let result = transport.recv_loop(recv_send, rx).await;
                 if let Err(e) = result {
                     log::error!("recv loop exit: {:?}", e);
+
+                    // Clear any pending commands by propagating the error
+                    let mut pending = pending_commands.lock().unwrap();
+                    while let Some((_, tx)) = pending.pop_front() {
+                        let _ = tx.send(Err(MiniDSPError::TransportClosed));
+                    }
                 }
                 let mut tx = receiver_tx.lock().unwrap();
                 // Set `receiver_tx` to None to mark this as closed
