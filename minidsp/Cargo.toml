@@ -22,7 +22,7 @@ futures-sink = "0.3.25"
 futures-util = "0.3.25"
 hex = "0.4.3"
 hexplay = "0.2.1"
-hyper = "0.14.20"
+hyper = "0.14.23"
 lazy_static = "1.4.0"
 log = "0.4.17"
 minidsp-protocol = {path = "../protocol", version = "0.1.9", default-features = false, features = ["use_serde", "debug", "devices"]}
