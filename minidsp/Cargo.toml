@@ -28,7 +28,7 @@ log = "0.4.17"
 minidsp-protocol = {path = "../protocol", version = "0.1.9", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.12"
 schemars = "0.8.11"
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.148", features = ["derive"] }
 serde_json = "1.0.87"
 shellwords = "1.1.0"
 strong-xml = "0.6.3"
