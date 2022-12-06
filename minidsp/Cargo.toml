@@ -54,7 +54,7 @@ version = "1.4.2"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.21.2"
+version = "1.23.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
