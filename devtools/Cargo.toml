@@ -11,10 +11,10 @@ symbols = ["minidsp/device"]
 devices = ["minidsp/devices"]
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 bimap = "0.6.2"
-clap = "4.0.18"
-env_logger = "0.9.1"
+clap = "4.0.32"
+env_logger = "0.10.0"
 futures = "0.3.25"
 futures-sink = "0.3.25"
 futures-util = "0.3.25"
@@ -24,12 +24,12 @@ termcolor = "1.1.3"
 
 # Codegen
 Inflector = "0.11.4"
-proc-macro2 = "1.0.47"
-quote = "1.0.21"
+proc-macro2 = "1.0.49"
+quote = "1.0.23"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.21.2"
+version = "1.23.0"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
