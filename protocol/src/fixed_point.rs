@@ -38,8 +38,8 @@ impl FixedPoint {
     pub fn to_f32(&self) -> f32 {
         let val = self.0 ^ 0x0800_0000;
         let sub = (val.wrapping_sub(1 << 27)) as i32 as f32;
-        let decoded = sub / ((1 << 23) as f32);
-        decoded as f32
+
+        sub / ((1 << 23) as f32)
     }
 
     pub fn to_u32(&self) -> u32 {

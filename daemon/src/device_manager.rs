@@ -211,7 +211,7 @@ impl Device {
             let app = super::APP.get().unwrap();
             let app = app.read().await;
             let (decoder, stream) =
-                logging::transport_logging(stream, app.opts.verbose as u8, app.opts.log.clone());
+                logging::transport_logging(stream, app.opts.verbose, app.opts.log.clone());
 
             (transport::Hub::new(stream), decoder)
         };

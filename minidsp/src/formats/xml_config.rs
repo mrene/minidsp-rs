@@ -106,17 +106,17 @@ impl Setting {
         for item in &self.items {
             match item {
                 AddressableElement::Item { name, addr, .. } => {
-                    map.insert(name.clone(), *addr as usize);
+                    map.insert(name.clone(), *addr);
                 }
                 AddressableElement::Fir { name, addr, .. } => {
-                    map.insert(name.clone(), *addr as usize);
+                    map.insert(name.clone(), *addr);
                 }
                 AddressableElement::Filter {
                     name,
                     addr: Some(addr),
                     ..
                 } => {
-                    map.insert(name.clone(), *addr as usize);
+                    map.insert(name.clone(), *addr);
                 }
                 _ => {}
             }

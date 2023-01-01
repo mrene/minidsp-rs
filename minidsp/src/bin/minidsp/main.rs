@@ -127,7 +127,7 @@ impl Opts {
             let _ = builder.with_default_usb();
         }
 
-        builder.with_logging(self.verbose as u8, self.log.clone());
+        builder.with_logging(self.verbose, self.log.clone());
 
         if let Some(force_kind) = self.force_kind {
             builder.force_device_kind(force_kind);

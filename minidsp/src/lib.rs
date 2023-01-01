@@ -249,7 +249,7 @@ impl MiniDSP<'_> {
     pub async fn set_dirac(&self, enabled: bool) -> Result<()> {
         self.client
             .roundtrip(Commands::DiracBypass {
-                value: if enabled { 0 } else { 1 },
+                value: u8::from(!enabled),
             })
             .await?
             .into_ack()
