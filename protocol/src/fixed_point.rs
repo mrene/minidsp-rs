@@ -112,16 +112,9 @@ mod test {
             // println!("val={} hex={:#x?} enc={:#x?} dec={}", val, hex, enc, dec);
             assert!(
                 (hex as i32 - enc as i32).abs() < 2,
-                "{:x} and {:x} differ too much",
-                hex,
-                enc
+                "{hex:x} and {enc:x} differ too much"
             );
-            assert!(
-                (val - dec).abs() < 1e-5,
-                "{} and {} differ too much",
-                val,
-                dec
-            )
+            assert!((val - dec).abs() < 1e-5, "{val} and {dec} differ too much")
         }
     }
 

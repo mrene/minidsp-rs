@@ -31,8 +31,8 @@ pub(crate) fn input(input: usize) -> Input {
             .collect(),
         routing: (0..8usize)
             .map(|output| Gate {
-                enable: format!("Mixer_{}_{}_status", input, output),
-                gain: Some(format!("Mixer_{}_{}", input, output)),
+                enable: format!("Mixer_{input}_{output}_status"),
+                gain: Some(format!("Mixer_{input}_{output}")),
             })
             .collect(),
     }

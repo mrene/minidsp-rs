@@ -25,14 +25,14 @@ pub(crate) fn input(input: usize) -> Input {
             enable: format!("DGain_{}_0_status", input + 1),
             gain: Some(format!("DGain_{}_0", input + 1)),
         }),
-        meter: Some(format!("Meter02_C1_{}", input)),
+        meter: Some(format!("Meter02_C1_{input}")),
         peq: (0..10usize)
             .map(|index| format!("PEQ_{}_{}", input + 1, 10 - index))
             .collect(),
         routing: (0..4usize)
             .map(|output| Gate {
-                enable: format!("MixerNxMSmoothed1_{}_{}_status", input, output),
-                gain: Some(format!("MixerNxMSmoothed1_{}_{}", input, output)),
+                enable: format!("MixerNxMSmoothed1_{input}_{output}_status"),
+                gain: Some(format!("MixerNxMSmoothed1_{input}_{output}")),
             })
             .collect(),
     }
@@ -63,7 +63,7 @@ pub(crate) fn output(output: usize) -> Output {
             ratio: format!("COMP_{}_0_ratio", output + 3),
             attack: format!("COMP_{}_0_atime", output + 3),
             release: format!("COMP_{}_0_rtime", output + 3),
-            meter: Some(format!("Meter10_C1_{}", output)),
+            meter: Some(format!("Meter10_C1_{output}")),
         }),
         fir: Some(Fir {
             index: output as u8,

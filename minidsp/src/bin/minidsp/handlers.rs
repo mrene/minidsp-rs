@@ -102,7 +102,7 @@ pub(crate) async fn run_command(
         }) => run_output(device, output_index, cmd).await?,
 
         // Other tools
-        Some(&SubCommand::Debug { ref cmd }) => run_debug(device, cmd).await?,
+        Some(SubCommand::Debug { cmd }) => run_debug(device, cmd).await?,
 
         // Handled earlier
         Some(&SubCommand::Server { .. }) => {}
@@ -255,7 +255,7 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> R
                         biquad.index.unwrap_or_default()
                     );
                 } else {
-                    println!("PEQ {}: Cleared filter", i);
+                    println!("PEQ {i}: Cleared filter");
                     peq.clear().await?;
                 }
                 peq.set_bypass(false).await?;
@@ -313,7 +313,7 @@ pub(crate) async fn run_xover(
                         biquad.index.unwrap_or_default()
                     );
                 } else {
-                    println!("Xover {}.{}: Cleared filter", group, i);
+                    println!("Xover {group}.{i}: Cleared filter");
                     xover.clear(group).await?;
                 }
             }

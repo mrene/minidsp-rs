@@ -106,7 +106,7 @@ impl Opts {
             let tcp = if tcp.contains(':') {
                 tcp.to_string()
             } else {
-                format!("{}:5333", tcp)
+                format!("{tcp}:5333")
             };
             builder.with_tcp(tcp).unwrap();
         } else if let Some(url) = &self.url {
@@ -443,7 +443,7 @@ impl OutputFormat {
         T: serde::Serialize + fmt::Display,
     {
         match self {
-            OutputFormat::Text => format!("{}", obj),
+            OutputFormat::Text => format!("{obj}"),
             OutputFormat::Json => {
                 serde_json::to_string_pretty(obj).expect("couldn't serialize object as json")
             }
@@ -493,7 +493,7 @@ async fn run_probe(devices: Vec<DeviceHandle>, net: bool) -> Result<()> {
             println!("No network devices detected")
         } else {
             for device in &devices {
-                println!("Found: {}", device);
+                println!("Found: {device}");
             }
         }
     }
@@ -585,7 +585,7 @@ async fn main() -> Result<()> {
                 let this_opts = match this_opts {
                     Ok(x) => x,
                     Err(e) => {
-                        eprintln!("While executing: {}\n{}", cmd, e);
+                        eprintln!("While executing: {cmd}\n{e}");
                         return Err(anyhow!("Command failure"));
                     }
                 };

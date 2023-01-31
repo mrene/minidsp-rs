@@ -149,7 +149,7 @@ impl Builder {
     pub fn with_tcp<T: ToSocketAddrs>(&mut self, sockaddr: T) -> std::io::Result<&mut Self> {
         self.candidate_devices
             .extend(sockaddr.to_socket_addrs()?.map(|sa| {
-                let url = format!("tcp://{}", sa);
+                let url = format!("tcp://{sa}");
                 let url2 = Url2::parse(&url);
                 (url, Box::new(url2) as Box<dyn Openable>)
             }));
