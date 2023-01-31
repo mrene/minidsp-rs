@@ -96,7 +96,7 @@ impl Decoder {
         let elapsed = self.start_instant.elapsed();
         let secs = elapsed.as_secs();
         let millis = elapsed.subsec_millis();
-        let _ = write!(self.w, "[{}.{:03}s] ", secs, millis);
+        let _ = write!(self.w, "[{secs}.{millis:03}s] ");
         Ok(())
     }
 
@@ -113,7 +113,7 @@ impl Decoder {
     fn print_command(&mut self, cmd: Commands) -> std::io::Result<()> {
         let _ = self.print_direction(true);
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)));
-        write!(self.w, "{:02x?} ", cmd)?;
+        write!(self.w, "{cmd:02x?} ")?;
         let _ = self.maybe_print_addr(&ParsedMessage::Request(cmd));
         Ok(())
     }
@@ -123,7 +123,7 @@ impl Decoder {
         let _ = self
             .w
             .set_color(ColorSpec::new().set_fg(Some(Color::Green)));
-        write!(self.w, "{:02x?}", cmd)?;
+        write!(self.w, "{cmd:02x?}")?;
         let _ = self.maybe_print_addr(&ParsedMessage::Response(cmd));
         Ok(())
     }
@@ -137,7 +137,7 @@ impl Decoder {
             "Recv: "
         };
         let _ = self.print_time();
-        write!(self.w, "{}", direction)?;
+        write!(self.w, "{direction}")?;
 
         Ok(())
     }
@@ -145,7 +145,7 @@ impl Decoder {
     fn print_error<T: fmt::Debug>(&mut self, err: T) -> std::io::Result<()> {
         let _ = self.w.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
         let _ = self.print_time();
-        writeln!(self.w, "Decode error: {:?}", err)?;
+        writeln!(self.w, "Decode error: {err:?}")?;
         Ok(())
     }
 
@@ -169,7 +169,7 @@ impl Decoder {
         let name = self
             .resolve_addr(addr)
             .unwrap_or_else(|| "<unknown>".to_string());
-        writeln!(self.w, "(0x{:02x?} | {:?}) <> {}", addr, addr, name,)?;
+        writeln!(self.w, "(0x{addr:02x?} | {addr:?}) <> {name}",)?;
         Ok(())
     }
 

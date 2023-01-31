@@ -27,8 +27,8 @@ pub(crate) fn input(input: usize) -> Input {
         peq: Vec::new(),
         routing: (0..4usize)
             .map(|output| Gate {
-                enable: format!("Mixer_{}_{}_status", input, output),
-                gain: Some(format!("Mixer_{}_{}", input, output)),
+                enable: format!("Mixer_{input}_{output}_status"),
+                gain: Some(format!("Mixer_{input}_{output}")),
             })
             .collect(),
     }
@@ -229,6 +229,6 @@ mod test {
                 Some((addr, value))
             })
             .collect();
-        println!("{:#?}", s)
+        println!("{s:#?}")
     }
 }

@@ -286,13 +286,10 @@ async fn error_handler(err: routerify::RouteError) -> Response<Body> {
     let error = if let Some(err) = err.downcast_ref::<Error>() {
         let err: FormattedError = err.clone().into();
         serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
-            format!(
-                "the error: '{:?}' couldn't be serialized as json: {:?}",
-                err, e
-            )
+            format!("the error: '{err:?}' couldn't be serialized as json: {e:?}")
         })
     } else {
-        format!("Something went wrong: {}", err)
+        format!("Something went wrong: {err}")
     };
 
     Response::builder()
@@ -345,9 +342,9 @@ pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
     // Create a server by passing the created service to `.serve` method.
     let server = Server::try_bind(&addr)?.serve(service);
 
-    println!("App is running on: {}", addr);
+    println!("App is running on: {addr}");
     if let Err(err) = server.await {
-        eprintln!("TCP Server error: {:?}", err);
+        eprintln!("TCP Server error: {err:?}");
         return Err(err.into());
     }
 
@@ -381,7 +378,7 @@ pub async fn unix_main() -> Result<(), anyhow::Error> {
 
     println!("App is listening on: {}", path.to_string_lossy());
     if let Err(err) = server.await {
-        eprintln!("Unix Server error: {:?}", err);
+        eprintln!("Unix Server error: {err:?}");
     }
 
     Ok(())

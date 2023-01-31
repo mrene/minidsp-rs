@@ -23,7 +23,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
                 })
                 .await?;
 
-            println!("response: {:02x?}", response);
+            println!("response: {response:02x?}");
         }
         &DebugCommands::Dump { addr, end_addr } => {
             let mut view = MemoryView {
@@ -58,7 +58,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
                     println!("No matching local USB devices detected.")
                 } else {
                     for device in &devices {
-                        println!("Found: {}", device);
+                        println!("Found: {device}");
                     }
                 }
                 println!()
@@ -71,7 +71,7 @@ pub(crate) async fn run_debug(device: &MiniDSP<'_>, debug: &DebugCommands) -> Re
             );
 
             let sources = source::Source::mapping(&device_info);
-            println!("Detected sources: {:?}", sources);
+            println!("Detected sources: {sources:?}");
 
             println!("\nDumping memory:");
             let mut view = device.client.read_memory(0xffa0, 59).await?;
@@ -111,7 +111,7 @@ fn dump_floats(view: &FloatView) {
     for i in view.base..(view.base + view.data.len() as u16) {
         let val = view.get(i);
         if val != 0. {
-            println!("{:04x?}: {:?}", i, val);
+            println!("{i:04x?}: {val:?}");
         }
     }
 }

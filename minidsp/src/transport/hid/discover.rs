@@ -49,7 +49,7 @@ impl FromStr for Device {
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let query = match self.id {
-            Some((vid, pid)) => format!("?vid={:04x}&pid={:04x}", vid, pid),
+            Some((vid, pid)) => format!("?vid={vid:04x}&pid={pid:04x}"),
             None => "".into(),
         };
 
@@ -58,7 +58,7 @@ impl fmt::Display for Device {
             None => "".into(),
         };
 
-        write!(f, "usb:{}{}", path, query)
+        write!(f, "usb:{path}{query}")
     }
 }
 
