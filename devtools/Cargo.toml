@@ -15,7 +15,7 @@ anyhow = "1.0.68"
 bimap = "0.6.2"
 clap = "4.0.32"
 env_logger = "0.10.0"
-futures = "0.3.25"
+futures = "0.3.26"
 futures-sink = "0.3.25"
 futures-util = "0.3.25"
 minidsp = {path = "../minidsp", version="0.1.4", default-features = false, features = []}
