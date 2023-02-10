@@ -10,28 +10,13 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, flake-compat, ... }:
+  outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
         };
-
-        minidsp = pkgs.rustPlatform.buildRustPackage {
-          pname = "minidsp";
-          version = "0.1.9";
-          src = ./.;
-          cargoBuildFlags = [ "-p minidsp -p minidsp-daemon" ];
-          cargoLock.lockFile = ./Cargo.lock;
-          doCheck = false;
-          buildInputs = with pkgs;
-            lib.optionals stdenv.isLinux [ libusb1 ] ++ 
-            lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [ IOKit AppKit ]);
-
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
-        };
+        minidsp = pkgs.callPackage ./package.nix { };
       in
       { 
         packages.default = minidsp;
