@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     flake-compat = {
       url = "github:edolstra/flake-compat";
@@ -10,11 +11,12 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
+          overlays = [ (import rust-overlay) ];
         };
         minidsp = pkgs.callPackage ./package.nix { };
       in
@@ -32,21 +34,11 @@
         };
 
         devShells.default = pkgs.mkShell {
-          # The nix CC wrapper sets --sysroot=/nix/store/does/not/exist which prevents the rpath on libusb to be properly read
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.udev ];
-
-          buildInputs = minidsp.buildInputs;
-          nativeBuildInputs = minidsp.nativeBuildInputs;
-        };
-
-        devShells.deps = pkgs.mkShell {
           buildInputs = with pkgs;
             lib.optionals stdenv.isLinux [ libusb1 ] ++ 
             lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [ IOKit AppKit ]);
 
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
+          nativeBuildInputs = with pkgs; [ pkg-config rust-bin.stable.latest.default ];
         };
       });
 }

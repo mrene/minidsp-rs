@@ -102,7 +102,7 @@ pub(crate) async fn run_command(
         }) => run_output(device, output_index, cmd).await?,
 
         // Other tools
-        Some(&SubCommand::Debug { ref cmd }) => run_debug(device, cmd).await?,
+        Some(SubCommand::Debug { cmd }) => run_debug(device, cmd).await?,
 
         // Handled earlier
         Some(&SubCommand::Server { .. }) => {}
