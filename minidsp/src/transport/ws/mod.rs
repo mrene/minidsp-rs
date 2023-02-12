@@ -110,7 +110,7 @@ pub async fn discover(base_url: &Url2) -> Result<Vec<Url2>, Error> {
         .enumerate()
         .map(|(i, _)| {
             let mut u = base_url
-                .join(&format!("/devices/{}/ws", i))
+                .join(&format!("/devices/{i}/ws"))
                 .expect("parsing generated url failed (2)");
             u.set_scheme("ws").unwrap();
             Url2::from(u)

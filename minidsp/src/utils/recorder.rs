@@ -110,7 +110,7 @@ mod test {
         let data: &'static [u8] = include_bytes!("../../test_fixtures/config1/sync.txt");
         let mut x = Box::pin(fixtures_reader(data));
         while let Some(msg) = x.next().await {
-            println!("{:02x?}", msg);
+            println!("{msg:02x?}");
         }
     }
 }

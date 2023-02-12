@@ -38,8 +38,8 @@ impl FixedPoint {
     pub fn to_f32(&self) -> f32 {
         let val = self.0 ^ 0x0800_0000;
         let sub = (val.wrapping_sub(1 << 27)) as i32 as f32;
-        let decoded = sub / ((1 << 23) as f32);
-        decoded as f32
+
+        sub / ((1 << 23) as f32)
     }
 
     pub fn to_u32(&self) -> u32 {
@@ -112,16 +112,9 @@ mod test {
             // println!("val={} hex={:#x?} enc={:#x?} dec={}", val, hex, enc, dec);
             assert!(
                 (hex as i32 - enc as i32).abs() < 2,
-                "{:x} and {:x} differ too much",
-                hex,
-                enc
+                "{hex:x} and {enc:x} differ too much"
             );
-            assert!(
-                (val - dec).abs() < 1e-5,
-                "{} and {} differ too much",
-                val,
-                dec
-            )
+            assert!((val - dec).abs() < 1e-5, "{val} and {dec} differ too much")
         }
     }
 

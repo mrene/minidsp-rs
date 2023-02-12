@@ -38,5 +38,15 @@
           buildInputs = minidsp.buildInputs;
           nativeBuildInputs = minidsp.nativeBuildInputs;
         };
+
+        devShells.deps = pkgs.mkShell {
+          buildInputs = with pkgs;
+            lib.optionals stdenv.isLinux [ libusb1 ] ++ 
+            lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [ IOKit AppKit ]);
+
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+          ];
+        };
       });
 }

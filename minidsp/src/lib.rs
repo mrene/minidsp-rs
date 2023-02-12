@@ -125,7 +125,7 @@ impl MiniDSP<'_> {
         let memory = self.client.read_memory(eeprom::PRESET, 9).await?;
 
         MasterStatus::from_memory(&device_info, &memory).map_err(|e| {
-            MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {:?}", e))
+            MiniDSPError::MalformedResponse(format!("Couldn't convert to MemoryView: {e:?}"))
         })
     }
 
@@ -249,7 +249,7 @@ impl MiniDSP<'_> {
     pub async fn set_dirac(&self, enabled: bool) -> Result<()> {
         self.client
             .roundtrip(Commands::DiracBypass {
-                value: if enabled { 0 } else { 1 },
+                value: u8::from(!enabled),
             })
             .await?
             .into_ack()

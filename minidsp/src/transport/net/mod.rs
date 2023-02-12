@@ -56,6 +56,6 @@ pub async fn open_url(url: &Url2) -> Result<StreamTransport<TcpStream>, MiniDSPE
     let host = url.host().ok_or(MiniDSPError::InvalidURL)?;
     let port = url.port().unwrap_or(5333);
 
-    let stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
+    let stream = TcpStream::connect(format!("{host}:{port}")).await?;
     Ok(StreamTransport::new(stream))
 }

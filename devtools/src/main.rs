@@ -143,12 +143,12 @@ async fn decode(
         match msg {
             recorder::Message::Sent(data) => {
                 n_sent += 1;
-                print!("{}:", n_sent);
+                print!("{n_sent}:");
                 decoder.feed_sent(&data);
             }
             recorder::Message::Received(data) => {
                 n_recv += 1;
-                print!("{}:", n_recv);
+                print!("{n_recv}:");
                 decoder.feed_recv(&data);
             }
         }

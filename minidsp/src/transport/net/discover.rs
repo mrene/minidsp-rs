@@ -56,7 +56,7 @@ pub async fn discover() -> Result<impl Stream<Item = Device>> {
 
 /// Gather discovery packets during the timeout period and return a de-duplicated list by ip
 pub async fn discover_timeout(timeout: Duration) -> Result<Vec<Device>, anyhow::Error> {
-    let mut devices = Box::new(HashMap::new());
+    let mut devices: Box<HashMap<std::net::SocketAddr, Device>> = Box::default();
     let mut stream = discovery::client::discover().await?;
 
     let timeout = tokio::time::sleep(timeout);

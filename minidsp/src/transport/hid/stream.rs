@@ -209,7 +209,7 @@ mod test {
         tokio::spawn(async move {
             loop {
                 let x = stream.next().await;
-                println!("{:?}", x);
+                println!("{x:?}");
             }
         });
     }

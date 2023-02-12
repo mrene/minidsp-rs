@@ -29,7 +29,7 @@ pub(crate) fn routing(
 
     let syms = |start: u8| -> Vec<String> {
         (start..(start + num_inputs as u8))
-            .map(|n| format!("MuteNoSlewAlg{}mute", n))
+            .map(|n| format!("MuteNoSlewAlg{n}mute"))
             .collect()
     };
     let starts: Vec<_> = (11..)
