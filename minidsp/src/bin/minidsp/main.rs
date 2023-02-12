@@ -346,7 +346,7 @@ enum OutputCommand {
     /// Control crossovers (2x 4 biquads)
     Crossover {
         /// Group index (0 or 1)
-        group: usize,
+        group: PEQTarget,
 
         /// Filter index (all | 0 | 1 | 3)
         index: PEQTarget,
@@ -383,6 +383,15 @@ enum OutputCommand {
 enum PEQTarget {
     All,
     One(usize),
+}
+
+impl PEQTarget {
+    fn into_range(self, num_groups: usize) -> impl Iterator<Item = usize> {
+        match self {
+            PEQTarget::All => 0..num_groups,
+            PEQTarget::One(n) => n..n + 1,
+        }
+    }
 }
 
 impl FromStr for PEQTarget {

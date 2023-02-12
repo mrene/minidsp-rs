@@ -272,53 +272,51 @@ pub(crate) async fn run_peq(peqs: &[BiquadFilter<'_>], cmd: &FilterCommand) -> R
 pub(crate) async fn run_xover(
     xover: &Crossover<'_>,
     cmd: &FilterCommand,
-    group: usize,
+    group: PEQTarget,
     index: PEQTarget,
 ) -> Result<()> {
     match cmd {
-        FilterCommand::Set { coeff } => match index {
-            PEQTarget::All => {
-                for index in 0..xover.num_filter_per_group() {
+        FilterCommand::Set { coeff } => {
+            for group in group.into_range(2) {
+                for index in index.into_range(xover.num_filter_per_group()) {
                     xover.set_coefficients(group, index, coeff.as_ref()).await?;
                 }
             }
-            PEQTarget::One(index) => {
-                xover.set_coefficients(group, index, coeff.as_ref()).await?;
-            }
-        },
+        }
         &FilterCommand::Bypass { value } => {
-            xover.set_bypass(group, value.0).await?;
+            for group in group.into_range(2) {
+                xover.set_bypass(group, value.0).await?;
+            }
         }
         &FilterCommand::Clear => {
-            xover.clear(group).await?;
+            for group in group.into_range(2) {
+                xover.clear(group).await?;
+            }
         }
         FilterCommand::Import { filename, .. } => {
             let file = std::fs::read_to_string(filename)?;
             let mut lines = file.lines();
 
-            let range = match index {
-                PEQTarget::All => 0..xover.num_filter_per_group(),
-                PEQTarget::One(i) => i..i + 1,
-            };
-
-            for i in range {
-                if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
-                    xover
-                        .set_coefficients(group, i, biquad.to_array().as_ref())
-                        .await?;
-                    println!(
-                        "Xover {}.{}: Applied imported filter: biquad{}",
-                        group,
-                        i,
-                        biquad.index.unwrap_or_default()
-                    );
-                } else {
-                    println!("Xover {}.{}: Cleared filter", group, i);
-                    xover.clear(group).await?;
+            for group in group.into_range(2) {
+                for i in index.into_range(xover.num_filter_per_group()) {
+                    if let Some(biquad) = Biquad::from_rew_lines(&mut lines) {
+                        xover
+                            .set_coefficients(group, i, biquad.to_array().as_ref())
+                            .await?;
+                        println!(
+                            "Xover {}.{}: Applied imported filter: biquad{}",
+                            group,
+                            i,
+                            biquad.index.unwrap_or_default()
+                        );
+                    } else {
+                        println!("Xover {}.{}: Cleared filter", group, i);
+                        xover.clear(group).await?;
+                    }
                 }
-            }
 
-            xover.set_bypass(group, false).await?;
+                xover.set_bypass(group, false).await?;
+            }
 
             if Biquad::from_rew_lines(&mut lines).is_some() {
                 eprintln!("Warning: Some filters were not imported because they didn't fit (try using `all`)")
