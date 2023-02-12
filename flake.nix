@@ -18,10 +18,10 @@
         };
         minidsp = pkgs.callPackage ./package.nix { };
       in
-      { 
+      {
         packages.default = minidsp;
 
-        apps = { 
+        apps = {
           default = flake-utils.lib.mkApp {
             drv = minidsp;
           };
@@ -32,8 +32,10 @@
         };
 
         devShells.default = pkgs.mkShell {
+          # The nix CC wrapper sets --sysroot=/nix/store/does/not/exist which prevents the rpath on libusb to be properly read
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.udev ];
+
           buildInputs = minidsp.buildInputs;
-          # buildRustPackage defines the baseline native build inputs
           nativeBuildInputs = minidsp.nativeBuildInputs;
         };
       });
