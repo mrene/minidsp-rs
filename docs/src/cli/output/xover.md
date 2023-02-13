@@ -10,8 +10,18 @@ The command follows the same syntax as the `peq` command, for the exception that
 #### Import crossovers in REW format
 ```bash
 minidsp output 0 crossover 0 all import ./file.txt
+minidsp output 0 crossover 0 all bypass off
+
 minidsp output 0 crossover 1 all import ./file2.txt
+minidsp output 0 crossover 1 all bypass off
 ```
+
+#### Import all crossover groups at once (such as using an export file from Multi Sub Optimizer).  Would be up to 8 with MiniDSP 2x4 HD
+```bash
+minidsp output 0 crossover all all import ./file.txt
+minidsp output 0 crossover all all bypass off
+```
+
 
 ## Usage
 ```
