@@ -4,6 +4,8 @@ Dynamic range compression (DRC) or simply compression is an electronic effect un
 
 The command allows any number of options to be specified.  Unspecified arguments remain at the last set value.
 
+When using the `import` subcommand, any imported crossover group is automatically unbypassed.
+
 
 ## Examples
 

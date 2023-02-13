@@ -2,6 +2,8 @@
 The `peq` commands supports broadcasting an operation on multiple peqs. If specifying
 an index, the command will only affect a single filter.
 
+When using the `import` subcommand, any imported PEQs automatically unbypassed.
+
 ## Examples
 
 #### Bypass the first peq

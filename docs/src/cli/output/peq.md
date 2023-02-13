@@ -4,6 +4,8 @@
 The `minidsp output n peq` and `minidsp input n peq` commands both support importing from a REW-formatted file. If there are less
 filters on the device, the remaining PEQs will be cleared.
 
+When using the `import` subcommand, any imported PEQs automatically unbypassed.
+
 Here is how you would import a series of biquad filter to output channel 3:
 ```shell
 $ minidsp output 3 peq all import filename.txt
