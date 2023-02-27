@@ -27,7 +27,7 @@ lazy_static = "1.4.0"
 log = "0.4.17"
 minidsp-protocol = {path = "../protocol", version = "0.1.9", default-features = false, features = ["use_serde", "debug", "devices"]}
 pin-project = "1.0.12"
-schemars = "0.8.11"
+schemars = "0.8.12"
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.91"
 shellwords = "1.1.0"
