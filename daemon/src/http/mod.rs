@@ -11,6 +11,7 @@ use minidsp::{
 };
 use routerify::{Router, RouterService};
 use routerify_query::{query_parser, RequestQueryExt};
+use routerify_cors::enable_cors_all;
 use schemars::JsonSchema;
 use serde::Serialize;
 use tokio_stream::wrappers::IntervalStream;
@@ -304,6 +305,7 @@ fn router() -> Router<Body, Error> {
     // before any route handlers.
     Router::builder()
         .middleware(query_parser())
+        .middleware(enable_cors_all())
         // .middleware(Middleware::pre(logger))
         .get("/openapi.json", |req| async move {
             Ok(serialize_response(&req, openapi::schema())?)

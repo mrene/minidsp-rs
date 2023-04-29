@@ -669,6 +669,7 @@ dependencies = [
  "okapi",
  "once_cell",
  "routerify",
+ "routerify-cors",
  "routerify-query",
  "routerify-unixsocket",
  "schemars",
@@ -938,6 +939,16 @@ dependencies = [
  "lazy_static",
  "percent-encoding",
  "regex",
+]
+
+[[package]]
+name = "routerify-cors"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53844cd732937d7c582a93d6b6875e11f18aa90cc65cac780591837655841244"
+dependencies = [
+ "hyper",
+ "routerify",
 ]
 
 [[package]]
