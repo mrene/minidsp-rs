@@ -346,9 +346,6 @@ pub async fn tcp_main(server: HttpServer) -> Result<(), anyhow::Error> {
         .unwrap_or("0.0.0.0:5380")
         .to_owned();
 
-
-    dbg!(&server);
-
     let rt = router(Some(server));
     let service = RouterService::new(rt).expect("while building router service");
 
