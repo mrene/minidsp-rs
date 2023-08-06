@@ -1226,6 +1226,6 @@ mod test {
         m1.extend_with(m2).ok().unwrap();
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
-        assert!(m1.data.into_iter().eq((0u8..20)));
+        assert!(m1.data.into_iter().eq(0u8..20));
     }
 }
