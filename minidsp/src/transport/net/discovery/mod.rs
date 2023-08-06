@@ -51,6 +51,7 @@ impl DiscoveryPacket {
 
     pub fn to_bytes(&self) -> Bytes {
         let mut p = BytesMut::with_capacity(64);
+        p.put_slice(&[0x80, 0x0, 0x05, 0xA0]);
         p.resize(35, 0);
         self.mac_address.as_ref().copy_to_slice(&mut p[6..12]);
         self.ip_address
