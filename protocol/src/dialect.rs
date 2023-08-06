@@ -33,8 +33,6 @@ pub enum AddrEncoding {
     AddrLen3 = 3,
 }
 
-
-
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[derive(Default)]
@@ -43,8 +41,6 @@ pub enum FloatEncoding {
     Float32LE,
     FixedPoint,
 }
-
-
 
 impl Dialect {
     pub fn addr(&self, value: u16) -> Addr {

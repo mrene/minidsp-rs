@@ -2,14 +2,15 @@ use std::{fmt::Debug, net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use futures::{future::join_all, SinkExt, StreamExt};
-use hyper::{Body, Request, Response, Server, StatusCode};
+use hyper::header::{self, HeaderValue};
+use hyper::{body::HttpBody, Body, Request, Response, Server, StatusCode};
 use hyper_tungstenite::tungstenite::{self, Message};
 use minidsp::{
     model::{Config, MasterStatus, StatusSummary},
     utils::{ErrInto, OwnedJoinHandle},
     MiniDSP,
 };
-use routerify::{Router, RouterService};
+use routerify::{Middleware, Router, RouterService};
 use routerify_query::{query_parser, RequestQueryExt};
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -298,11 +299,11 @@ async fn error_handler(err: routerify::RouteError) -> Response<Body> {
         .unwrap()
 }
 
-fn router() -> Router<Body, Error> {
+fn router(server: Option<HttpServer>) -> Router<Body, Error> {
     // Create a router and specify the logger middleware and the handlers.
     // Here, "Middleware::pre" means we're adding a pre middleware which will be executed
     // before any route handlers.
-    Router::builder()
+    let mut builder = Router::builder()
         .middleware(query_parser())
         // .middleware(Middleware::pre(logger))
         .get("/openapi.json", |req| async move {
@@ -327,13 +328,28 @@ fn router() -> Router<Body, Error> {
         )
         .get("/api", redoc)
         .any_method("/devices/:deviceIndex/ws", device_bridge)
-        .err_handler(error_handler)
-        .build()
-        .expect("could not build http router")
+        .err_handler(error_handler);
+
+    if let Some(server) = server {
+        if let Some(allowed_origins) = server.allowed_origins {
+            builder = builder.middleware(enable_cors_all(allowed_origins.into()));
+        }
+    }
+
+    builder.build().expect("could not build http router")
 }
 
-pub async fn tcp_main(bind_address: String) -> Result<(), anyhow::Error> {
-    let rt = router();
+pub async fn tcp_main(server: HttpServer) -> Result<(), anyhow::Error> {
+    let bind_address = server
+        .bind_address
+        .as_deref()
+        .unwrap_or("0.0.0.0:5380")
+        .to_owned();
+
+
+    dbg!(&server);
+
+    let rt = router(Some(server));
     let service = RouterService::new(rt).expect("while building router service");
 
     // The address on which the server will be listening.
@@ -358,7 +374,7 @@ pub async fn unix_main() -> Result<(), anyhow::Error> {
     use hyperlocal::UnixServerExt;
     use routerify_unixsocket::UnixRouterService;
 
-    let service = UnixRouterService::new(router()).expect("while building router service");
+    let service = UnixRouterService::new(router(None)).expect("while building router service");
 
     let path = Path::new("/tmp/minidsp.sock");
     if path.exists() {
@@ -384,19 +400,39 @@ pub async fn unix_main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+pub fn enable_cors_all<B, E>(allowed_origins: Arc<str>) -> Middleware<B, E>
+where
+    B: HttpBody + Send + Sync + Unpin + 'static,
+    E: std::error::Error + Send + Sync + Unpin + 'static,
+{
+    let handler = Box::new(move |mut res: Response<B>| {
+        let allowed_origins = allowed_origins.clone();
+        async move {
+            let headers = res.headers_mut();
+            let value =
+                HeaderValue::from_str(&allowed_origins).expect("cors header value was invalid");
+
+            headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, value.clone());
+            headers.insert(header::ACCESS_CONTROL_ALLOW_METHODS, value.clone());
+            headers.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, value.clone());
+            headers.insert(header::ACCESS_CONTROL_EXPOSE_HEADERS, value);
+
+            Ok(res)
+        }
+    });
+
+    Middleware::post(handler)
+}
+
 pub async fn main(cfg: Option<HttpServer>) -> Result<(), anyhow::Error> {
     let mut futs: Vec<OwnedJoinHandle<Result<(), anyhow::Error>>> = Vec::with_capacity(2);
 
     if let Some(server) = cfg {
-        let bind_address = server
-            .bind_address
-            .as_deref()
-            .unwrap_or("0.0.0.0:5380")
-            .to_owned();
+        let server = server.clone();
 
         futs.push(
-            tokio::spawn(async {
-                if let Err(e) = tcp_main(bind_address).await {
+            tokio::spawn(async move {
+                if let Err(e) = tcp_main(server).await {
                     eprintln!("HTTP/TCP listener error: {}", &e);
                     return Err(e);
                 }

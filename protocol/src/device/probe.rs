@@ -43,8 +43,6 @@ pub enum DeviceKind {
     Flex,
 }
 
-
-
 /// Attempts to get a `&Device` from a DeviceInfo
 pub fn probe(device_info: &DeviceInfo) -> &'static super::Device {
     by_kind(probe_kind(device_info))

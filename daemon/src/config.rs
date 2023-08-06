@@ -27,6 +27,7 @@ impl Default for Config {
         Self {
             http_server: Some(HttpServer {
                 bind_address: Some("0.0.0.0:5380".to_string()),
+                ..Default::default()
             }),
             tcp_servers: Vec::new(),
             static_devices: Vec::new(),
@@ -48,6 +49,9 @@ pub struct StaticDevice {
 pub struct HttpServer {
     /// Address used to bind the listening socket accepting HTTP connections
     pub bind_address: Option<String>,
+
+    /// If set, CORS headers will be set to allow the specified origins
+    pub allowed_origins: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

@@ -9,6 +9,8 @@ A single bind address can be set, note that there is currently no authentication
 ```toml
 [http_server]
 bind_address = "127.0.0.1:5380"
+# Uncomment to allow websites from certain domains to access your devices
+# allowed_origins = "*"
 ```
 
 
