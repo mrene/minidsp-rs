@@ -15,7 +15,9 @@ use crate::DeviceInfo;
     )
 )]
 #[cfg_attr(feature = "use_serde", strum(serialize_all = "lowercase"))]
+#[derive(Default)]
 pub enum DeviceKind {
+    #[default]
     Generic,
     #[cfg(feature = "device_4x10hd")]
     M4x10Hd,
@@ -41,11 +43,7 @@ pub enum DeviceKind {
     Flex,
 }
 
-impl Default for DeviceKind {
-    fn default() -> Self {
-        DeviceKind::Generic
-    }
-}
+
 
 /// Attempts to get a `&Device` from a DeviceInfo
 pub fn probe(device_info: &DeviceInfo) -> &'static super::Device {

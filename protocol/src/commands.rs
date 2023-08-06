@@ -1211,7 +1211,7 @@ mod test {
         assert!(f1
             .data
             .into_iter()
-            .eq((0u16..20).into_iter().map(|x| -> f32 { x.into() })));
+            .eq((0u16..20).map(|x| -> f32 { x.into() })));
 
         let mut m1 = MemoryView {
             base: 0,
@@ -1226,6 +1226,6 @@ mod test {
         m1.extend_with(m2).ok().unwrap();
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
-        assert!(m1.data.into_iter().eq((0u8..20).into_iter()));
+        assert!(m1.data.into_iter().eq((0u8..20)));
     }
 }

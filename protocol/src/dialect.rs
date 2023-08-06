@@ -26,29 +26,25 @@ impl Dialect {
 #[repr(u8)]
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Default)]
 pub enum AddrEncoding {
     AddrLen2 = 2,
+    #[default]
     AddrLen3 = 3,
 }
 
-impl Default for AddrEncoding {
-    fn default() -> Self {
-        AddrEncoding::AddrLen3
-    }
-}
+
 
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Default)]
 pub enum FloatEncoding {
+    #[default]
     Float32LE,
     FixedPoint,
 }
 
-impl Default for FloatEncoding {
-    fn default() -> Self {
-        FloatEncoding::Float32LE
-    }
-}
+
 
 impl Dialect {
     pub fn addr(&self, value: u16) -> Addr {
