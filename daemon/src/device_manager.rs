@@ -1,4 +1,4 @@
-///! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
+//! Device Manager: Reacts to discovery events, probe devices and make them ready for use by other components
 use std::{
     collections::HashSet,
     net::IpAddr,

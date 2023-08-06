@@ -1,5 +1,5 @@
-///! Main entrypoint
-/// Launches the application by instantiating all components
+//! Main entrypoint
+// Launches the application by instantiating all components
 use std::{
     collections::HashSet,
     net::IpAddr,
