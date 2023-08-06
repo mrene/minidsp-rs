@@ -35,11 +35,10 @@
 
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs;
-            [ rust-analyzer ] ++
             lib.optionals stdenv.isLinux [ libusb1 ] ++ 
             lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [ IOKit AppKit ]);
 
-          nativeBuildInputs = with pkgs; [ pkg-config rust-bin.stable.latest.default ];
+          nativeBuildInputs = with pkgs; [ pkg-config rust-bin.stable.latest.default pkgs.rust-bin.stable.latest.rust-analyzer ];
         };
       });
 }
