@@ -34,8 +34,6 @@ in
           tcp_server = [{
             bind_address = "127.0.0.1:5333";
           }];
-
-          static_device = [];
         };
         description = ''
         Configuration file
@@ -57,19 +55,19 @@ in
       groups.minidsp = {};
     };
 
-    systemd.services.minidspd = {
+    systemd.services.minidsp = {
       after = ["network.target"];
       description = "minidsp daemon";
       wantedBy = ["multi-user.target"];
 
       serviceConfig = {
         User = "minidsp";
-        ExecStart = "${cfg.package}/bin/minidspd --config /etc/minidspd.toml";
+        ExecStart = "${cfg.package}/bin/minidspd --config /etc/minidsp/config.toml";
       };
     };
 
-    environment.etc."minidspd.toml" = {
-      source = tomlFormat.generate "minidspd.toml" cfg.config;
+    environment.etc."minidsp/config.toml" = {
+      source = tomlFormat.generate "config.toml" cfg.config;
     };
 
     services.udev.extraRules = ''
