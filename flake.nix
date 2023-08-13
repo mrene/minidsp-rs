@@ -40,5 +40,7 @@
 
           nativeBuildInputs = with pkgs; [ pkg-config rust-bin.stable.latest.default pkgs.rust-bin.stable.latest.rust-analyzer ];
         };
-      });
+      }) // {
+        nixosModules.default = import ./module.nix self;
+      };
 }
