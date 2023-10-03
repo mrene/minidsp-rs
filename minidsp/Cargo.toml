@@ -12,7 +12,7 @@ version = "0.1.9"
 [dependencies]
 anyhow = "1.0.72"
 async-trait = "0.1.73"
-atomic_refcell = "0.1.10"
+atomic_refcell = "0.1.12"
 bimap = "0.6.3"
 bytes = "1.4.0"
 clap = { version = "4.3.21", features = ["derive", "env"] }
