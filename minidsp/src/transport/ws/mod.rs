@@ -87,7 +87,7 @@ struct Device {
 
 /// Generates a list of URLs that can be opened with [`open_url`] from all devices managed by the given server
 pub async fn discover(base_url: &Url2) -> Result<Vec<Url2>, Error> {
-    use hyper::Client;
+    use hyper::client::Client;
 
     let client = Client::new();
     let mut resp = client
