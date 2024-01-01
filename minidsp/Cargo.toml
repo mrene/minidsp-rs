@@ -34,7 +34,7 @@ shellwords = "1.1.0"
 strong-xml = "0.6.3"
 strum = { version = "0.25.0", features = ["derive"] }
 termcolor = "1.4.0"
-thiserror = "1.0.50"
+thiserror = "1.0.53"
 tokio-stream = { version = "0.1.14", features = ["sync"] }
 tokio-tungstenite = "0.20.1"
 tower = { version = "0.4.13", features = ["util", "timeout"] }
