@@ -37,7 +37,7 @@ serde = { version = "1.0.193", features = ["derive"], optional = true }
 serde_json = "1.0.108"
 strum = { version = "0.25.0", features = ["derive"], optional = true }
 termcolor = "1.4.0"
-thiserror = "1.0.50"
+thiserror = "1.0.55"
 tokio-stream = { version = "0.1.14", features = ["sync"] }
 url2 = "0.0.6"
 
