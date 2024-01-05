@@ -53,16 +53,8 @@ impl MockDevice {
             hw_id,
             dsp_version,
             kind,
-            eeprom: {
-                let mut v = Vec::new();
-                v.resize(65536, 0xFF);
-                v
-            },
-            settings: {
-                let mut v = Vec::new();
-                v.resize(65536, 0);
-                v
-            },
+            eeprom: vec![0xFF; 65536],
+            settings: vec![0; 65536],
             ..Default::default()
         };
 
