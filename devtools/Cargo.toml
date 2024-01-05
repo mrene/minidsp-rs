@@ -11,25 +11,25 @@ symbols = ["minidsp/device"]
 devices = ["minidsp/devices"]
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 bimap = "0.6.3"
-clap = "4.4.9"
+clap = "4.4.13"
 env_logger = "0.10.1"
-futures = "0.3.29"
-futures-sink = "0.3.29"
-futures-util = "0.3.29"
+futures = "0.3.30"
+futures-sink = "0.3.30"
+futures-util = "0.3.30"
 minidsp = {path = "../minidsp", version="0.1.4", default-features = false, features = []}
 strong-xml = "0.6.3"
 termcolor = "1.4.0"
 
 # Codegen
 Inflector = "0.11.4"
-proc-macro2 = "1.0.70"
-quote = "1.0.33"
+proc-macro2 = "1.0.75"
+quote = "1.0.35"
 
 [dependencies.tokio]
 features = ["rt-multi-thread", "net", "fs", "macros", "io-util"]
-version = "1.34.0"
+version = "1.35.1"
 
 [dependencies.tokio-util]
 features = ["net", "codec", "io"]
