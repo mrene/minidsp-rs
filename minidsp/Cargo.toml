@@ -48,7 +48,7 @@ wav = "1.0.1"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
-hex-literal = "0.4.1"
+hex-literal = "1.0.0"
 
 [dependencies.hidapi]
 default-features = false
