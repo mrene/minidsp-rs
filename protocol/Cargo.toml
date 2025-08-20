@@ -13,7 +13,7 @@ bytes = "1.10.1"
 schemars = { version = "0.8.22", optional = true }
 serde = { version = "1.0.219", features = ["derive"], optional = true }
 strum = { version = "0.25.0", features = ["derive"], optional = true }
-thiserror = "1.0.69"
+thiserror = "2.0.16"
 
 [features]
 debug = ["std"]
