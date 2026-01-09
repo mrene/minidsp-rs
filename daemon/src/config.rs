@@ -42,7 +42,6 @@ impl Default for Config {
                 card_name: None,
                 control_name: Some("Digital".to_string()),
                 sync_interval_ms: None,
-                use_virtual_control: true,
                 output_device: Some("hw:0".to_string()),
             }),
         }
@@ -115,10 +114,6 @@ pub struct AlsaMixer {
     /// Sync interval in milliseconds
     /// Defaults to 100ms if not specified
     pub sync_interval_ms: Option<u64>,
-
-    /// Use virtual control creation (default: true, falls back to mapping if fails)
-    /// If false, always maps to existing controls like "Master" or "PCM"
-    pub use_virtual_control: bool,
 
     /// ALSA device to route audio output to (e.g., "hw:0", "default")
     /// This is where audio physically plays from

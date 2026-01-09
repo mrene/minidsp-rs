@@ -57,6 +57,23 @@ pub fn detect_card_for_device(device_product_name: &str) -> Option<String> {
     None
 }
 
+/// Parse card number from ALSA card string format
+///
+/// Extracts the numeric card number from strings like "hw:0", "hw:2", etc.
+///
+/// # Examples
+/// ```
+/// # use minidsp_daemon::alsa_card_detect::parse_card_number;
+/// assert_eq!(parse_card_number("hw:0"), Some(0));
+/// assert_eq!(parse_card_number("hw:2"), Some(2));
+/// assert_eq!(parse_card_number("default"), None);
+/// ```
+pub fn parse_card_number(card_string: &str) -> Option<u32> {
+    card_string
+        .strip_prefix("hw:")
+        .and_then(|s| s.parse::<u32>().ok())
+}
+
 #[cfg(not(target_os = "linux"))]
 pub fn detect_card_for_device(_device_product_name: &str) -> Option<String> {
     None
@@ -71,6 +88,20 @@ mod tests {
         // This is a unit test that would work if /proc/asound/cards exists
         // In practice, this is tested manually on Linux systems
         let result = detect_card_for_device("DDRC-24");
-        println!("Detected card: {:?}", result);
+        // No assertion needed - this is a smoke test for systems with hardware
+        let _ = result; // Suppress unused variable warning
+    }
+
+    #[test]
+    fn test_parse_card_number() {
+        assert_eq!(parse_card_number("hw:0"), Some(0));
+        assert_eq!(parse_card_number("hw:1"), Some(1));
+        assert_eq!(parse_card_number("hw:2"), Some(2));
+        assert_eq!(parse_card_number("hw:123"), Some(123));
+        assert_eq!(parse_card_number("default"), None);
+        assert_eq!(parse_card_number("hw:"), None);
+        assert_eq!(parse_card_number("hw:abc"), None);
+        assert_eq!(parse_card_number(""), None);
+        assert_eq!(parse_card_number("plughw:0"), None); // Only hw: prefix supported
     }
 }

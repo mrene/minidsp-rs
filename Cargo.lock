@@ -748,7 +748,6 @@ name = "minidsp-daemon"
 version = "0.1.12"
 dependencies = [
  "alsa",
- "alsa-sys",
  "anyhow",
  "bytes",
  "clap",

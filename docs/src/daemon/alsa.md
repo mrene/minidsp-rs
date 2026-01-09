@@ -56,7 +56,6 @@ enabled = true              # Enable integration
 card_name = "hw:0"          # ALSA card for control
 control_name = "Digital"    # Name of ALSA control
 sync_interval_ms = 100      # Sync every 100ms
-use_virtual_control = true  # Try virtual control
 output_device = "hw:0"      # Audio output device
 ```
 
@@ -65,13 +64,43 @@ output_device = "hw:0"      # Audio output device
 | Option | Default | Description |
 |--------|---------|-------------|
 | `enabled` | `true` | Enable ALSA integration |
-| `card_name` | `"default"` | ALSA card for mixer control |
-| `control_name` | `"Digital"` | Name of ALSA control |
+| `card_name` | Auto-detected | ALSA card for mixer control. Auto-detected from MiniDSP device, falls back to `"default"` if not specified and detection fails. |
+| `control_name` | `"Digital"` | Name of the ALSA mixer control (softvol) |
 | `sync_interval_ms` | `100` | Sync polling interval (ms) |
-| `use_virtual_control` | `true` | Try creating virtual control |
-| `output_device` | `"hw:0"` | Audio output device |
+| `output_device` | Auto-detected | ALSA PCM device for audio output. Uses detected card if not specified. |
 
 Use `aplay -l` to list available cards.
+
+## Automatic Card Detection
+
+The daemon automatically detects which ALSA sound card your MiniDSP device is connected to on Linux systems.
+
+**How it works:**
+1. On startup, the daemon searches `/proc/asound/cards` for your MiniDSP device
+2. It matches the device product name (e.g., "DDRC-24", "2x4HD") with ALSA card entries
+3. The softvol control is created on the detected card automatically
+4. Audio routing uses the detected card by default
+
+**Configuration is optional:**
+- If detection succeeds: Uses detected card (e.g., `hw:1`, `hw:2`)
+- If detection fails: Falls back to `card_name` in config
+- If no config: Skips ALSA setup and logs warning
+
+**Manual override example:**
+```toml
+[alsa_mixer]
+enabled = true
+card_name = "hw:1"  # Force specific card, bypass auto-detection
+```
+
+**Check detection logs:**
+```bash
+RUST_LOG=debug target/release/minidspd
+
+# Look for:
+# "Detected MiniDSP device 'DDRC-24' on ALSA card 1 (USB-Audio - DDRC-24)"
+# "Using detected MiniDSP card: hw:1"
+```
 
 ### Example: Separate Audio and Control
 
@@ -107,20 +136,6 @@ amixer -c 0 scontrols
 ```
 
 If "Digital" is missing, check daemon logs for creation errors.
-
-### Permission Denied
-
-Add your user to the audio group:
-```bash
-sudo usermod -a -G audio $USER
-# Log out and back in
-```
-
-Or use softvol instead:
-```toml
-[alsa_mixer]
-use_virtual_control = false
-```
 
 ### Volume Not Syncing
 

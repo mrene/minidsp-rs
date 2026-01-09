@@ -879,6 +879,32 @@ pub struct Gain(pub f32);
 impl Gain {
     pub const MIN: f32 = -127.;
     pub const MAX: f32 = 0.;
+
+    /// Quantize a dB value to the nearest 0.5 dB increment supported by hardware.
+    ///
+    /// MiniDSP hardware only supports 0.5 dB steps due to u8 encoding.
+    /// This ensures any input value maps cleanly to a hardware-representable value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use minidsp_protocol::commands::Gain;
+    /// assert_eq!(Gain::quantize(-10.2), -10.0);
+    /// assert_eq!(Gain::quantize(-10.3), -10.5);
+    /// assert_eq!(Gain::quantize(-10.25), -10.5);  // Exactly halfway rounds to nearest even
+    /// ```
+    pub fn quantize(db: f32) -> f32 {
+        // Clamp to valid range first
+        let clamped = db.clamp(Self::MIN, Self::MAX);
+
+        // Round to nearest 0.5 dB increment
+        // Multiply by 2, round to nearest integer, divide by 2
+        (clamped * 2.0).round() / 2.0
+    }
+
+    /// Create a Gain with hardware quantization applied
+    pub fn new_quantized(db: f32) -> Self {
+        Self(Self::quantize(db))
+    }
 }
 
 impl From<Gain> for u8 {
@@ -1121,6 +1147,62 @@ mod test {
             addr.write(&mut written_bytes);
             assert_eq!(&written_bytes, bytes);
         }
+    }
+
+    #[test]
+    fn test_quantize() {
+        // Test exact 0.5 dB increments (should remain unchanged)
+        assert_eq!(Gain::quantize(-10.0), -10.0);
+        assert_eq!(Gain::quantize(-10.5), -10.5);
+        assert_eq!(Gain::quantize(-127.0), -127.0);
+        assert_eq!(Gain::quantize(0.0), 0.0);
+
+        // Test rounding to nearest 0.5 dB
+        assert_eq!(Gain::quantize(-10.2), -10.0); // Closer to -10.0
+        assert_eq!(Gain::quantize(-10.3), -10.5); // Closer to -10.5
+        assert_eq!(Gain::quantize(-10.7), -10.5); // Closer to -10.5
+        assert_eq!(Gain::quantize(-10.8), -11.0); // Closer to -11.0
+
+        // Test halfway values (round to nearest even)
+        assert_eq!(Gain::quantize(-10.25), -10.5);
+        assert_eq!(Gain::quantize(-10.75), -11.0);
+
+        // Test boundary clamping
+        assert_eq!(Gain::quantize(-130.0), -127.0); // Below minimum
+        assert_eq!(Gain::quantize(5.0), 0.0); // Above maximum
+        assert_eq!(Gain::quantize(-200.0), -127.0); // Way below minimum
+
+        // Test small values near zero
+        assert_eq!(Gain::quantize(-0.2), 0.0);
+        assert_eq!(Gain::quantize(-0.3), -0.5);
+    }
+
+    #[test]
+    fn test_gain_u8_roundtrip() {
+        // Every valid u8 value should survive a round-trip conversion
+        for i in 0..=254 {
+            let gain = Gain::from(i);
+            let back: u8 = gain.into();
+            assert_eq!(i, back, "Round-trip failed for u8={}", i);
+
+            // Also verify the gain value is a multiple of 0.5 dB
+            let db = gain.0;
+            let quantized = Gain::quantize(db);
+            assert_eq!(db, quantized, "Gain from u8 {} is not quantized: {} dB", i, db);
+        }
+    }
+
+    #[test]
+    fn test_new_quantized() {
+        // Test the convenience constructor
+        let gain = Gain::new_quantized(-10.3);
+        assert_eq!(gain.0, -10.5);
+
+        let gain = Gain::new_quantized(-127.2);
+        assert_eq!(gain.0, -127.0);
+
+        let gain = Gain::new_quantized(5.0);
+        assert_eq!(gain.0, 0.0);
     }
 
     #[test]

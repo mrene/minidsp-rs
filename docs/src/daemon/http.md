@@ -69,6 +69,64 @@ curl http://localhost:5380/devices/0/config \
     -d '{ "master_status": { "preset": 0 } }'
 ```
 
+## Volume Control
+
+Control the master volume of a MiniDSP device:
+
+**Endpoint**: `POST /devices/{deviceIndex}/volume/{direction}`
+
+**Parameters**:
+- `deviceIndex`: Device index (usually 0)
+- `direction`: One of:
+  - `up` - Increase volume by 0.5 dB
+  - `down` - Decrease volume by 0.5 dB
+  - `togglemute` - Toggle mute state
+
+**Example**:
+```bash
+curl -X POST http://localhost:5380/devices/0/volume/up
+curl -X POST http://localhost:5380/devices/0/volume/down
+curl -X POST http://localhost:5380/devices/0/volume/togglemute
+```
+
+**Response**: HTTP 200 on success
+
+**Notes**:
+- Volume changes in 0.5 dB increments (hardware limitation)
+- Range: -127.0 dB to 0.0 dB
+- Changes sync to ALSA mixer if enabled
+
+## Source Selection
+
+Switch the active input source:
+
+**Endpoint**: `POST /devices/{deviceIndex}/source/{source}`
+
+**Parameters**:
+- `deviceIndex`: Device index (usually 0)
+- `source`: Source identifier (device-specific, typically 0-3)
+
+**Example**:
+```bash
+curl -X POST http://localhost:5380/devices/0/source/0
+curl -X POST http://localhost:5380/devices/0/source/1
+```
+
+## Preset/Configuration Selection
+
+Load a stored configuration preset:
+
+**Endpoint**: `POST /devices/{deviceIndex}/config/{preset}`
+
+**Parameters**:
+- `deviceIndex`: Device index (usually 0)
+- `preset`: Preset number (typically 0-3)
+
+**Example**:
+```bash
+curl -X POST http://localhost:5380/devices/0/config/0
+curl -X POST http://localhost:5380/devices/0/config/1
+```
 
 ## WebSocket Streaming
 Asynchronous updates to the master status are provided through websocket. Upon upgrading, the full current status is provided, followed by updates to properties that have changes. Note that this currently only returns changes done through the IR remote, in order to get more regular updates it's possible to poll the device for changes by passing `poll=true` in the query string. This requests updates every 2 seconds and sends a message if the status summary has changed. 

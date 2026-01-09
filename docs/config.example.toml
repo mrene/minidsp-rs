@@ -56,11 +56,16 @@ bind_address = "127.0.0.1:5333"
 # Provides bidirectional volume sync between MiniDSP hardware and ALSA system mixer
 [alsa_mixer]
 enabled = true
-card_name = "hw:0"              # ALSA card for mixer control
+
+# Card name is auto-detected on Linux by searching /proc/asound/cards
+# Only specify this to override detection or if detection fails
+# card_name = "hw:0"            # ALSA card for mixer control (optional, auto-detected)
+
 control_name = "Digital"        # Name of ALSA control
 sync_interval_ms = 100          # Sync polling interval (ms)
-use_virtual_control = true      # Try virtual control creation
-output_device = "hw:0"          # Audio output device
+
+# Output device is also auto-detected, uses the detected card if not specified
+# output_device = "hw:0"        # Audio output device (optional, auto-detected)
 
 # Use Cases:
 # 1. System volume integration: Enable to control MiniDSP via desktop volume controls

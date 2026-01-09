@@ -21,7 +21,6 @@ use crate::{
 };
 
 pub mod alsa_card_detect;
-pub mod alsa_ctl_ffi;
 pub mod alsa_mixer;
 pub mod alsa_softvol;
 pub mod config;
@@ -65,6 +64,9 @@ pub struct App {
     config: Config,
     #[allow(dead_code)]
     device_manager: Option<Arc<DeviceManager>>,
+    /// ALSA mixer manager. Stored here to maintain the Arc reference;
+    /// actual sync operations run in background task via cloned Arc.
+    /// The manager is accessed through APP.get() in the sync task.
     #[allow(dead_code)]
     alsa_mixer: Option<Arc<AlsaMixerManager>>,
     #[allow(dead_code)]
@@ -129,119 +131,107 @@ impl App {
         // Initialize ALSA mixer on Linux
         #[cfg(target_os = "linux")]
         {
-            // Get ALSA configuration from config file
             let alsa_config = self.config.alsa_mixer.clone().unwrap_or_default();
 
             if alsa_config.enabled {
-                // Spawn ALSA initialization as a task to allow device discovery to complete
                 let device_mgr_clone = device_mgr.clone();
                 let alsa_config_clone = alsa_config.clone();
 
                 self.handles.push(
                     tokio::spawn(async move {
-                        // Give device manager a moment to discover devices
+                        // Give device manager time to discover devices
                         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
-                        // Try to get the device product name to use as control name
-                        let device_product_name = device_mgr_clone.get_device(0).and_then(|device| {
-                            device.device_spec().map(|spec| spec.product_name.to_string())
-                        });
+                        // STEP 1: Get device product name
+                        let device_product_name = device_mgr_clone.get_device(0)
+                            .and_then(|device| {
+                                device.device_spec().map(|spec| spec.product_name.to_string())
+                            });
 
-                        // Use config name, or default to "Digital"
-                        let control_name = alsa_config_clone.control_name.or_else(|| {
-                            Some("Digital".to_string())
-                        });
-
-                        if let Some(ref name) = control_name {
-                            log::info!("Using control name '{}' for ALSA mixer", name);
-                        }
-
-                        // Detect which ALSA card the MiniDSP device is on
-                        let detected_card = if let Some(ref product_name) = device_product_name {
+                        // STEP 2: Detect MiniDSP card
+                        let detected_card_string = if let Some(ref product_name) = device_product_name {
                             crate::alsa_card_detect::detect_card_for_device(product_name)
                         } else {
+                            log::warn!("No MiniDSP device detected at startup, skipping ALSA setup");
                             None
                         };
 
-                        // For softvol approach:
-                        // - Audio routes to detected_card (hw:X - the MiniDSP device)
-                        // - Control lives on card 0 (default card which supports softvol)
-                        // - Mixer connects to card 0 to access the control
+                        // STEP 3: Parse card number from detected card
+                        let detected_card_number = detected_card_string.as_ref()
+                            .and_then(|s| crate::alsa_card_detect::parse_card_number(s));
 
-                        // Check if softvol control exists on card 0, if not try to create config
-                        #[cfg(target_os = "linux")]
-                        let softvol_card = "default"; // Softvol controls are on default card (usually card 0)
+                        // STEP 4: Determine card to use (detected or config override)
+                        let (card_to_use, card_number) = if let Some(num) = detected_card_number {
+                            let card_str = format!("hw:{}", num);
+                            log::info!("Using detected MiniDSP card: {}", card_str);
+                            (card_str, num)
+                        } else if let Some(ref config_card) = alsa_config_clone.card_name {
+                            log::warn!("Device not detected, using configured card: {}", config_card);
+                            let num = crate::alsa_card_detect::parse_card_number(config_card)
+                                .unwrap_or(0);
+                            (config_card.clone(), num)
+                        } else {
+                            log::warn!("No device detected and no card configured, skipping ALSA setup");
+                            return Ok(());
+                        };
 
-                        if let Some(ref ctrl_name) = &control_name {
-                            if !crate::alsa_softvol::check_softvol_exists(softvol_card, ctrl_name) {
-                                log::info!(
-                                    "ALSA control '{}' not found, attempting to create softvol configuration",
-                                    ctrl_name
-                                );
+                        // STEP 5: Determine output device (use detected card or config override)
+                        let output_device = alsa_config_clone.output_device
+                            .unwrap_or_else(|| {
+                                log::info!("Using detected card for audio output: {}", card_to_use);
+                                card_to_use.clone()
+                            });
 
-                                // Extract card number from detected_card for routing audio
-                                if let Some(ref card) = detected_card {
-                                    if let Some(card_num_str) = card.strip_prefix("hw:") {
-                                        if let Ok(card_num) = card_num_str.parse::<u32>() {
-                                        if let Some(ref dev_name) = device_product_name {
-                                            // Get output device from config, default to hw:0
-                                            let output_dev = alsa_config_clone.output_device
-                                                .as_deref()
-                                                .unwrap_or("hw:0");
+                        // STEP 6: Get control name
+                        let control_name = alsa_config_clone.control_name
+                            .unwrap_or_else(|| "Digital".to_string());
 
-                                            match crate::alsa_softvol::write_user_asoundrc(
-                                                dev_name,
-                                                card_num,
-                                                ctrl_name,
-                                                output_dev,
-                                            ) {
-                                                Ok(()) => {
-                                                    log::warn!(
-                                                        "Created ALSA softvol configuration in ~/.asoundrc"
-                                                    );
-                                                    log::warn!(
-                                                        "Audio output: {}, Volume control: '{}' (syncs with MiniDSP)",
-                                                        output_dev, ctrl_name
-                                                    );
-                                                    log::warn!(
-                                                        "IMPORTANT: Run 'sudo alsactl init' or restart to activate the new control"
-                                                    );
-                                                }
-                                                Err(e) => {
-                                                    log::warn!(
-                                                        "Failed to create softvol config: {}. Will try virtual control creation.",
-                                                        e
-                                                    );
-                                                }
-                                            }
-                                        }
-                                        }
+                        log::info!("ALSA configuration: card={}, output={}, control='{}'",
+                                  card_to_use, output_device, control_name);
+
+                        // STEP 7: Create softvol config if control doesn't exist
+                        if !crate::alsa_softvol::check_softvol_exists(&card_to_use, &control_name) {
+                            log::info!(
+                                "ALSA control '{}' not found on {}, attempting to create softvol configuration",
+                                control_name, card_to_use
+                            );
+
+                            if let Some(ref dev_name) = device_product_name {
+                                match crate::alsa_softvol::write_user_asoundrc(
+                                    dev_name,
+                                    card_number,
+                                    &control_name,
+                                    &output_device,
+                                    card_number,  // Control on detected card
+                                ) {
+                                    Ok(()) => {
+                                        log::warn!("Created ALSA softvol configuration in ~/.asoundrc");
+                                        log::warn!("  Control '{}' on card {}", control_name, card_number);
+                                        log::warn!("  Audio output: {}", output_device);
+                                        log::warn!("IMPORTANT: Run 'sudo alsactl init' or restart to activate");
+                                    }
+                                    Err(e) => {
+                                        log::warn!("Failed to create softvol config: {}", e);
                                     }
                                 }
-                            } else {
-                                log::info!("Found existing ALSA control '{}'", ctrl_name);
                             }
+                        } else {
+                            log::info!("Found existing ALSA control '{}'", control_name);
                         }
 
-                        // Use default card (card 0) for mixer since that's where softvol controls live
-                        let mixer_card = alsa_config_clone.card_name.unwrap_or_else(|| "default".to_string());
-                        log::info!("Using ALSA card '{}' for mixer control", mixer_card);
-
+                        // STEP 8: Initialize mixer with detected card
                         let mut alsa_mixer = AlsaMixerManager::new(
-                            Some(mixer_card),
-                            control_name,
-                            alsa_config_clone.use_virtual_control,
+                            Some(card_to_use.clone()),
+                            Some(control_name.clone()),
                             alsa_config_clone.sync_interval_ms,
                         );
 
-                        // Initialize ALSA mixer
                         if let Err(e) = alsa_mixer.initialize() {
                             log::warn!("Failed to initialize ALSA mixer: {}", e);
                             log::info!("ALSA integration disabled due to initialization failure");
                         } else {
-                            log::info!("ALSA mixer initialized successfully");
+                            log::info!("ALSA mixer initialized successfully on {}", card_to_use);
 
-                            // Store in app state
                             if let Some(app) = APP.get() {
                                 if let Ok(mut app_write) = app.try_write() {
                                     app_write.alsa_mixer.replace(Arc::new(alsa_mixer));

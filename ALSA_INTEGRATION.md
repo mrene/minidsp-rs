@@ -7,7 +7,7 @@ This document describes the ALSA mixer integration added to minidsp-rs, which pr
 MiniDSP devices expose master volume (-127 dB to 0 dB) **ONLY** through the minidsp-rs daemon's proprietary USB protocol. The USB audio interface provides audio streaming but does **NOT** expose writable volume controls natively through ALSA.
 
 The ALSA integration creates a bridge that:
-- Exposes MiniDSP master volume through an ALSA control (softvol or virtual control)
+- Exposes MiniDSP master volume through an ALSA softvol control
 - Synchronizes bidirectionally: changes in ALSA update MiniDSP hardware, and vice versa
 - Enables system-wide volume control integration
 
@@ -21,10 +21,10 @@ All changes are synchronized with the MiniDSP hardware in real-time.
 ## Features
 
 - **Two-way synchronization**: Changes on either MiniDSP or ALSA are synced to the other
-- **Virtual control creation**: Creates a dedicated "MiniDSP" control in ALSA (with fallback to existing controls)
+- **Softvol configuration**: Creates an ALSA softvol control via ~/.asoundrc
 - **Automatic on Linux**: Enabled by default on Linux systems (conditional compilation)
 - **Fully configurable**: Control name, sync interval, and behavior can be customized
-- **Graceful fallback**: Uses existing playback controls (Master/PCM) if virtual creation fails
+- **Graceful fallback**: Uses existing playback controls (Master/PCM) if softvol control not available
 
 ## Architecture
 
@@ -37,7 +37,7 @@ All changes are synchronized with the MiniDSP hardware in real-time.
 
 **minidsp-rs Daemon Integration**:
 - Exposes master volume through HTTP/WebSocket API
-- Creates ALSA integration using softvol plugin or virtual control
+- Creates ALSA integration using softvol plugin
 - Provides bidirectional sync: ALSA ↔ MiniDSP hardware
 
 **Important**: Main gain is a separate DSP parameter not exposed through the USB interface. Only master volume is available and controlled via the daemon.
@@ -49,9 +49,9 @@ All changes are synchronized with the MiniDSP hardware in real-time.
    - `sync_task()`: Background task for bidirectional synchronization
    - Volume conversion functions (dB ↔ percentage)
 
-2. **`daemon/src/alsa_ctl_ffi.rs`** - FFI module for virtual control creation:
-   - `VirtualControl::create()`: Creates virtual ALSA control elements using ALSA C API
-   - Direct FFI to alsa-sys for functionality not exposed in safe Rust alsa crate
+2. **`daemon/src/alsa_softvol.rs`** - Softvol configuration module:
+   - Creates ~/.asoundrc configuration for ALSA softvol plugin
+   - Detects and manages softvol controls
 
 3. **`daemon/src/config.rs`** - Configuration structure:
    - `AlsaMixer`: Configuration for ALSA integration (enabled, card_name, control_name, etc.)
@@ -63,7 +63,6 @@ All changes are synchronized with the MiniDSP hardware in real-time.
 
 5. **Modified `daemon/Cargo.toml`**:
    - Added `alsa = "0.9.0"` dependency for Linux targets
-   - Added `alsa-sys = "0.3.0"` for FFI access to control creation APIs
 
 ### How It Works
 
@@ -190,11 +189,6 @@ control_name = "Digital"
 # Lower = more responsive, higher = less CPU usage
 sync_interval_ms = 100
 
-# Attempt to create virtual ALSA control element
-# If true: Try virtual control, fallback to softvol
-# If false: Always use softvol configuration
-use_virtual_control = true
-
 # Audio output device (where audio is routed)
 # Can be different from card_name
 output_device = "hw:0"
@@ -208,7 +202,6 @@ output_device = "hw:0"
 | `card_name` | string | `"default"` | ALSA card for mixer control. Use `aplay -l` to list cards |
 | `control_name` | string | `"Digital"` | Name of ALSA control that syncs with MiniDSP |
 | `sync_interval_ms` | integer | `100` | Sync polling interval (50-500ms recommended) |
-| `use_virtual_control` | bool | `true` | Try creating virtual control (requires permissions) |
 | `output_device` | string | `"hw:0"` | ALSA device for audio output |
 
 #### Example Configurations
@@ -272,11 +265,67 @@ program -o hw:0 -V Digital
 
 This allows using a different audio device while maintaining MiniDSP volume control integration.
 
-**Important Note**: The MiniDSP USB audio interface provides audio streaming but does not expose writable volume controls natively. Master volume is ONLY accessible through the minidsp-rs daemon's proprietary USB protocol. The softvol/virtual control approach creates a writable ALSA control that syncs bidirectionally with MiniDSP hardware volume.
+**Important Note**: The MiniDSP USB audio interface provides audio streaming but does not expose writable volume controls natively. Master volume is ONLY accessible through the minidsp-rs daemon's proprietary USB protocol. The softvol approach creates a writable ALSA control that syncs bidirectionally with MiniDSP hardware volume.
+
+## Dynamic Card Detection
+
+### Automatic Detection Process
+
+The daemon automatically detects the ALSA card number on Linux:
+
+1. **Device Discovery**: Daemon waits 500ms for device manager to discover MiniDSP via USB
+2. **Card Matching**: Searches `/proc/asound/cards` for product name match (e.g., "DDRC-24")
+3. **Control Creation**: Creates softvol control on detected card (e.g., card 1, card 2)
+4. **Fallback Logic**: Uses config `card_name` if detection fails
+
+### Detection Log Output
+
+**Successful detection:**
+```
+[INFO] Detected MiniDSP device 'DDRC-24' on ALSA card 1 (USB-Audio - DDRC-24)
+[INFO] Using detected MiniDSP card: hw:1
+[INFO] Found existing ALSA control 'Digital'
+[INFO] ALSA mixer initialized successfully on hw:1
+```
+
+**No device at startup:**
+```
+[WARN] No MiniDSP device detected at startup, skipping ALSA setup
+```
+
+**Fallback to config:**
+```
+[WARN] Device not detected, using configured card: hw:0
+```
+
+### Manual Override
+
+To bypass auto-detection:
+
+```toml
+[alsa_mixer]
+enabled = true
+card_name = "hw:1"      # Force specific card
+output_device = "hw:1"  # Force specific output
+```
+
+### Verification Commands
+
+Check which card was detected:
+```bash
+# View daemon logs
+journalctl -u minidspd -f | grep -i "detected\|card"
+
+# Check created control
+amixer -c 1 sget Digital
+
+# Verify ~/.asoundrc configuration
+grep "card" ~/.asoundrc
+```
 
 ### ALSA Softvol Configuration
 
-When `use_virtual_control` fails or is disabled, the daemon creates softvol configuration.
+The daemon creates softvol configuration in ~/.asoundrc to provide a writable volume control.
 
 #### Generated Configuration
 
@@ -355,10 +404,6 @@ grep -A5 "minidsp.*softvol" ~/.asoundrc
 aplay -l
 ```
 
-**Permission denied creating virtual control**:
-- Add user to `audio` group: `sudo usermod -a -G audio $USER`
-- Fallback: Set `use_virtual_control = false` to use softvol
-
 **Audio routing issues**:
 - Verify output device exists: `aplay -L`
 - Test playback: `aplay -D hw:0 test.wav`
@@ -405,20 +450,6 @@ On non-Linux platforms:
 - Check device index (currently hardcoded to 0)
 
 ## Implementation Notes
-
-### Why Virtual Control Creation?
-
-Creating a dedicated virtual control provides several benefits:
-1. **Independent control**: MiniDSP volume doesn't interfere with system master volume
-2. **Clear identification**: Shows with device name (e.g., "DDRC-24") in mixers and volume controls
-3. **Multiple devices**: Can create separate controls for multiple MiniDSP devices (each with its own product name)
-4. **Proper representation**: Accurately reflects the MiniDSP hardware state
-
-However, virtual control creation requires:
-- ALSA control element API access (via FFI)
-- Proper permissions (usually requires audio group membership)
-
-If creation fails, the fallback to existing controls (Master/PCM) works seamlessly.
 
 ### Why Polling Instead of Events?
 
@@ -467,11 +498,11 @@ Possible improvements:
 
 ## Files Changed
 
-- `daemon/Cargo.toml` - Added ALSA dependencies (alsa, alsa-sys)
+- `daemon/Cargo.toml` - Added ALSA dependency (alsa)
 - `daemon/src/config.rs` - Added AlsaMixer configuration struct
 - `daemon/src/main.rs` - Integration initialization with config loading
 - `daemon/src/alsa_mixer.rs` - Main module for volume synchronization
-- `daemon/src/alsa_ctl_ffi.rs` - FFI module for virtual control creation (new)
+- `daemon/src/alsa_softvol.rs` - Softvol configuration module (new)
 
 ## License
 

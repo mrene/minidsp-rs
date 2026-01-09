@@ -55,4 +55,3 @@ routerify-unixsocket = "3.0.0"
 
 [target.'cfg(target_os="linux")'.dependencies]
 alsa = "0.9.0"
-alsa-sys = "0.3.0"

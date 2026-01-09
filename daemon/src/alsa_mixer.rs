@@ -18,21 +18,21 @@ use std::sync::Arc;
 use alsa::mixer::{MilliBel, Mixer, Selem, SelemChannelId, SelemId};
 
 #[cfg(target_os = "linux")]
+use alsa::Round;
+
+#[cfg(target_os = "linux")]
 use minidsp::Gain;
 
 #[cfg(target_os = "linux")]
 use tokio::sync::Mutex;
 
 #[cfg(target_os = "linux")]
-use crate::alsa_ctl_ffi::VirtualControl;
-
 /// ALSA Mixer Manager - handles bidirectional volume synchronization
 #[cfg(target_os = "linux")]
 pub struct AlsaMixerManager {
     mixer: Arc<Mutex<Option<Mixer>>>,
     card_name: String,
     control_name: String,
-    use_virtual: bool,
     sync_interval_ms: u64,
 }
 
@@ -42,68 +42,26 @@ impl AlsaMixerManager {
     ///
     /// # Arguments
     /// * `card_name` - ALSA card name (e.g., "default", "hw:0")
-    /// * `control_name` - Name for the control (virtual if created, or existing to map to)
-    /// * `use_virtual` - Whether to attempt virtual control creation
+    /// * `control_name` - Name for the softvol control
     /// * `sync_interval_ms` - Sync interval in milliseconds (defaults to 100ms)
     pub fn new(
         card_name: Option<String>,
         control_name: Option<String>,
-        use_virtual: bool,
         sync_interval_ms: Option<u64>,
     ) -> Self {
         Self {
             mixer: Arc::new(Mutex::new(None)),
             card_name: card_name.unwrap_or_else(|| "default".to_string()),
             control_name: control_name.unwrap_or_else(|| "MiniDSP".to_string()),
-            use_virtual,
             sync_interval_ms: sync_interval_ms.unwrap_or(100),
         }
     }
 
     /// Initialize the ALSA mixer connection
     pub fn initialize(&mut self) -> anyhow::Result<()> {
-        // Try to create virtual control if enabled
-        if self.use_virtual {
-            log::info!(
-                "Attempting to create virtual ALSA control '{}'",
-                self.control_name
-            );
+        log::info!("Using softvol configuration for ALSA control '{}'", self.control_name);
 
-            // MiniDSP volume range: -127dB to 0dB
-            // ALSA wants centibels (hundredths of dB)
-            let min_cb = -12700i64; // -127.00 dB
-            let max_cb = 0i64;       // 0.00 dB
-            let step_cb = 10i64;     // 0.10 dB steps
-
-            match VirtualControl::create(
-                &self.card_name,
-                &self.control_name,
-                min_cb,
-                max_cb,
-                step_cb,
-            ) {
-                Ok(_vc) => {
-                    // Virtual control created successfully
-                    // It will remain in ALSA even after _vc is dropped
-                    log::info!(
-                        "Virtual ALSA control '{}' created successfully",
-                        self.control_name
-                    );
-                }
-                Err(e) => {
-                    log::warn!(
-                        "Could not create virtual ALSA control '{}': {}",
-                        self.control_name,
-                        e
-                    );
-                    log::info!("Falling back to mapping to existing controls");
-                }
-            }
-        } else {
-            log::info!("Virtual control creation disabled, using existing controls");
-        }
-
-        // Open the mixer (works for both virtual and existing controls)
+        // Open the mixer
         let mixer = Mixer::new(&self.card_name, false)?;
 
         log::info!(
@@ -163,60 +121,34 @@ impl AlsaMixerManager {
         // Find a suitable playback control
         let selem = self.find_playback_control(mixer)?;
 
-        // Get volume range
-        let (vol_min, vol_max) = selem.get_playback_volume_range();
+        // Quantize to ensure we're setting a hardware-representable value
+        let quantized_db = Gain::quantize(gain.0);
+        // Convert MiniDSP dB to MilliBel (ALSA native unit)
+        let target_mb = MilliBel::from_db(quantized_db);
 
-        // Try to get dB range to check if dB is actually supported
+        // Check if dB setting is supported
         let (db_min, db_max) = selem.get_playback_db_range();
-
-        log::debug!(
-            "ALSA control ranges: vol={}..{}, dB={}..{}",
-            vol_min, vol_max, db_min.0, db_max.0
-        );
-
-        // Check if dB range is valid (not 0 to 0, and min < max)
         let has_valid_db_range = db_min.0 != db_max.0 && db_min.0 < db_max.0;
 
         if has_valid_db_range {
-            // ALSA uses MilliBel (1/100 dB), MiniDSP uses dB
-            // Convert MiniDSP dB to MilliBel
-            let target_mb = MilliBel::from_db(gain.0);
-
-            // Clamp to ALSA's range
+            // Clamp to ALSA's supported range
             let clamped_mb = MilliBel(target_mb.0.clamp(db_min.0, db_max.0));
 
-            // Calculate what raw volume corresponds to our target dB
-            let db_range = (db_max.0 - db_min.0) as f64;
-            let vol_range = (vol_max - vol_min) as f64;
-            let db_offset = (clamped_mb.0 - db_min.0) as f64;
-            let vol_value_unclamped = vol_min + ((db_offset / db_range) * vol_range) as i64;
+            // Use ALSA's native dB API - direct, precise mapping
+            // Using Floor is fine since we quantize values before this point
+            selem.set_playback_db_all(clamped_mb, Round::Floor)
+                .map_err(|e| anyhow::anyhow!("Failed to set playback dB: {}", e))?;
 
-            // IMPORTANT: Clamp to actual raw volume range, not just dB range
-            // Some controls have raw ranges that extend beyond their reported dB range
-            let vol_value = vol_value_unclamped.clamp(vol_min, vol_max);
-
-            log::debug!(
-                "Setting ALSA volume: {}dB -> {}mB -> raw {} (clamped to {}..{})",
-                gain.0, clamped_mb.0, vol_value, vol_min, vol_max
-            );
-
-            // Set volume on both stereo channels
-            Self::set_stereo_volume(&selem, vol_value)?;
-
-            log::debug!(
-                "Set ALSA volume to {}dB (raw: {}, both channels)",
-                gain.0, vol_value
-            );
+            log::debug!("Set ALSA volume to {}dB ({}mB)", gain.0, clamped_mb.0);
         } else {
-            // Fallback to percentage-based method if dB not supported
+            // Fallback for controls without dB support (rare for softvol)
             let percentage = self.db_to_percentage(gain.0);
+            let (vol_min, vol_max) = selem.get_playback_volume_range();
             let target_value = vol_min + ((vol_max - vol_min) as f32 * percentage / 100.0) as i64;
-
-            // Set volume on both stereo channels
             Self::set_stereo_volume(&selem, target_value)?;
 
             log::debug!(
-                "Set ALSA volume: {}dB -> {}% (raw: {}, both channels)",
+                "Set ALSA volume: {}dB -> {}% (raw: {}, no dB support)",
                 gain.0, percentage, target_value
             );
         }
@@ -265,8 +197,9 @@ impl AlsaMixerManager {
         ) {
             (Ok(left_mb), Ok(right_mb)) => {
                 // Average both channels to get overall volume (preserves balance)
-                let avg_mb = (left_mb.0 + right_mb.0) / 2;
-                let db = avg_mb as f32 / 100.0;
+                // Use floating-point arithmetic to preserve precision
+                let avg_mb = (left_mb.0 as f32 + right_mb.0 as f32) / 2.0;
+                let db = avg_mb / 100.0;
 
                 log::debug!("Read ALSA volume: L={}mB R={}mB avg={}dB", left_mb.0, right_mb.0, db);
 
@@ -474,17 +407,26 @@ pub async fn sync_task(
         // Sync MiniDSP -> ALSA volume (takes priority)
         if minidsp_volume_changed {
             let volume = current_minidsp_volume.unwrap();
-            // Only sync if the difference is significant (> 0.3 dB to account for rounding)
+            // Only sync if the difference is significant (> 0.25 dB to catch 0.5 dB hardware steps)
             let should_sync = match current_alsa_volume {
-                Some(alsa_vol) => (volume.0 - alsa_vol.0).abs() > 0.3,
-                None => true,
+                Some(alsa_vol) => {
+                    let diff = (volume.0 - alsa_vol.0).abs();
+                    let sync = diff > 0.25;
+                    log::debug!("MiniDSP changed: {}dB, ALSA: {}dB, diff: {:.2}dB, sync: {}",
+                               volume.0, alsa_vol.0, diff, sync);
+                    sync
+                }
+                None => {
+                    log::debug!("MiniDSP changed: {}dB, ALSA: unknown, syncing", volume.0);
+                    true
+                }
             };
 
             if should_sync {
                 if let Err(e) = mixer.set_volume_from_minidsp(volume).await {
                     log::warn!("Failed to sync volume to ALSA: {}", e);
                 } else {
-                    log::debug!("Synced MiniDSP -> ALSA volume: {}dB", volume.0);
+                    log::info!("Synced MiniDSP -> ALSA volume: {}dB", volume.0);
                     // Read back actual ALSA value after sync (may differ due to quantization)
                     if let Ok(actual_alsa) = mixer.get_volume_as_minidsp().await {
                         last_alsa_volume = Some(actual_alsa);
@@ -502,17 +444,29 @@ pub async fn sync_task(
         // Sync ALSA -> MiniDSP volume (only if MiniDSP didn't change)
         else if alsa_volume_changed {
             let volume = current_alsa_volume.unwrap();
-            // Only sync if the difference is significant (> 0.3 dB to account for rounding)
+            // Only sync if the difference is significant (> 0.25 dB to catch 0.5 dB hardware steps)
             let should_sync = match current_minidsp_volume {
-                Some(minidsp_vol) => (volume.0 - minidsp_vol.0).abs() > 0.3,
-                None => true,
+                Some(minidsp_vol) => {
+                    let diff = (volume.0 - minidsp_vol.0).abs();
+                    let sync = diff > 0.25;
+                    log::debug!("ALSA changed: {}dB, MiniDSP: {}dB, diff: {:.2}dB, sync: {}",
+                               volume.0, minidsp_vol.0, diff, sync);
+                    sync
+                }
+                None => {
+                    log::debug!("ALSA changed: {}dB, MiniDSP: unknown, syncing", volume.0);
+                    true
+                }
             };
 
             if should_sync {
-                if let Err(e) = dsp.set_master_volume(volume).await {
+                // Quantize to ensure hardware-representable value
+                let quantized = Gain::new_quantized(volume.0);
+                log::debug!("Quantizing ALSA {}dB -> {}dB before sending to MiniDSP", volume.0, quantized.0);
+                if let Err(e) = dsp.set_master_volume(quantized).await {
                     log::warn!("Failed to sync volume to MiniDSP: {}", e);
                 } else {
-                    log::debug!("Synced ALSA -> MiniDSP volume: {}dB", volume.0);
+                    log::info!("Synced ALSA -> MiniDSP volume: {}dB", quantized.0);
                     // Read back actual MiniDSP value after sync (may differ due to quantization)
                     if let Ok(status) = dsp.get_master_status().await {
                         if let Some(actual_minidsp) = status.volume {
