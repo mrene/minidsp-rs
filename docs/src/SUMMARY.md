@@ -28,5 +28,6 @@
     - [Phase inversion](./cli/output/invert.md)
 - [Daemon](./daemon/index.md)
   - [HTTP API](./daemon/http.md)
-  - [Compat TCP Server](./daemon/tcp.md) 
+  - [Compat TCP Server](./daemon/tcp.md)
+  - [ALSA Integration](./daemon/alsa.md) 
 

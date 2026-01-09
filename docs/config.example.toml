@@ -51,3 +51,21 @@ bind_address = "127.0.0.1:5333"
 #
 # [[static_device]]
 # url = "mock:?serial=922222"
+
+# ALSA Mixer Integration (Linux only)
+# Provides bidirectional volume sync between MiniDSP hardware and ALSA system mixer
+[alsa_mixer]
+enabled = true
+card_name = "hw:0"              # ALSA card for mixer control
+control_name = "Digital"        # Name of ALSA control
+sync_interval_ms = 100          # Sync polling interval (ms)
+use_virtual_control = true      # Try virtual control creation
+output_device = "hw:0"          # Audio output device
+
+# Use Cases:
+# 1. System volume integration: Enable to control MiniDSP via desktop volume controls
+# 2. Media key support: Volume up/down keys will control MiniDSP
+# 3. Application compatibility: Apps using ALSA mixer can control volume
+#
+# Note: Master volume is ONLY accessible through minidsp-rs daemon.
+#       MiniDSP USB devices do not expose writable volume controls natively.

@@ -20,6 +20,10 @@ pub struct Config {
     /// Set to ignore network devices that broadcast advertisement packets (such as the WI-DG).
     /// It's still possible to add them using `[[static_device]]`
     pub ignore_advertisements: bool,
+
+    /// ALSA mixer integration settings (Linux only)
+    #[cfg(target_os = "linux")]
+    pub alsa_mixer: Option<AlsaMixer>,
 }
 
 impl Default for Config {
@@ -32,6 +36,15 @@ impl Default for Config {
             tcp_servers: Vec::new(),
             static_devices: Vec::new(),
             ignore_advertisements: false,
+            #[cfg(target_os = "linux")]
+            alsa_mixer: Some(AlsaMixer {
+                enabled: true,
+                card_name: None,
+                control_name: Some("Digital".to_string()),
+                sync_interval_ms: None,
+                use_virtual_control: true,
+                output_device: Some("hw:0".to_string()),
+            }),
         }
     }
 }
@@ -82,4 +95,33 @@ pub struct Advertise {
 
     /// Bind address to use when sending broadcast packets
     pub bind_address: Option<String>,
+}
+
+#[cfg(target_os = "linux")]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AlsaMixer {
+    /// Enable ALSA mixer integration (Linux only)
+    pub enabled: bool,
+
+    /// ALSA card name (e.g., "default", "hw:0")
+    /// Defaults to "default" if not specified
+    pub card_name: Option<String>,
+
+    /// Control name for the virtual/mapped control
+    /// Defaults to "MiniDSP" if not specified
+    pub control_name: Option<String>,
+
+    /// Sync interval in milliseconds
+    /// Defaults to 100ms if not specified
+    pub sync_interval_ms: Option<u64>,
+
+    /// Use virtual control creation (default: true, falls back to mapping if fails)
+    /// If false, always maps to existing controls like "Master" or "PCM"
+    pub use_virtual_control: bool,
+
+    /// ALSA device to route audio output to (e.g., "hw:0", "default")
+    /// This is where audio physically plays from
+    /// Defaults to "hw:0" if not specified
+    pub output_device: Option<String>,
 }
