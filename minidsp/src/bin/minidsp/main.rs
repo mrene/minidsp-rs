@@ -27,6 +27,7 @@ use minidsp::{
 
 mod debug;
 mod handlers;
+mod names;
 
 use std::{io::Read, time::Duration};
 
@@ -191,8 +192,8 @@ enum SubCommand {
 
     /// Control settings regarding input channels
     Input {
-        /// Index of the input channel, starting at 0
-        input_index: usize,
+        /// Index or name of the input channel, starting at 0
+        input_index: String,
 
         #[clap(subcommand)]
         cmd: InputCommand,
@@ -200,8 +201,8 @@ enum SubCommand {
 
     /// Control settings regarding output channels
     Output {
-        /// Index of the output channel, starting at 0
-        output_index: usize,
+        /// Index or name of the output channel, starting at 0
+        output_index: String,
 
         #[clap(subcommand)]
         cmd: OutputCommand,
@@ -221,6 +222,12 @@ enum SubCommand {
     Debug {
         #[clap(subcommand)]
         cmd: DebugCommands,
+    },
+
+    /// Manage named aliases for input/output channels
+    Name {
+        #[clap(subcommand)]
+        cmd: NameCommand,
     },
 }
 
@@ -263,6 +270,31 @@ impl FromStr for Bool {
 }
 
 #[derive(Clone, Parser, Debug)]
+enum NameCommand {
+    /// Assign a name to an input channel
+    Input {
+        /// 0-based channel index
+        index: usize,
+        /// Name to assign
+        name: String,
+    },
+    /// Assign a name to an output channel
+    Output {
+        /// 0-based channel index
+        index: usize,
+        /// Name to assign
+        name: String,
+    },
+    /// Remove a named alias
+    Remove {
+        /// Name to remove
+        name: String,
+    },
+    /// List all named aliases
+    List,
+}
+
+#[derive(Clone, Parser, Debug)]
 enum InputCommand {
     /// Set the input gain for this channel
     Gain {
@@ -278,8 +310,8 @@ enum InputCommand {
 
     /// Controls signal routing from this input
     Routing {
-        /// Index of the output channel starting at 0
-        output_index: usize,
+        /// Index or name of the output channel starting at 0
+        output_index: String,
 
         #[clap(subcommand)]
         cmd: RoutingCommand,
@@ -536,6 +568,14 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
+    if let Some(SubCommand::Name { ref cmd }) = opts.subcmd {
+        if matches!(cmd, crate::NameCommand::List) {
+            handlers::run_name_command(cmd, None);
+            return Ok(());
+        }
+        // Other name commands need a device — fall through to device probe
+    }
+
     if !opts.all_local_devices {
         if let Some(index) = opts.device_index {
             let dev = devices.remove(index);
@@ -543,6 +583,12 @@ async fn main() -> Result<()> {
             devices.push(dev);
         }
         devices.truncate(1);
+    }
+
+    if let Some(SubCommand::Name { ref cmd }) = opts.subcmd {
+        let device = devices.first().ok_or_else(|| anyhow!("No devices found"))?;
+        handlers::run_name_command(cmd, Some(device.device_info.serial));
+        return Ok(());
     }
 
     if let Some(SubCommand::Server { .. }) = opts.subcmd {
@@ -648,14 +694,14 @@ mod tests {
             v,
             Ok(Opts {
                 subcmd: Some(SubCommand::Input {
-                    input_index: 0,
+                    ref input_index,
                     cmd: InputCommand::PEQ {
                         index: PEQTarget::One(0),
                         cmd: FilterCommand::Bypass { value: Bool(false) },
                     },
                 }),
                 ..
-            })
+            }) if input_index == "0"
         ));
     }
 }

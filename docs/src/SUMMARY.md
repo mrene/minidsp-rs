@@ -6,6 +6,7 @@
   - [Bass EQ](./integrations/beq.md)
   - [Roomie Remote](./integrations/roomie_remote.md)
 - [Command Line Interface](./cli/index.md)
+  - [Channel Names](./cli/names.md)
   - [Master Settings](./cli/master/index.md)
     - [Config](./cli/master/config.md)
     - [Source](./cli/master/source.md)

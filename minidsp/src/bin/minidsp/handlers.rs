@@ -1,5 +1,7 @@
 use std::{str::FromStr, time::Duration};
 
+use indexmap::IndexMap;
+
 use minidsp::{
     formats::{rew::FromRew, wav::read_wav_filter},
     model::StatusSummary,
@@ -8,7 +10,7 @@ use minidsp::{
 };
 
 use super::{InputCommand, MiniDSP, OutputCommand, Result};
-use crate::{debug::run_debug, FilterCommand, PEQTarget, RoutingCommand, SubCommand, ToggleBool};
+use crate::{debug::run_debug, FilterCommand, NameCommand, PEQTarget, RoutingCommand, SubCommand, ToggleBool};
 
 pub(crate) async fn run_server(
     subcmd: SubCommand,
@@ -62,6 +64,9 @@ pub(crate) async fn run_command(
     cmd: Option<&SubCommand>,
     opts: &crate::Opts,
 ) -> Result<()> {
+    let serial = device.get_device_info().await?.serial;
+    let names_cfg = crate::names::NamesConfig::load();
+    let names = names_cfg.for_device(serial);
     match cmd {
         // Master
         Some(&SubCommand::Gain {
@@ -93,13 +98,19 @@ pub(crate) async fn run_command(
             device.set_dirac(dirac).await?
         }
         Some(&SubCommand::Input {
-            input_index,
+            ref input_index,
             ref cmd,
-        }) => run_input(device, cmd, input_index).await?,
+        }) => {
+            let idx = names.resolve_input(input_index)?;
+            run_input(device, cmd, idx, &names).await?
+        }
         Some(&SubCommand::Output {
-            output_index,
+            ref output_index,
             ref cmd,
-        }) => run_output(device, output_index, cmd).await?,
+        }) => {
+            let idx = names.resolve_output(output_index)?;
+            run_output(device, idx, cmd).await?
+        }
 
         // Other tools
         Some(SubCommand::Debug { cmd }) => run_debug(device, cmd).await?,
@@ -107,11 +118,15 @@ pub(crate) async fn run_command(
         // Handled earlier
         Some(&SubCommand::Server { .. }) => {}
         Some(&SubCommand::Probe { .. }) => return Ok(()),
+        Some(SubCommand::Name { .. }) => return Ok(()),
 
         Some(&SubCommand::Status) | None => {
             // Always output the current master status and input/output levels
             let summary = StatusSummary::fetch(device).await?;
-            println!("{}", opts.output_format.format(&summary));
+            match opts.output_format {
+                crate::OutputFormat::Text => print_status_with_names(&summary, &names),
+                _ => println!("{}", opts.output_format.format(&summary)),
+            }
         }
     };
 
@@ -122,6 +137,7 @@ pub(crate) async fn run_input(
     dsp: &MiniDSP<'_>,
     cmd: &InputCommand,
     input_index: usize,
+    names: &crate::names::DeviceNames,
 ) -> Result<()> {
     use InputCommand::*;
     use RoutingCommand::*;
@@ -131,12 +147,15 @@ pub(crate) async fn run_input(
         InputCommand::Gain { value } => input.set_gain(value).await?,
         Mute { value } => input.set_mute(value.0).await?,
         Routing {
-            output_index,
+            ref output_index,
             ref cmd,
-        } => match *cmd {
-            Enable { value } => input.set_output_enable(output_index, value.0).await?,
-            RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
-        },
+        } => {
+            let output_index = names.resolve_output(output_index)?;
+            match *cmd {
+                Enable { value } => input.set_output_enable(output_index, value.0).await?,
+                RoutingCommand::Gain { value } => input.set_output_gain(output_index, value).await?,
+            }
+        }
         PEQ { index, ref cmd } => match index {
             PEQTarget::One(index) => run_peq(&[input.peq(index)?], cmd).await?,
             PEQTarget::All => {
@@ -345,4 +364,87 @@ pub(crate) async fn run_fir(dsp: &MiniDSP<'_>, fir: &Fir<'_>, cmd: &FilterComman
     }
 
     Ok(())
+}
+
+fn print_status_with_names(summary: &StatusSummary, names: &crate::names::DeviceNames) {
+    println!("{:?}", summary.master);
+
+    let fmt_levels = |levels: &[f32], labeler: fn(&crate::names::DeviceNames, usize) -> String| -> String {
+        levels.iter().enumerate()
+            .map(|(i, level)| format!("{}: {:.1}", labeler(names, i), level))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    println!("Input levels: {}", fmt_levels(&summary.input_levels, crate::names::DeviceNames::label_for_input));
+    println!("Output levels: {}", fmt_levels(&summary.output_levels, crate::names::DeviceNames::label_for_output));
+}
+
+pub(crate) fn run_name_command(cmd: &NameCommand, serial: Option<u32>) {
+    let mut config = crate::names::NamesConfig::load();
+    match cmd {
+        NameCommand::Input { index, name } | NameCommand::Output { index, name } => {
+            let serial = serial.expect("device must be connected to set names");
+            if let Err(e) = crate::names::NamesConfig::validate_name(name) {
+                eprintln!("error: {}", e);
+                return;
+            }
+            let (kind, map) = {
+                let dev = config.for_device_mut(serial);
+                if matches!(cmd, NameCommand::Input { .. }) {
+                    ("input", &mut dev.inputs)
+                } else {
+                    ("output", &mut dev.outputs)
+                }
+            };
+            if let Some(old) = map.insert(name.clone(), *index) {
+                if old != *index {
+                    eprintln!("note: '{}' was previously mapped to {} {}", name, kind, old);
+                }
+            }
+            config.save().expect("failed to save names config");
+            println!("{} {} = {}", kind, name, index);
+        }
+        NameCommand::Remove { name } => {
+            let serial = serial.expect("device must be connected to remove names");
+            let dev = config.for_device_mut(serial);
+            let removed = dev.inputs.shift_remove(name).is_some()
+                || dev.outputs.shift_remove(name).is_some();
+            if removed {
+                config.save().expect("failed to save names config");
+                println!("removed '{}'", name);
+            } else {
+                eprintln!("name '{}' not found", name);
+            }
+        }
+        NameCommand::List => {
+            if config.device.is_empty() {
+                println!("no names configured");
+                return;
+            }
+            for (serial, dev) in &config.device {
+                if dev.inputs.is_empty() && dev.outputs.is_empty() {
+                    continue;
+                }
+                println!("device {}:", serial);
+                print_grouped("  input", &dev.inputs);
+                print_grouped("  output", &dev.outputs);
+            }
+        }
+    }
+}
+
+fn print_grouped(kind: &str, map: &IndexMap<String, usize>) {
+    if map.is_empty() {
+        return;
+    }
+    // Group names by index, preserving insertion order for each group
+    let mut groups: IndexMap<usize, Vec<&str>> = IndexMap::new();
+    for (name, &idx) in map {
+        groups.entry(idx).or_default().push(name.as_str());
+    }
+    groups.sort_keys();
+    for (idx, names) in &groups {
+        println!("{:<6} {}: {}", kind, idx, names.join(", "));
+    }
 }
