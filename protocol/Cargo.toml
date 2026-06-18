@@ -32,6 +32,7 @@ all_devices = [
     "device_flex",
     "device_flexdl",
     "device_flexhtx",
+    "device_flex8",
 ]
 device_2x4hd = ["devices"]
 device_4x10hd = ["devices"]
@@ -46,6 +47,7 @@ device_m2x4 = ["devices"]
 device_flex = ["devices"]
 device_flexdl = ["devices"]
 device_flexhtx = ["devices"]
+device_flex8 = ["devices"]
 devices = []
 std = []
 use_serde = ["std", "serde", "schemars", "strum"]

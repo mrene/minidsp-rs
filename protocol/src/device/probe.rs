@@ -43,6 +43,8 @@ pub enum DeviceKind {
     Flex,
     #[cfg(feature = "device_flexhtx")]
     FlexHtx,
+    #[cfg(feature = "device_flex8")]
+    Flex8,
 }
 
 /// Attempts to get a `&Device` from a DeviceInfo
@@ -79,6 +81,10 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
 
         #[cfg(feature = "device_flexhtx")]
         (32, 115) => FlexHtx, //get from `minidsp probe`
+
+        // miniDSP Flex 8 (8 analog outputs, 96 kHz DSP, 10 PEQ/voie)
+        #[cfg(feature = "device_flex8")]
+        (30, _) => Flex8,
 
         _ => Generic,
     }
@@ -124,5 +130,8 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_flexhtx")]
         FlexHtx => &super::flexhtx::DEVICE,
+
+        #[cfg(feature = "device_flex8")]
+        Flex8 => &super::flex8::DEVICE,
     }
 }
