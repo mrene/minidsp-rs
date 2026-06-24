@@ -55,6 +55,14 @@ The following settings will be visible after changing them from any source:
 The rest of the settings (filters, delays, routing) will not be reflected in the app.
 
 
+### Channel names
+Input and output channels can be given names for convenience. See [Channel Names](./names.md) for details.
+
+```bash
+minidsp name output 0 left
+minidsp output left gain -- -10
+```
+
 ### Running multiple commands at once
 For the purposes of organizing configurations, a file can be created with commands to run sequentially. It's an easy way to recall a certain preset without changing the device config preset.
 

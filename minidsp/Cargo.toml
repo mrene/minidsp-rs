@@ -16,6 +16,9 @@ atomic_refcell = "0.1.14"
 bimap = "0.6.3"
 bytes = "1.11.1"
 clap = { version = "4.6.1", features = ["derive", "env"] }
+dirs = "6"
+indexmap = { version = "2", features = ["serde"] }
+toml = "1"
 env_logger = "0.10.2"
 futures = "0.3.32"
 futures-sink = "0.3.32"
