@@ -41,6 +41,8 @@ pub enum DeviceKind {
     M2x4,
     #[cfg(feature = "device_flex")]
     Flex,
+    #[cfg(feature = "device_flexdl")]
+    FlexDl,
     #[cfg(feature = "device_flexhtx")]
     FlexHtx,
 }
@@ -76,6 +78,8 @@ pub fn probe_kind(device_info: &DeviceInfo) -> DeviceKind {
         (2, 22) => M2x4,
         #[cfg(feature = "device_flex")]
         (27, 100) => Flex,
+        #[cfg(feature = "device_flexdl")]
+        (27, 101) => FlexDl,
 
         #[cfg(feature = "device_flexhtx")]
         (32, 115) => FlexHtx, //get from `minidsp probe`
@@ -121,6 +125,9 @@ pub fn by_kind(kind: DeviceKind) -> &'static super::Device {
 
         #[cfg(feature = "device_flex")]
         Flex => &super::flex::DEVICE,
+
+        #[cfg(feature = "device_flexdl")]
+        FlexDl => &super::flexdl::DEVICE,
 
         #[cfg(feature = "device_flexhtx")]
         FlexHtx => &super::flexhtx::DEVICE,
