@@ -882,8 +882,19 @@ impl Gain {
 }
 
 impl From<Gain> for u8 {
+    /// Encodes the gain as a number of 0.5 dB attenuation steps.
+    /// Values outside of [`Gain::MIN`, `Gain::MAX`] are clamped, so that positive values map to
+    /// 0 dB instead of being mirrored into an attenuation.
     fn from(val: Gain) -> Self {
-        (val.0.abs() * 2.) as u8
+        // NaN fails both comparisons and falls back to the quietest setting
+        let db = if val.0 >= Gain::MAX {
+            Gain::MAX
+        } else if val.0 >= Gain::MIN {
+            val.0
+        } else {
+            Gain::MIN
+        };
+        (-db * 2.) as u8
     }
 }
 
@@ -1223,5 +1234,18 @@ mod test {
         assert_eq!(m1.base, 0);
         assert_eq!(m1.data.len(), 20);
         assert!(m1.data.into_iter().eq(0u8..20));
+    }
+
+    #[test]
+    fn gain_encoding_is_clamped() {
+        assert_eq!(u8::from(Gain(0.)), 0);
+        assert_eq!(u8::from(Gain(-10.)), 20);
+        assert_eq!(u8::from(Gain(-0.5)), 1);
+        // Positive gains must not be mirrored into an attenuation
+        assert_eq!(u8::from(Gain(0.5)), 0);
+        assert_eq!(u8::from(Gain(5.)), 0);
+        // Values below the minimum saturate at the minimum
+        assert_eq!(u8::from(Gain(-200.)), u8::from(Gain(Gain::MIN)));
+        assert_eq!(u8::from(Gain(f32::NAN)), u8::from(Gain(Gain::MIN)));
     }
 }

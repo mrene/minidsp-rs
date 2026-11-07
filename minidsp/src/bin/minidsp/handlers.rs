@@ -70,7 +70,12 @@ pub(crate) async fn run_command(
         }) => {
             if relative {
                 let status = device.get_master_status().await?;
-                value.0 += status.volume.unwrap().0;
+                value.0 += status
+                    .volume
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("this device does not report its master volume")
+                    })?
+                    .0;
             }
             device.set_master_volume(value).await?
         }
@@ -78,7 +83,9 @@ pub(crate) async fn run_command(
             let mute: bool = match value {
                 ToggleBool::On => true,
                 ToggleBool::Off => false,
-                ToggleBool::Toggle => !device.get_master_status().await?.mute.unwrap(),
+                ToggleBool::Toggle => !device.get_master_status().await?.mute.ok_or_else(|| {
+                    anyhow::anyhow!("this device does not report its mute status")
+                })?,
             };
             device.set_master_mute(mute).await?
         }
@@ -88,7 +95,11 @@ pub(crate) async fn run_command(
             let dirac: bool = match value {
                 ToggleBool::On => true,
                 ToggleBool::Off => false,
-                ToggleBool::Toggle => !device.get_master_status().await?.dirac.unwrap(),
+                ToggleBool::Toggle => {
+                    !device.get_master_status().await?.dirac.ok_or_else(|| {
+                        anyhow::anyhow!("this device does not report its Dirac status")
+                    })?
+                }
             };
             device.set_dirac(dirac).await?
         }

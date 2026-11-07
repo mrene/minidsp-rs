@@ -103,18 +103,35 @@ impl Multiplexer {
         let this = self.clone();
         async move {
             let rx = {
+                // Hold the write lock while queuing the command, so the order of pending commands
+                // always matches the order in which they are written to the device.
+                let mut writer = this.write.lock().await;
+
                 let (tx, rx) = oneshot::channel();
-                let mut pending_command = this.pending_command.lock().unwrap();
-                pending_command.push_back((cmd.clone(), tx));
+                this.pending_command
+                    .lock()
+                    .unwrap()
+                    .push_back((cmd.clone(), tx));
+
+                log::trace!("send: {:02x?}", &cmd);
+                if let Err(e) = writer.send(cmd).await {
+                    // The command never made it to the device, don't wait for its response
+                    drop(rx);
+                    Self::purge_cancelled(&mut this.pending_command.lock().unwrap());
+                    return Err(e);
+                }
                 rx
             };
 
-            let mut writer = this.write.lock().await;
-            log::trace!("send: {:02x?}", &cmd);
-            writer.send(cmd).await?;
-
             rx.await.map_err(|_| MiniDSPError::TransportClosed)?
         }
+    }
+
+    /// Removes pending commands whose caller is no longer waiting for a response (e.g. because
+    /// the request timed out). Leaving them in the queue would make them capture responses
+    /// meant for subsequent commands.
+    fn purge_cancelled(pending: &mut VecDeque<PendingCommandTuple>) {
+        pending.retain(|(_, tx)| !tx.is_canceled());
     }
 
     /// Receives responses from the transport, dispatches responses to the first pending command if it matches, else
@@ -135,6 +152,7 @@ impl Multiplexer {
 
             {
                 let mut pending_cmd = pending_command.lock().unwrap();
+                Self::purge_cancelled(&mut pending_cmd);
                 let matches = if let Some((cmd, _)) = pending_cmd.front() {
                     cmd.matches_response(&data)
                 } else {
@@ -242,5 +260,38 @@ mod test {
         let (resp1, resp2, _) = futures_util::join!(resp1, resp2, answer);
         assert!(matches!(resp1.unwrap(), Responses::Ack));
         assert!(matches!(resp2.unwrap(), Responses::HardwareId { .. }));
+    }
+
+    #[tokio::test]
+    async fn test_timed_out_command_does_not_block_queue() {
+        use std::time::Duration;
+
+        let (sink_tx, mut sink_rx) = mpsc::channel::<Commands>(10);
+        let (mut stream_tx, stream_rx) = mpsc::channel::<Result<Responses, MiniDSPError>>(10);
+        let sink_tx = sink_tx.sink_map_err(|_| MiniDSPError::TransportClosed);
+        let mplex = Multiplexer::from_split(Box::pin(sink_tx), Box::pin(stream_rx));
+
+        // The device never answers this one, and the caller gives up
+        let timed_out = tokio::time::timeout(
+            Duration::from_millis(50),
+            mplex.roundtrip(Commands::ReadHardwareId),
+        )
+        .await;
+        assert!(timed_out.is_err());
+        assert!(matches!(
+            sink_rx.next().await,
+            Some(Commands::ReadHardwareId)
+        ));
+
+        // The next command must still receive its own response
+        let resp = mplex.roundtrip(Commands::SetMute { value: true });
+        let answer = async move {
+            let cmd = sink_rx.next().await.unwrap();
+            assert!(matches!(cmd, Commands::SetMute { .. }));
+            stream_tx.send(Ok(Responses::Ack)).await.unwrap();
+        };
+        let (resp, _) =
+            futures_util::join!(tokio::time::timeout(Duration::from_secs(1), resp), answer);
+        assert!(matches!(resp, Ok(Ok(Responses::Ack))));
     }
 }
