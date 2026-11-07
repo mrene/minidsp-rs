@@ -636,6 +636,8 @@ pub async fn apply(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     if body.slot > 3 {
         return Err(Error::parameter_error("slot", "must be between 0 and 3"));
     }
+    // Loading a preset switches the active slot
+    super::locks::check(device_index, false, true).await?;
     let preset = read_preset(&presets_dir().await, &id).await?;
 
     let app = super::super::APP.get().unwrap();

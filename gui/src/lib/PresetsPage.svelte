@@ -11,6 +11,8 @@
   const active = $derived(ctl.master.preset);
   const product = $derived(ctl.layout?.product_name ?? '');
   const busy = $derived(ctl.applyingSlot !== undefined);
+  const locked = $derived(ctl.locks.preset);
+  const LOCKED_TITLE = 'The preset is locked. Untick Lock next to the preset buttons to switch or load.';
   const unknown = $derived(ctl.unknownSettings());
   const activeInfo = $derived(ctl.memory.state.slot);
   const linked = $derived(activeInfo?.presetId ? ctl.presets.find((p) => p.id === activeInfo.presetId) : undefined);
@@ -106,7 +108,7 @@
   <section class="panel">
     <div class="panel-head">
       <h2>Device slots</h2>
-      <button disabled={ctl.previousSlot === undefined || busy} onclick={() => ctl.toggleAB()} title="Switch between this slot and the previous one">
+      <button disabled={locked || ctl.previousSlot === undefined || busy} onclick={() => ctl.toggleAB()} title={locked ? LOCKED_TITLE : 'Switch between this slot and the previous one'}>
         A/B {#if ctl.previousSlot !== undefined}⇄ {ctl.previousSlot + 1}{/if}
       </button>
     </div>
@@ -132,7 +134,7 @@
               </td>
               <td class="right">
                 {#if slot !== active}
-                  <button disabled={busy || ctl.presetBusy} onclick={() => ctl.setMaster({ preset: slot })}>Activate</button>
+                  <button disabled={locked || busy || ctl.presetBusy} title={locked ? LOCKED_TITLE : undefined} onclick={() => ctl.setMaster({ preset: slot })}>Activate</button>
                 {/if}
               </td>
             </tr>
@@ -140,6 +142,12 @@
         </tbody>
       </table>
     </div>
+    {#if locked}
+      <p class="hint locked-note">
+        The preset is locked, so slots can't be switched or loaded.
+        <button class="ghost" onclick={() => ctl.setLock('preset', false)}>Unlock</button>
+      </p>
+    {/if}
     <p class="hint">
       For A/B testing, load each preset into its own slot, then switch slots. Switching is instant;
       loading a preset writes every setting and takes a few seconds (longer with FIR filters).
@@ -247,7 +255,7 @@
               <select aria-label="Slot to load “{selected.name}” into" bind:value={target} disabled={!compatible}>
                 {#each slotNumbers as slot (slot)}<option value={slot}>Slot {slot + 1}</option>{/each}
               </select>
-              <button class="on" disabled={!compatible || busy} onclick={() => ctl.applyPreset(selected.id, target)}>Load into slot</button>
+              <button class="on" disabled={locked || !compatible || busy} title={locked ? LOCKED_TITLE : undefined} onclick={() => ctl.applyPreset(selected.id, target)}>Load into slot</button>
             </div>
             <button disabled={!canUndo} onclick={() => ctl.undoPreset(selected.id)} title="Restore the settings before the last change">Undo last change</button>
             <button onclick={() => ctl.exportPreset(selected.id)}>Export</button>
@@ -357,6 +365,12 @@
   }
   .right {
     text-align: right;
+  }
+  .locked-note {
+    color: var(--warn) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .hint {
     margin: 0;

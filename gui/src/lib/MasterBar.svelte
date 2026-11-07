@@ -10,23 +10,21 @@
   let local = $state(0);
   const shownVolume = $derived(dragging ? local : master.volume);
 
-  // The source is locked by default so it can't be changed by accident; remembered per browser
-  const LOCK_KEY = 'minidsp-gui:source-locked';
-  let sourceLocked = $state(true);
-  try {
-    sourceLocked = localStorage.getItem(LOCK_KEY) !== 'false';
-  } catch {
-    // Storage unavailable, stay locked
-  }
-  function setSourceLocked(locked: boolean) {
-    sourceLocked = locked;
-    try {
-      localStorage.setItem(LOCK_KEY, String(locked));
-    } catch {
-      // Not remembered
-    }
-  }
+  // Locks are kept by the daemon, so they protect every browser and the MCP tools too
+  const sourceLocked = $derived(ctl.locks.source);
+  const presetLocked = $derived(ctl.locks.preset);
 </script>
+
+{#snippet lock(what: 'source' | 'preset', locked: boolean, title: string)}
+  <label class="lock" class:locked {title}>
+    <input type="checkbox" checked={locked} aria-label="Lock {what}" onchange={(e) => ctl.setLock(what, e.currentTarget.checked)} />
+    <svg viewBox="0 0 12 14" width="10" height="12" aria-hidden="true">
+      <rect x="1" y="6" width="10" height="7" rx="1.2" fill="currentColor" />
+      <path d={locked ? 'M3.2 6V4.2a2.8 2.8 0 0 1 5.6 0V6' : 'M3.2 6V4.2a2.8 2.8 0 0 1 5.6 0'} fill="none" stroke="currentColor" stroke-width="1.4" />
+    </svg>
+    <span>Lock</span>
+  </label>
+{/snippet}
 
 <div class="master">
   <div class="group volume">
@@ -81,7 +79,7 @@
           class:on={master.preset === preset}
           aria-pressed={master.preset === preset}
           title={info?.presetName ? `Slot ${preset + 1}: ${info.presetName}${info.dirty ? ' (modified)' : ''}` : `Slot ${preset + 1}`}
-          disabled={ctl.presetBusy || ctl.applyingSlot !== undefined}
+          disabled={presetLocked || ctl.presetBusy || ctl.applyingSlot !== undefined}
           onclick={() => master.preset !== preset && ctl.setMaster({ preset })}
         >
           {preset + 1}
@@ -89,12 +87,13 @@
       {/each}
     </div>
     <button
-      disabled={ctl.previousSlot === undefined || ctl.presetBusy}
-      title={ctl.previousSlot === undefined ? 'Switch slots once to enable A/B' : `Switch to slot ${ctl.previousSlot + 1}`}
+      disabled={presetLocked || ctl.previousSlot === undefined || ctl.presetBusy}
+      title={presetLocked ? 'Preset is locked' : ctl.previousSlot === undefined ? 'Switch slots once to enable A/B' : `Switch to slot ${ctl.previousSlot + 1}`}
       onclick={() => ctl.toggleAB()}
     >
       A/B
     </button>
+    {@render lock('preset', presetLocked, 'Prevent the active preset from being switched by accident')}
   </div>
 
   {#if ctl.layout && ctl.layout.sources.length > 0}
@@ -112,14 +111,7 @@
           <option value={source}>{source.toUpperCase()}</option>
         {/each}
       </select>
-      <label class="lock" class:locked={sourceLocked} title="Prevent the source from being changed by accident">
-        <input type="checkbox" checked={sourceLocked} onchange={(e) => setSourceLocked(e.currentTarget.checked)} />
-        <svg viewBox="0 0 12 14" width="10" height="12" aria-hidden="true">
-          <rect x="1" y="6" width="10" height="7" rx="1.2" fill="currentColor" />
-          <path d={sourceLocked ? 'M3.2 6V4.2a2.8 2.8 0 0 1 5.6 0V6' : 'M3.2 6V4.2a2.8 2.8 0 0 1 5.6 0'} fill="none" stroke="currentColor" stroke-width="1.4" />
-        </svg>
-        <span>Lock</span>
-      </label>
+      {@render lock('source', sourceLocked, 'Prevent the source from being changed by accident')}
     </div>
   {/if}
 

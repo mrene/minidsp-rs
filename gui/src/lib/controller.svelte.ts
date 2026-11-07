@@ -16,7 +16,7 @@ import { cascadeDb, firDb, logFrequencies } from './dsp';
 import { bandCoeffs, toBiquad, xoverCoeffs } from './filters';
 import { countUnknown, stateToConfig } from './presets';
 import { notify, reportError } from './toasts.svelte';
-import type { ChannelLinks, ChannelNames, HistoryEntry, LinkGroup, LinkParam, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
+import type { ChannelLinks, ChannelNames, HistoryEntry, LinkGroup, LinkParam, Locks, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
 
 export type ChannelKind = 'in' | 'out';
 export interface ChannelRef {
@@ -68,6 +68,8 @@ class Controller {
   names = $state<ChannelNames>({ inputs: {}, outputs: {} });
   /** Linked channels, stored by the daemon and shared by every client */
   links = $state<ChannelLinks>({ groups: [] });
+  /** Source and preset locks, enforced by the daemon */
+  locks = $state<Locks>({ source: true, preset: true });
 
   #deviceUrl = '';
   #activeSlot: number | undefined;
@@ -132,6 +134,7 @@ class Controller {
     this.master = {};
     this.names = { inputs: {}, outputs: {} };
     this.links = { groups: [] };
+    this.locks = { source: true, preset: true };
     this.inputLevels = [];
     this.outputLevels = [];
     this.firLoading = {};
@@ -144,7 +147,9 @@ class Controller {
         // Names are optional; the interface works without them
         const names = await api.names(index).catch(() => ({ inputs: {}, outputs: {} }));
         const links = await api.links(index).catch(() => ({ groups: [] }));
+        const locks = await api.locks(index).catch(() => ({ source: true, preset: true }));
         if (cancelled) return;
+        this.locks = locks;
         this.names = names;
         this.links = links;
         this.layout = layout;
@@ -252,6 +257,19 @@ class Controller {
       this.names = await api.setNames(this.selected, next);
     } catch (e) {
       this.names = previous;
+      reportError(e);
+    }
+  }
+
+  // ---- Locks -------------------------------------------------------------------------------
+
+  async setLock(what: keyof Locks, locked: boolean) {
+    const previous = { ...this.locks };
+    this.locks = { ...this.locks, [what]: locked };
+    try {
+      this.locks = await api.setLocks(this.selected, this.locks);
+    } catch (e) {
+      this.locks = previous;
       reportError(e);
     }
   }

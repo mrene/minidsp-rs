@@ -149,6 +149,12 @@ export interface Branding {
   accent?: string;
 }
 
+/** Protections enforced by the daemon; both are on until unlocked */
+export interface Locks {
+  source: boolean;
+  preset: boolean;
+}
+
 /** Settings a link group can share */
 export type LinkParam = 'peq' | 'crossover' | 'compressor' | 'fir' | 'gain' | 'mute' | 'delay' | 'invert';
 

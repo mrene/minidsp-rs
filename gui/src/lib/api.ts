@@ -1,5 +1,6 @@
 import type {
   Branding,
+  Locks,
   ChannelLinks,
   ChannelNames,
   Config,
@@ -54,6 +55,8 @@ export const api = {
   branding: () => request<Branding>('GET', '/branding'),
   setBranding: (branding: Branding) => request<Branding>('PUT', '/branding', branding),
 
+  locks: (device: number) => request<Locks>('GET', `/devices/${device}/locks`),
+  setLocks: (device: number, locks: Locks) => request<Locks>('PUT', `/devices/${device}/locks`, locks),
   links: (device: number) => request<ChannelLinks>('GET', `/devices/${device}/links`),
   setLinks: (device: number, links: ChannelLinks) => request<ChannelLinks>('PUT', `/devices/${device}/links`, links),
   names: (device: number) => request<ChannelNames>('GET', `/devices/${device}/names`),

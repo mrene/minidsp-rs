@@ -24,6 +24,9 @@ pub enum Error {
     #[error("the specified device is not ready to accept requests")]
     DeviceNotReady,
 
+    #[error("{what} is locked. Unlock it first.")]
+    Locked { what: String },
+
     #[error(transparent)]
     #[serde(serialize_with = "ser_details")]
     #[schemars(with = "InternalErrorDetails")]
