@@ -6,12 +6,15 @@
   import Nav from './lib/Nav.svelte';
   import Overview from './lib/Overview.svelte';
   import PresetsPage from './lib/PresetsPage.svelte';
+  import SettingsPage from './lib/SettingsPage.svelte';
+  import { branding } from './lib/branding.svelte';
   import { router } from './lib/route.svelte';
   import Routing from './lib/Routing.svelte';
   import { dismiss, toasts } from './lib/toasts.svelte';
   import type { Device } from './lib/types';
 
   onMount(() => {
+    void branding.load();
     void ctl.loadDevices();
     // Devices can take a moment to show up after the daemon starts
     const timer = setInterval(() => {
@@ -50,9 +53,13 @@
   <header class="top">
     <div class="brand">
       <span class="logo" aria-hidden="true">
-        <svg viewBox="0 0 16 16" width="16" height="16"><path d="M1 12 L4 12 L6 4 L9 14 L11 8 L15 8" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" /></svg>
+        {#if branding.saved.logo}
+          <img src={branding.saved.logo} alt="" />
+        {:else}
+          <svg viewBox="0 0 16 16" width="16" height="16"><path d="M1 12 L4 12 L6 4 L9 14 L11 8 L15 8" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" /></svg>
+        {/if}
       </span>
-      <span class="name">minidsp</span>
+      <span class="name" class:custom={!!branding.saved.title}>{branding.title}</span>
       {#if ctl.devices.length > 1}
         <label class="sr-only" for="device">Device</label>
         <select id="device" bind:value={ctl.selected}>
@@ -88,6 +95,8 @@
           <Routing />
         {:else if route.page === 'presets'}
           <PresetsPage />
+        {:else if route.page === 'settings'}
+          <SettingsPage />
         {:else}
           {#key `${route.ch.kind}${route.ch.index}`}
             <ChannelPage ch={route.ch} />
@@ -135,6 +144,20 @@
   }
   .logo {
     display: inline-flex;
+    align-items: center;
+  }
+  .logo img {
+    height: 24px;
+    max-width: 96px;
+    object-fit: contain;
+  }
+  .name.custom {
+    font-family: var(--sans);
+    letter-spacing: 0;
+    max-width: 22ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .name {
     font-family: var(--mono);

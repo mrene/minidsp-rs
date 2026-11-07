@@ -2,3 +2,4 @@ node_modules/
 dist/
 dev/presets/
 dev/channel-names.json
+dev/branding.json

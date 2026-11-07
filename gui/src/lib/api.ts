@@ -1,4 +1,5 @@
 import type {
+  Branding,
   ChannelNames,
   Config,
   Device,
@@ -48,6 +49,9 @@ export const api = {
     request<MasterStatus>('POST', `/devices/${device}`, status),
   applyConfig: (device: number, config: Config) =>
     request<void>('POST', `/devices/${device}/config`, config),
+
+  branding: () => request<Branding>('GET', '/branding'),
+  setBranding: (branding: Branding) => request<Branding>('PUT', '/branding', branding),
 
   names: (device: number) => request<ChannelNames>('GET', `/devices/${device}/names`),
   setNames: (device: number, names: ChannelNames) => request<ChannelNames>('PUT', `/devices/${device}/names`, names),

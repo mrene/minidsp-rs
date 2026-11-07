@@ -26,6 +26,7 @@ pub use error::{Error, FormattedError};
 mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
+mod branding;
 mod gui;
 mod names;
 mod openapi;
@@ -420,6 +421,8 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
             "/devices/:deviceIndex/presets/:presetId/apply",
             presets::apply,
         )
+        .get("/branding", branding::get)
+        .put("/branding", branding::put)
         .get("/presets", presets::list)
         .post("/presets", presets::create)
         .get("/deleted-presets", presets::list_deleted)

@@ -28,6 +28,7 @@
   {#each inputs as ch (ch.index)}{@render channel(ch)}{/each}
   <span class="section label">Outputs</span>
   {#each outputs as ch (ch.index)}{@render channel(ch)}{/each}
+  <a href={href.settings} class="item settings" class:current={router.route.page === 'settings'} aria-current={router.route.page === 'settings' ? 'page' : undefined}>Settings</a>
 </nav>
 
 <style>
@@ -80,6 +81,10 @@
   .mini {
     flex: 1;
     min-width: 30px;
+  }
+  .settings {
+    margin-top: 14px;
+    color: var(--muted);
   }
 
   /* Phones: the navigation becomes a horizontal strip */

@@ -140,6 +140,15 @@ export interface Config {
   outputs?: OutputConfig[];
 }
 
+export interface Branding {
+  /** Name shown in the header and browser tab; the default is used when empty */
+  title: string;
+  /** Logo as a data URL */
+  logo?: string;
+  /** Accent color, #rrggbb */
+  accent?: string;
+}
+
 /** Custom channel names, by 0-based channel index */
 export interface ChannelNames {
   inputs: Record<string, string>;
