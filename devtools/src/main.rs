@@ -67,9 +67,8 @@ pub async fn main() -> Result<()> {
         SubCommand::Decode { input, force_kind } => {
             let file = File::open(input).await?;
             let framed = LinesCodec::new().framed(file);
-            let messages =
-                framed.filter_map(|x| async { recorder::Message::from_string(x.ok()?.as_str()) });
-            decode(messages, force_kind).await?;
+            let lines = framed.filter_map(|x| async { CaptureLine::parse(x.ok()?.as_str()) });
+            decode(lines, force_kind).await?;
         }
         SubCommand::DumpBulk {
             input,
@@ -121,8 +120,24 @@ async fn dump(
     Ok(())
 }
 
+/// A line of a capture file: a frame, or a `#` comment such as a marker added while capturing
+enum CaptureLine {
+    Message(recorder::Message),
+    Comment(String),
+}
+
+impl CaptureLine {
+    fn parse(line: &str) -> Option<Self> {
+        let trimmed = line.trim();
+        if let Some(comment) = trimmed.strip_prefix('#') {
+            return Some(CaptureLine::Comment(comment.trim().to_string()));
+        }
+        recorder::Message::from_string(trimmed).map(CaptureLine::Message)
+    }
+}
+
 async fn decode(
-    framed: impl Stream<Item = recorder::Message>,
+    framed: impl Stream<Item = CaptureLine>,
     device_kind: Option<DeviceKind>,
 ) -> Result<()> {
     let mut decoder = {
@@ -139,7 +154,15 @@ async fn decode(
     let mut n_sent: i32 = 0;
     let mut framed = Box::pin(framed);
 
-    while let Some(msg) = framed.next().await {
+    while let Some(line) = framed.next().await {
+        let msg = match line {
+            CaptureLine::Comment(text) => {
+                // Markers stand out so captured actions are easy to find
+                println!("\n\x1b[1;35m### {text}\x1b[0m");
+                continue;
+            }
+            CaptureLine::Message(msg) => msg,
+        };
         match msg {
             recorder::Message::Sent(data) => {
                 n_sent += 1;
