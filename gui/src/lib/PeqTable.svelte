@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PeqBand } from './channels.svelte';
-  import { channelName, ctl, type ChannelRef } from './controller.svelte';
+  import { ctl, type ChannelRef } from './controller.svelte';
   import { parseRewBiquads, PEQ_TYPES, peqTypeInfo, type PeqType } from './dsp';
   import NumberField from './NumberField.svelte';
   import { notify, reportError } from './toasts.svelte';
@@ -37,7 +37,7 @@
     const all: Record<number, PeqBand> = {};
     for (const i of indexes) all[i] = { ...defaultBand(i, 'PK'), gain: 0 };
     await ctl.setPeqs(ch, all);
-    notify(`${channelName(ch)}: all ${count} bands set flat`);
+    notify(`${ctl.label(ch)}: all ${count} bands set flat`);
   }
 
   async function setAllBypass(bypass: boolean) {
@@ -67,7 +67,7 @@
       }
       await ctl.setPeqs(ch, all);
       notify(
-        `Imported ${filters.length - skipped} filters into ${channelName(ch)}` +
+        `Imported ${filters.length - skipped} filters into ${ctl.label(ch)}` +
           (skipped ? ` (${skipped} skipped: this channel has ${count} bands)` : ''),
       );
     } catch (e) {

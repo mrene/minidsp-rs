@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { channelColor, channelName, ctl, type ChannelRef } from './controller.svelte';
+  import ChannelLabel from './ChannelLabel.svelte';
+  import { channelColor, channelName, ctl, MAX_NAME_LENGTH, type ChannelRef } from './controller.svelte';
   import { peqTypeInfo } from './dsp';
   import CompressorPanel from './CompressorPanel.svelte';
   import CrossoverPanel from './CrossoverPanel.svelte';
@@ -22,6 +23,27 @@
   const hasMute = $derived(layout ? layout.has_mute : true);
 
   let selected = $state<number | undefined>();
+
+  // ---- Renaming ----
+
+  let editing = $state(false);
+  let draft = $state('');
+
+  function startRename() {
+    draft = ctl.customName(ch) ?? '';
+    editing = true;
+  }
+
+  function commitRename() {
+    if (!editing) return;
+    editing = false;
+    if (draft.trim() !== (ctl.customName(ch) ?? '')) void ctl.renameChannel(ch, draft);
+  }
+
+  function focusAndSelect(node: HTMLInputElement) {
+    node.focus();
+    node.select();
+  }
 
   // ---- Response plot ----
 
@@ -88,7 +110,25 @@
   <header class="panel strip">
     <div class="title">
       <span class="swatch" style:background={color}></span>
-      <h1 class="num">{channelName(ch)}</h1>
+      {#if editing}
+        <input
+          class="rename"
+          type="text"
+          bind:value={draft}
+          maxlength={MAX_NAME_LENGTH}
+          placeholder={channelName(ch)}
+          aria-label="Name for {channelName(ch)} (empty restores the default)"
+          use:focusAndSelect
+          onkeydown={(e) => {
+            if (e.key === 'Enter') commitRename();
+            else if (e.key === 'Escape') editing = false;
+          }}
+          onblur={commitRename}
+        />
+      {:else}
+        <h1><ChannelLabel {ch} /></h1>
+        <button class="ghost" aria-label="Rename {ctl.label(ch)}" onclick={startRename}>Rename</button>
+      {/if}
       {#if hasMute}
         <button class="danger" class:on={chState.mute} aria-pressed={chState.mute ?? false} onclick={() => ctl.setMute(ch, !chState.mute)}>
           {chState.mute === undefined ? 'Mute ?' : 'Mute'}
@@ -184,10 +224,24 @@
     align-items: center;
     gap: 10px;
   }
+  .title {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
   .title h1 {
+    font-family: var(--mono);
     font-size: 16px;
     letter-spacing: 0.04em;
-    margin-right: 6px;
+    min-width: 0;
+    max-width: 100%;
+    display: inline-flex;
+  }
+  .rename {
+    font-family: var(--sans);
+    font-size: 15px;
+    width: 16em;
+    max-width: 100%;
+    padding: 2px 6px;
   }
   .swatch {
     width: 10px;

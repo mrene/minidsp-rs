@@ -140,6 +140,12 @@ export interface Config {
   outputs?: OutputConfig[];
 }
 
+/** Custom channel names, by 0-based channel index */
+export interface ChannelNames {
+  inputs: Record<string, string>;
+  outputs: Record<string, string>;
+}
+
 export interface PresetSummary {
   id: string;
   name: string;

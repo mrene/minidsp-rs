@@ -27,6 +27,7 @@ mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
 mod gui;
+mod names;
 mod openapi;
 mod presets;
 mod websocket;
@@ -398,6 +399,8 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
         )
         .post("/devices/:deviceIndex/config", post_config)
         .get("/devices/:deviceIndex/layout", gui::get_layout)
+        .get("/devices/:deviceIndex/names", names::get)
+        .put("/devices/:deviceIndex/names", names::put)
         .post(
             "/devices/:deviceIndex/presets/:presetId/apply",
             presets::apply,

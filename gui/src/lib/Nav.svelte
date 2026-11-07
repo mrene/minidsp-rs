@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { channelColor, channelName, ctl, type ChannelRef } from './controller.svelte';
+  import ChannelLabel from './ChannelLabel.svelte';
+  import { channelColor, ctl, type ChannelRef } from './controller.svelte';
   import Meter from './Meter.svelte';
   import { href, router } from './route.svelte';
 
@@ -11,7 +12,7 @@
 {#snippet channel(ch: ChannelRef)}
   <a href={href.channel(ch)} class="item ch" class:current={router.isChannel(ch)} aria-current={router.isChannel(ch) ? 'page' : undefined}>
     <span class="swatch" style:background={channelColor(ch)}></span>
-    <span class="name">{channelName(ch)}</span>
+    <span class="name"><ChannelLabel {ch} showTag={false} /></span>
     {#if ctl.state(ch)?.mute}<span class="flag">M</span>{/if}
     <span class="mini"><Meter level={ctl.level(ch)} showValue={false} /></span>
   </a>
@@ -64,7 +65,10 @@
     flex: none;
   }
   .name {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 110px;
+    display: inline-flex;
   }
   .flag {
     font-size: 9.5px;

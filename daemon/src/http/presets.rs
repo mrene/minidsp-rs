@@ -65,7 +65,7 @@ pub struct ApplyRequest {
 }
 
 /// Where presets are stored: the configured directory, or a per-user default
-async fn presets_dir() -> PathBuf {
+pub(super) async fn presets_dir() -> PathBuf {
     let app = super::super::APP.get().unwrap().read().await;
     if let Some(dir) = &app.config.presets_dir {
         return PathBuf::from(dir);

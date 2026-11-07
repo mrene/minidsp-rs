@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ChannelLabel from './ChannelLabel.svelte';
   import { channelColor, ctl } from './controller.svelte';
   import NumberField from './NumberField.svelte';
 
@@ -14,14 +15,14 @@
         <tr>
           <th><span class="sr-only">Input</span></th>
           {#each outputs as o (o)}
-            <th><span class="swatch" style:background={channelColor({ kind: 'out', index: o })}></span>OUT {o + 1}</th>
+            <th><span class="swatch" style:background={channelColor({ kind: 'out', index: o })}></span><ChannelLabel ch={{ kind: 'out', index: o }} showTag={false} /></th>
           {/each}
         </tr>
       </thead>
       <tbody>
         {#each inputs as input, i (i)}
           <tr>
-            <th scope="row"><span class="swatch" style:background={channelColor({ kind: 'in', index: i })}></span>IN {i + 1}</th>
+            <th scope="row"><span class="swatch" style:background={channelColor({ kind: 'in', index: i })}></span><ChannelLabel ch={{ kind: 'in', index: i }} /></th>
             {#each outputs as o (o)}
               <td>
                 {#if o < input.routing_count}

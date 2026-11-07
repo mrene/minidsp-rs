@@ -16,7 +16,7 @@ import { cascadeDb, firDb, logFrequencies } from './dsp';
 import { bandCoeffs, toBiquad, xoverCoeffs } from './filters';
 import { countUnknown, stateToConfig } from './presets';
 import { notify, reportError } from './toasts.svelte';
-import type { Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
+import type { ChannelNames, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
 
 export type ChannelKind = 'in' | 'out';
 export interface ChannelRef {
@@ -24,7 +24,11 @@ export interface ChannelRef {
   index: number;
 }
 
+/** Default name of a channel, e.g. "OUT 3" */
 export const channelName = (ch: ChannelRef) => `${ch.kind === 'in' ? 'IN' : 'OUT'} ${ch.index + 1}`;
+
+/** Longest custom channel name the daemon accepts */
+export const MAX_NAME_LENGTH = 32;
 
 /** Trace colors, one per output (inputs reuse them); dark enough to read on light grey */
 export const PALETTE = [
@@ -58,6 +62,9 @@ class Controller {
   presetsLoaded = $state(false);
   /** Slot a preset is currently being written into */
   applyingSlot = $state<number | undefined>();
+
+  /** Custom channel names, stored by the daemon and shared by every client */
+  names = $state<ChannelNames>({ inputs: {}, outputs: {} });
 
   #deviceUrl = '';
   #activeSlot: number | undefined;
@@ -120,6 +127,7 @@ class Controller {
     this.#activeSlot = undefined;
     this.previousSlot = undefined;
     this.master = {};
+    this.names = { inputs: {}, outputs: {} };
     this.inputLevels = [];
     this.outputLevels = [];
     this.firLoading = {};
@@ -129,7 +137,10 @@ class Controller {
         const layout = await api.layout(index);
         if (cancelled) return;
         const initial = await api.status(index);
+        // Names are optional; the interface works without them
+        const names = await api.names(index).catch(() => ({ inputs: {}, outputs: {} }));
         if (cancelled) return;
+        this.names = names;
         this.layout = layout;
         this.#useSlot(initial.master.preset ?? 0);
         this.applySummary(initial);
@@ -207,6 +218,35 @@ class Controller {
       reportError(e);
     } finally {
       if (switchingPreset) this.presetBusy = false;
+    }
+  }
+
+  // ---- Channel names -----------------------------------------------------------------------
+
+  /** Custom name of a channel, if it has one */
+  customName(ch: ChannelRef): string | undefined {
+    return (ch.kind === 'in' ? this.names.inputs : this.names.outputs)[ch.index] || undefined;
+  }
+
+  /** Name to display: the custom name, or the default one */
+  label(ch: ChannelRef): string {
+    return this.customName(ch) ?? channelName(ch);
+  }
+
+  /** Renames a channel; an empty name restores the default */
+  async renameChannel(ch: ChannelRef, name: string) {
+    const previous = $state.snapshot(this.names) as ChannelNames;
+    const next = structuredClone(previous);
+    const target = ch.kind === 'in' ? next.inputs : next.outputs;
+    const trimmed = name.trim().slice(0, MAX_NAME_LENGTH);
+    if (trimmed) target[ch.index] = trimmed;
+    else delete target[ch.index];
+    this.names = next;
+    try {
+      this.names = await api.setNames(this.selected, next);
+    } catch (e) {
+      this.names = previous;
+      reportError(e);
     }
   }
 

@@ -1,4 +1,4 @@
-import type { Config, Device, DeviceLayout, MasterStatus, Preset, PresetSummary, StatusSummary } from './types';
+import type { ChannelNames, Config, Device, DeviceLayout, MasterStatus, Preset, PresetSummary, StatusSummary } from './types';
 
 export class ApiError extends Error {}
 
@@ -36,6 +36,9 @@ export const api = {
     request<MasterStatus>('POST', `/devices/${device}`, status),
   applyConfig: (device: number, config: Config) =>
     request<void>('POST', `/devices/${device}/config`, config),
+
+  names: (device: number) => request<ChannelNames>('GET', `/devices/${device}/names`),
+  setNames: (device: number, names: ChannelNames) => request<ChannelNames>('PUT', `/devices/${device}/names`, names),
 
   presets: () => request<PresetSummary[]>('GET', '/presets'),
   preset: (id: string) => request<Preset>('GET', `/presets/${encodeURIComponent(id)}`),

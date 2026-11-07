@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ChannelLabel from './ChannelLabel.svelte';
   import { channelColor, channelName, ctl, type ChannelRef } from './controller.svelte';
   import Meter from './Meter.svelte';
   import NumberField from './NumberField.svelte';
@@ -41,7 +42,7 @@
       <div class="legend">
         {#each outputs as ch (ch.index)}
           <button class="ghost chip" class:off={hidden[ch.index]} aria-pressed={!hidden[ch.index]} onclick={() => (hidden[ch.index] = !hidden[ch.index])}>
-            <span class="swatch" style:background={channelColor(ch)}></span>{channelName(ch)}
+            <span class="swatch" style:background={channelColor(ch)}></span><ChannelLabel {ch} showTag={false} />
           </button>
         {/each}
       </div>
@@ -74,7 +75,7 @@
             {@const inLayout = ch.kind === 'in' ? ctl.layout!.inputs[ch.index] : undefined}
             <tr>
               <td>
-                <a class="ch" href={href.channel(ch)}><span class="swatch" style:background={channelColor(ch)}></span>{channelName(ch)}</a>
+                <a class="ch" href={href.channel(ch)}><span class="swatch" style:background={channelColor(ch)}></span><ChannelLabel {ch} /></a>
               </td>
               <td class="meter-col"><Meter level={ctl.level(ch)} /></td>
               <td>
