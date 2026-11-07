@@ -28,9 +28,17 @@ Working, tested against the mock devices in this repository:
   meters, per-channel gain, mute, polarity and delay, and the routing matrix
 - Parametric EQ with a frequency-response plot (drag bands on the graph, or import REW filters),
   crossovers, compressor and FIR filters
-- Preset library with save, update, load into any slot, export/import and A/B switching
-- Source lock
+- Preset library with save, update, load into any slot, export/import and A/B switching; each
+  preset keeps a full, timestamped history with undo and rollback, and deleted presets can be
+  restored
+- Source and preset locks, enforced by the daemon for every client
 - Custom names for every input and output, shared by every browser
+- Linked channels (e.g. left and right woofer) that share EQ, crossover, gain and more
+- Branding: your own name, logo and accent color
+- An [MCP server](mcp/README.md) so an AI assistant such as Claude can make adjustments,
+  including loading REW-generated EQ
+- A [USB capture tool](devtools/usb-capture/README.md) for recording how Device Console talks to
+  the device on macOS
 
 Not done yet:
 
