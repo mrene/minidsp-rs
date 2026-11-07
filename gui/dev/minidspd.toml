@@ -1,0 +1,18 @@
+# Development config: two mock devices and the web interface on http://127.0.0.1:5380
+# Run from the repository root:
+#   cargo run --bin minidspd -- --config gui/dev/minidspd.toml
+
+ignore_advertisements = true
+
+[http_server]
+bind_address = "127.0.0.1:5380"
+# Relative to the directory minidspd is started from
+static_dir = "gui/dist"
+
+# A 2x4HD (the mock's default model)
+[[static_device]]
+url = "mock:?serial=911111"
+
+# A second mock, to try the device picker
+[[static_device]]
+url = "mock:?serial=922222"

@@ -26,6 +26,7 @@ pub use error::{Error, FormattedError};
 mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
+mod gui;
 mod openapi;
 mod websocket;
 
@@ -273,8 +274,15 @@ async fn update_volume(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device = get_device_instance(&app, device_index).await?;
 
     let status = device.get_master_status().await?;
-    let current_gain = status.volume.unwrap().0;
-    let current_mute = status.mute.unwrap();
+    let current_gain = status
+        .volume
+        .ok_or_else(|| {
+            minidsp::MiniDSPError::MalformedResponse("master volume not reported".into())
+        })?
+        .0;
+    let current_mute = status.mute.ok_or_else(|| {
+        minidsp::MiniDSPError::MalformedResponse("mute status not reported".into())
+    })?;
     match direction {
         VolumeDirection::Down => {
             device
@@ -388,6 +396,11 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
             schema_fn::<MasterStatus>,
         )
         .post("/devices/:deviceIndex/config", post_config)
+        .get("/devices/:deviceIndex/layout", gui::get_layout)
+        .get(
+            "/devices/:deviceIndex/layout/get.schema",
+            schema_fn::<gui::DeviceLayout>,
+        )
         .get(
             "/devices/:deviceIndex/config/post.schema",
             schema_fn::<Config>,
@@ -399,6 +412,13 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
     if let Some(server) = server {
         if let Some(allowed_origins) = server.allowed_origins {
             builder = builder.middleware(enable_cors_all(allowed_origins.into()));
+        }
+
+        // Registered last so that API routes always take precedence over static files
+        if let Some(static_dir) = server.static_dir {
+            let root = std::path::PathBuf::from(static_dir);
+            log::info!("Serving web interface from {}", root.display());
+            builder = builder.get("/*", move |req| gui::serve_static(root.clone(), req));
         }
     }
 

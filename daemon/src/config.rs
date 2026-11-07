@@ -52,6 +52,10 @@ pub struct HttpServer {
 
     /// If set, CORS headers will be set to allow the specified origins
     pub allowed_origins: Option<String>,
+
+    /// If set, serves the web interface from this directory (e.g. the `gui/dist` build output).
+    /// API routes take precedence over files in this directory.
+    pub static_dir: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
