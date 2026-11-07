@@ -1,7 +1,14 @@
 # minidsp web interface
 
-A browser interface for `minidspd`: master volume, mute, source and preset, live level meters,
-per-channel gain, mute, polarity and delay, and the routing matrix.
+A browser interface for `minidspd`, styled like measurement software:
+
+- Master volume, mute, preset, source and Dirac, with live level meters
+- Per channel: gain, mute, polarity and delay, plus the routing matrix
+- Parametric EQ with a frequency-response plot: drag bands on the graph, scroll to change Q, or
+  import REW's "miniDSP biquad" export
+- Crossovers (Butterworth 6–48 dB/oct, Linkwitz-Riley 12–48 dB/oct), compressor, and FIR filters
+  loaded from WAV or text files
+- An overview plot of every output's combined filter response
 
 The page talks to the daemon's HTTP API and websocket; the daemon talks to the device.
 
@@ -37,7 +44,7 @@ cd gui && npm run dev
 Open the URL Vite prints (http://localhost:5173). Edits reload instantly, and API and websocket
 calls are proxied to the daemon on port 5380 (override with `MINIDSPD_URL`).
 
-`npm run check` type-checks the project.
+`npm run check` type-checks the project and `npm test` runs the filter-math unit tests.
 
 ## Serving it from minidspd
 
@@ -53,8 +60,11 @@ The daemon has no authentication. Only expose it on a network you trust.
 
 ## Limitations
 
-- miniDSP devices can't report per-channel settings (gain, mute, delay, polarity, routing). The
-  interface remembers what it last sent, per device, in the browser. A dash or "?" means unknown,
-  and changes made from another app or browser won't show up.
+- miniDSP devices can't report per-channel settings (gain, mute, delay, polarity, routing, EQ,
+  crossover, compressor, FIR). The interface remembers what it last sent, per device, in the
+  browser. A dash or "?" means unknown, and changes made from another app or browser won't show
+  up. Plots treat unknown filters as flat.
 - Master volume, mute, source, preset, Dirac and levels are read from the device and update live.
-- Not yet included: PEQ, crossovers, compressors, FIR.
+- "Reset to flat" on the FIR loads a single unit impulse. Clearing the filter the library's way
+  would load all-zero taps, which silences the output.
+- Compressor value ranges in the interface are estimates; check them against Device Console.

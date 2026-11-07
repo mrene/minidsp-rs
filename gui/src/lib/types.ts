@@ -47,8 +47,12 @@ export interface OutputLayout {
   has_delay: boolean;
   peq_count: number;
   has_crossover: boolean;
+  /** Number of crossover groups, each holding 4 cascaded biquads */
+  crossover_groups: number;
   has_compressor: boolean;
   has_fir: boolean;
+  /** Maximum number of FIR taps, 0 if there is no FIR filter */
+  fir_max_taps: number;
 }
 
 export interface DeviceLayout {
@@ -72,11 +76,50 @@ export interface RoutingEntryConfig {
   gain?: number;
 }
 
+/** Biquad coefficients in the device convention (see dsp.ts) */
+export interface BiquadConfig {
+  index?: number;
+  b0: number;
+  b1: number;
+  b2: number;
+  a1: number;
+  a2: number;
+}
+
+export interface PeqConfig {
+  index: number;
+  coeff?: BiquadConfig;
+  bypass?: boolean;
+}
+
+export interface CrossoverConfig {
+  /** Crossover group index */
+  index: number;
+  /** Biquads within the group, each with its own index (0-3) */
+  coeff: BiquadConfig[];
+  bypass?: boolean;
+}
+
+export interface CompressorConfig {
+  bypass?: boolean;
+  threshold?: number;
+  ratio?: number;
+  attack?: number;
+  release?: number;
+}
+
+export interface FirConfig {
+  bypass?: boolean;
+  /** An empty array clears the filter */
+  coefficients?: number[];
+}
+
 export interface InputConfig {
   index: number;
   mute?: boolean;
   gain?: number;
   routing?: RoutingEntryConfig[];
+  peq?: PeqConfig[];
 }
 
 export interface OutputConfig {
@@ -85,6 +128,10 @@ export interface OutputConfig {
   gain?: number;
   invert?: boolean;
   delay?: Duration;
+  peq?: PeqConfig[];
+  crossover?: CrossoverConfig[];
+  compressor?: CompressorConfig;
+  fir?: FirConfig;
 }
 
 export interface Config {

@@ -1,17 +1,25 @@
 export interface Toast {
   id: number;
   message: string;
+  kind: 'error' | 'info';
 }
 
 let nextId = 1;
 
 export const toasts = $state<Toast[]>([]);
 
-export function reportError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+function push(message: string, kind: Toast['kind']) {
   const id = nextId++;
-  toasts.push({ id, message });
-  setTimeout(() => dismiss(id), 6000);
+  toasts.push({ id, message, kind });
+  setTimeout(() => dismiss(id), kind === 'error' ? 7000 : 4000);
+}
+
+export function reportError(error: unknown) {
+  push(error instanceof Error ? error.message : String(error), 'error');
+}
+
+export function notify(message: string) {
+  push(message, 'info');
 }
 
 export function dismiss(id: number) {

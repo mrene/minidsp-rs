@@ -152,14 +152,16 @@ export function biquadDb(c: Coeffs, freq: number, fs: number): number {
 }
 
 /** Magnitude response of an FIR filter in dB, evaluated at each frequency */
-export function firDb(taps: number[], freqs: number[], fs: number): number[] {
+export function firDb(taps: ArrayLike<number>, freqs: number[], fs: number): number[] {
+  // Copy once: the taps may be a reactive proxy, which is slow to index repeatedly
+  const h = Float64Array.from(taps);
   return freqs.map((f) => {
     const w = (2 * Math.PI * f) / fs;
     let re = 0;
     let im = 0;
-    for (let n = 0; n < taps.length; n++) {
-      re += taps[n] * Math.cos(w * n);
-      im -= taps[n] * Math.sin(w * n);
+    for (let n = 0; n < h.length; n++) {
+      re += h[n] * Math.cos(w * n);
+      im -= h[n] * Math.sin(w * n);
     }
     const mag = re * re + im * im;
     return mag <= 0 ? -200 : 10 * Math.log10(mag);

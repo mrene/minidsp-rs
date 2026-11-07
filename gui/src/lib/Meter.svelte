@@ -4,14 +4,15 @@
   interface Props {
     /** Level in dBFS, or undefined if not available */
     level: number | undefined;
-    label?: string;
+    /** Show the numeric value next to the bar */
+    showValue?: boolean;
   }
-  let { level, label }: Props = $props();
+  let { level, showValue = true }: Props = $props();
 
-  const FLOOR = -60;
+  const FLOOR = -72;
   const toPercent = (db: number) => Math.max(0, Math.min(100, ((db - FLOOR) / -FLOOR) * 100));
 
-  // Peak hold that slowly falls back
+  // Peak hold that falls back after a moment
   let peak = $state(FLOOR);
   let peakTime = 0;
   $effect(() => {
@@ -27,58 +28,73 @@
   });
 
   const fill = $derived(level === undefined ? 0 : toPercent(level));
-  const zone = $derived(level === undefined ? '' : level > -3 ? 'hot' : level > -12 ? 'warm' : '');
+  const TICKS = [-60, -48, -36, -24, -12, -6];
 </script>
 
-<div class="meter" title={level === undefined ? 'No meter' : `${level.toFixed(1)} dBFS`}>
+<div class="meter" class:compact={!showValue} title={level === undefined ? 'No meter' : `${level.toFixed(1)} dBFS`}>
   <div class="track">
-    <div class="fill {zone}" style:width="{fill}%"></div>
+    <div class="fill" style:clip-path="inset(0 {100 - fill}% 0 0)"></div>
+    {#each TICKS as t (t)}<span class="tick" style:left="{toPercent(t)}%"></span>{/each}
     {#if level !== undefined}
       <div class="peak" style:left="{toPercent(peak)}%"></div>
     {/if}
   </div>
-  <span class="value">
-    {#if label}{label}{:else if level === undefined}—{:else}{level <= -120 ? '-∞' : level.toFixed(1)}{/if}
-  </span>
+  {#if showValue}
+    <span class="value num">
+      {#if level === undefined}—{:else if level <= -120}−∞{:else}{level.toFixed(1)}{/if}
+    </span>
+  {/if}
 </div>
 
 <style>
   .meter {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3.2rem;
+    grid-template-columns: minmax(0, 1fr) 3.4rem;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
+  }
+  .meter.compact {
+    grid-template-columns: minmax(0, 1fr);
   }
   .track {
     position: relative;
-    height: 0.55rem;
-    border-radius: 999px;
-    background: var(--meter-track);
-    overflow: hidden;
+    height: 6px;
+    background: var(--grid);
+    border: 1px solid var(--line);
+    border-radius: 1px;
   }
   .fill {
-    height: 100%;
-    background: var(--meter-ok);
-    transition: width 120ms linear;
+    position: absolute;
+    inset: 0;
+    /* Green up to -12, amber to -3, red above; revealed by the clip path */
+    background: linear-gradient(
+      90deg,
+      var(--ok) 0%,
+      var(--ok) 83.3%,
+      var(--warn) 83.3%,
+      var(--warn) 95.8%,
+      var(--danger) 95.8%
+    );
+    transition: clip-path 120ms linear;
   }
-  .fill.warm {
-    background: var(--meter-warm);
-  }
-  .fill.hot {
-    background: var(--meter-hot);
-  }
-  .peak {
+  .tick {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 2px;
-    background: var(--text);
+    width: 1px;
+    background: var(--bg);
     opacity: 0.6;
   }
+  .peak {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    width: 2px;
+    background: var(--text);
+  }
   .value {
-    font-variant-numeric: tabular-nums;
-    font-size: 0.8rem;
-    color: var(--text-muted);
+    font-size: 11.5px;
+    color: var(--muted);
     text-align: right;
   }
 </style>
