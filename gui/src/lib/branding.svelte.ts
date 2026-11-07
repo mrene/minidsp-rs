@@ -1,5 +1,6 @@
 // Name, logo and accent color of the interface, stored by the daemon and shared by every client
 import { api } from './api';
+import { fontPair } from './fonts';
 import type { Branding } from './types';
 
 export const DEFAULT_TITLE = 'minidsp';
@@ -48,12 +49,32 @@ class BrandingStore {
     this.apply(this.saved);
   }
 
+  #fontRequest = 0;
+
   /** Applies branding to the page (also used for live previews while editing) */
   apply(branding: Branding) {
     if (typeof document === 'undefined') return;
     document.title = branding.title || DEFAULT_TITLE;
 
     const root = document.documentElement.style;
+
+    // Load the font files first, so the page doesn't flash through fallback fonts. If another
+    // font is picked meanwhile, only the latest choice is applied.
+    const pair = fontPair(branding.font);
+    const request = ++this.#fontRequest;
+    pair
+      .load()
+      .catch(() => {})
+      .then(() => {
+        if (request !== this.#fontRequest) return;
+        if (pair.id === 'system') {
+          root.removeProperty('--sans');
+          root.removeProperty('--mono');
+        } else {
+          root.setProperty('--sans', pair.sans);
+          root.setProperty('--mono', pair.mono);
+        }
+      });
     if (branding.accent) {
       const [r, g, b] = [1, 3, 5].map((i) => parseInt(branding.accent!.slice(i, i + 2), 16));
       root.setProperty('--accent', branding.accent);

@@ -40,7 +40,7 @@ Device Console plugged into it.
 - Source and preset locks, enforced by `minidspd` for every client
 - Custom names for every input and output, shared by every browser
 - Linked channels (e.g. left and right woofer) that share EQ, crossover, gain and more
-- Branding: your own name, logo and accent color
+- Branding: your own name, logo, accent color and a choice of five font pairs
 - An [MCP server](mcp/README.md) so an AI assistant such as Claude can make adjustments,
   including loading REW-generated EQ
 - A [USB capture tool](devtools/usb-capture/README.md) for recording how Device Console talks to

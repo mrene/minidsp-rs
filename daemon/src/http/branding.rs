@@ -13,6 +13,9 @@ use super::{
     Error,
 };
 
+/// Font pairs the web interface bundles; "system" uses the operating system's fonts
+pub const FONTS: [&str; 5] = ["system", "plex", "inter", "barlow", "space"];
+
 /// Largest accepted logo, as a data URL (about 500 KB of image data)
 const MAX_LOGO_LEN: usize = 700_000;
 const MAX_TITLE_LEN: usize = 40;
@@ -30,6 +33,10 @@ pub struct Branding {
     /// Accent color as `#rrggbb`
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub accent: Option<String>,
+
+    /// Font pair: system, plex, inter, barlow or space
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub font: Option<String>,
 }
 
 async fn branding_file() -> PathBuf {
@@ -84,6 +91,15 @@ fn validate(mut branding: Branding) -> Result<Branding, Error> {
         }
         branding.accent = Some(accent.to_lowercase());
     }
+
+    if let Some(font) = &branding.font {
+        if !FONTS.contains(&font.as_str()) {
+            return Err(bad_request(format!(
+                "unknown font '{font}', use one of: {}",
+                FONTS.join(", ")
+            )));
+        }
+    }
     Ok(branding)
 }
 
@@ -130,7 +146,19 @@ mod test {
             title: title.into(),
             logo: logo.map(Into::into),
             accent: accent.map(Into::into),
+            font: None,
         }
+    }
+
+    #[test]
+    fn validates_fonts() {
+        let with_font = |f: &str| Branding {
+            font: Some(f.into()),
+            ..branding("", None, None)
+        };
+        assert!(validate(with_font("plex")).is_ok());
+        assert!(validate(with_font("system")).is_ok());
+        assert!(validate(with_font("comic-sans")).is_err());
     }
 
     #[test]

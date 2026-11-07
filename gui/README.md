@@ -24,7 +24,7 @@ A browser interface for `minidspd`, styled like measurement software.
 - **Locks** on the source and the active preset (on by default), enforced by `minidspd`
 - **Custom names** for every input and output
 - **Linked channels**, e.g. left and right woofer sharing EQ, crossover and gain
-- **Settings → Branding:** your own name, logo and accent color
+- **Settings → Branding:** your own name, logo, accent color and font (system fonts, IBM Plex, Inter + JetBrains Mono, Barlow, or Space Grotesk + Space Mono), bundled so no internet is needed
 
 Names, links, locks, branding and presets are stored by `minidspd`, so every browser sees the same.
 

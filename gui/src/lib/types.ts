@@ -147,6 +147,8 @@ export interface Branding {
   logo?: string;
   /** Accent color, #rrggbb */
   accent?: string;
+  /** Font pair id (see fonts.ts); the system fonts when unset */
+  font?: string;
 }
 
 /** Protections enforced by the daemon; both are on until unlocked */

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { branding, contrast, DEFAULT_ACCENT, DEFAULT_TITLE, MAX_LOGO_BYTES } from './branding.svelte';
+  import { FONT_PAIRS } from './fonts';
   import { notify, reportError } from './toasts.svelte';
   import type { Branding } from './types';
 
@@ -91,6 +92,26 @@
         <p class="help full">PNG, JPEG, WebP or SVG, under 500 KB. Also used as the browser-tab icon. A square image works best.</p>
       </div>
 
+      <span class="label" id="font-label">Font</span>
+      <div>
+        <div class="fonts" role="radiogroup" aria-labelledby="font-label">
+          {#each FONT_PAIRS as pair (pair.id)}
+            <label class="font-option" class:selected={(draft.font ?? 'system') === pair.id}>
+              <input type="radio" name="font" value={pair.id} checked={(draft.font ?? 'system') === pair.id}
+                onchange={() => (draft.font = pair.id === 'system' ? undefined : pair.id)} />
+              <span class="font-text">
+                <span class="font-name">{pair.label}</span>
+                <span class="help">{pair.description}</span>
+              </span>
+            </label>
+          {/each}
+        </div>
+        <div class="sample">
+          <span class="sample-text">Left woofer · Living room</span>
+          <span class="sample-num">OUT 1 · PEQ 3 · 120 Hz · −4.5 dB · Q 1.41</span>
+        </div>
+      </div>
+
       <label class="label" for="brand-accent">Accent</label>
       <div>
         <div class="accent-row">
@@ -173,6 +194,58 @@
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+  }
+  .fonts {
+    display: grid;
+    gap: 4px;
+  }
+  .font-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .font-option:hover {
+    background: var(--panel-2);
+  }
+  .font-option.selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .font-option input {
+    margin: 3px 0 0;
+    accent-color: var(--accent);
+  }
+  .font-text {
+    display: grid;
+    gap: 1px;
+  }
+  .font-name {
+    font-size: 13px;
+  }
+  .font-text .help {
+    margin: 0;
+  }
+  .sample {
+    display: grid;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .sample-text {
+    font-family: var(--sans);
+    font-size: 15px;
+  }
+  .sample-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
   }
   .accent-row {
     display: flex;
