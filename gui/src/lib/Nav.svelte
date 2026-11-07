@@ -22,6 +22,7 @@
   {#if hasRouting}
     <a href={href.routing} class="item" class:current={router.route.page === 'routing'} aria-current={router.route.page === 'routing' ? 'page' : undefined}>Routing</a>
   {/if}
+  <a href={href.presets} class="item" class:current={router.route.page === 'presets'} aria-current={router.route.page === 'presets' ? 'page' : undefined}>Presets</a>
   <span class="section label">Inputs</span>
   {#each inputs as ch (ch.index)}{@render channel(ch)}{/each}
   <span class="section label">Outputs</span>

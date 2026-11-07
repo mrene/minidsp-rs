@@ -4,6 +4,9 @@
 
 ignore_advertisements = true
 
+# Preset library, relative to the directory minidspd is started from
+presets_dir = "gui/dev/presets"
+
 [http_server]
 bind_address = "127.0.0.1:5380"
 # Relative to the directory minidspd is started from

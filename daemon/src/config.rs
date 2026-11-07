@@ -20,6 +20,10 @@ pub struct Config {
     /// Set to ignore network devices that broadcast advertisement packets (such as the WI-DG).
     /// It's still possible to add them using `[[static_device]]`
     pub ignore_advertisements: bool,
+
+    /// Directory where the preset library is stored. Defaults to
+    /// `~/.local/share/minidsp/presets`, or `/var/lib/minidsp/presets` without a home directory.
+    pub presets_dir: Option<String>,
 }
 
 impl Default for Config {
@@ -32,6 +36,7 @@ impl Default for Config {
             tcp_servers: Vec::new(),
             static_devices: Vec::new(),
             ignore_advertisements: false,
+            presets_dir: None,
         }
     }
 }

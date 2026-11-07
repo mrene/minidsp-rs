@@ -108,7 +108,7 @@
   <p class="note">
     Channel settings show what this page last sent. The device can't report them, so “—” or “?” means
     unknown, and changes made from another app won't appear here.
-    <button class="ghost" onclick={() => ctl.layout && ctl.memory.forget(ctl.layout.inputs.length, ctl.layout.outputs.length)}>
+    <button class="ghost" onclick={() => { ctl.memory.forget(); ctl.refreshSlots(); }}>
       Forget remembered values
     </button>
   </p>

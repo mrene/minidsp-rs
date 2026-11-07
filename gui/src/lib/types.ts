@@ -139,3 +139,21 @@ export interface Config {
   inputs?: InputConfig[];
   outputs?: OutputConfig[];
 }
+
+export interface PresetSummary {
+  id: string;
+  name: string;
+  notes: string;
+  product_name: string;
+  updated_ms: number;
+}
+
+export interface Preset {
+  name: string;
+  notes: string;
+  product_name: string;
+  updated_ms?: number;
+  config: Config;
+  /** The interface's editable parameters (ChannelState), opaque to the daemon */
+  ui: unknown;
+}

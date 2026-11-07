@@ -2,23 +2,21 @@
 import { api, latestSender, msToDuration, watchDevice, type ConnectionState } from './api';
 import {
   ChannelMemory,
+  mergeState,
+  peekSlot,
+  type ChannelState,
+  type SlotInfo,
   type CompressorState,
   type InputState,
   type OutputState,
   type PeqBand,
   type XoverGroup,
 } from './channels.svelte';
-import {
-  cascadeDb,
-  crossoverSections,
-  designBiquad,
-  firDb,
-  logFrequencies,
-  PASSTHROUGH,
-  type Coeffs,
-} from './dsp';
-import { reportError } from './toasts.svelte';
-import type { BiquadConfig, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
+import { cascadeDb, firDb, logFrequencies } from './dsp';
+import { bandCoeffs, toBiquad, xoverCoeffs } from './filters';
+import { countUnknown, stateToConfig } from './presets';
+import { notify, reportError } from './toasts.svelte';
+import type { Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
 
 export type ChannelKind = 'in' | 'out';
 export interface ChannelRef {
@@ -36,28 +34,6 @@ export const PALETTE = [
 export const channelColor = (ch: ChannelRef) =>
   PALETTE[(ch.kind === 'out' ? ch.index : ch.index + 6) % PALETTE.length];
 
-/** Coefficients actually loaded for a PEQ band */
-export function bandCoeffs(band: PeqBand, fs: number): Coeffs {
-  if (band.type === 'RAW') return band.raw ?? PASSTHROUGH;
-  return designBiquad(band.type, band.freq, band.gain, band.q, fs);
-}
-
-/** Biquads loaded into a crossover group, padded to the 4 slots of the group */
-export function xoverCoeffs(group: XoverGroup, fs: number): Coeffs[] {
-  const sections = crossoverSections(group.kind, group.type, group.order, group.freq, fs);
-  while (sections.length < 4) sections.push(PASSTHROUGH);
-  return sections;
-}
-
-const toBiquad = (c: Coeffs, index?: number): BiquadConfig => ({
-  ...(index === undefined ? {} : { index }),
-  b0: c.b0,
-  b1: c.b1,
-  b2: c.b2,
-  a1: c.a1,
-  a2: c.a2,
-});
-
 class Controller {
   devices = $state<Device[]>([]);
   devicesLoaded = $state(false);
@@ -71,6 +47,20 @@ class Controller {
   problem = $state<string | undefined>();
   /** Outputs whose FIR filter is currently being loaded */
   firLoading = $state<Record<number, boolean>>({});
+
+  /** Number of configuration slots on miniDSP devices */
+  readonly slotCount = 4;
+  /** Slot that was active before the current one, for A/B switching */
+  previousSlot = $state<number | undefined>();
+  /** What each slot holds, as far as this interface knows */
+  slots = $state<(SlotInfo | undefined)[]>([]);
+  presets = $state<PresetSummary[]>([]);
+  presetsLoaded = $state(false);
+  /** Slot a preset is currently being written into */
+  applyingSlot = $state<number | undefined>();
+
+  #deviceUrl = '';
+  #activeSlot: number | undefined;
 
   memory = new ChannelMemory();
 
@@ -98,8 +88,25 @@ class Controller {
     for (const [key, value] of Object.entries(summary.master ?? {})) {
       if (value !== undefined && value !== null) (this.master as Record<string, unknown>)[key] = value;
     }
+    // Each slot holds different settings, so switch the remembered values along with it
+    const slot = this.master.preset;
+    if (slot !== undefined && slot !== this.#activeSlot && this.layout) this.#useSlot(slot);
     if (summary.input_levels) this.inputLevels = summary.input_levels;
     if (summary.output_levels) this.outputLevels = summary.output_levels;
+  }
+
+  #useSlot(slot: number) {
+    if (this.#activeSlot !== undefined) this.previousSlot = this.#activeSlot;
+    this.#activeSlot = slot;
+    const layout = this.layout!;
+    this.memory.use(this.#deviceUrl, slot, layout.inputs.length, layout.outputs.length);
+    this.refreshSlots();
+  }
+
+  /** Re-reads what every slot holds */
+  refreshSlots() {
+    this.memory.flush();
+    this.slots = Array.from({ length: this.slotCount }, (_, i) => peekSlot(this.#deviceUrl, i));
   }
 
   /** Connects to a device: fetch its layout and status, then stream updates. Returns a cleanup. */
@@ -109,6 +116,9 @@ class Controller {
     let stop: (() => void) | undefined;
 
     this.layout = undefined;
+    this.#deviceUrl = device.url;
+    this.#activeSlot = undefined;
+    this.previousSlot = undefined;
     this.master = {};
     this.inputLevels = [];
     this.outputLevels = [];
@@ -118,11 +128,11 @@ class Controller {
       try {
         const layout = await api.layout(index);
         if (cancelled) return;
-        this.memory.use(device.url, layout.inputs.length, layout.outputs.length);
         const initial = await api.status(index);
         if (cancelled) return;
-        this.applySummary(initial);
         this.layout = layout;
+        this.#useSlot(initial.master.preset ?? 0);
+        this.applySummary(initial);
         this.problem = undefined;
         stop = watchDevice(index, (s) => this.applySummary(s), (s) => (this.connection = s));
       } catch (e) {
@@ -159,6 +169,7 @@ class Controller {
    * value, since we can no longer tell what the device has.
    */
   #apply<T>(key: string, value: T, config: (value: T) => Config, onError: () => void) {
+    this.memory.markDirty();
     this.memory.save();
     const device = this.selected;
     this.#send(key, value, async (latest: T) => {
@@ -294,6 +305,7 @@ class Controller {
   async setPeqs(ch: ChannelRef, bands: Record<number, PeqBand>) {
     const s = this.state(ch);
     Object.assign(s.peq, bands);
+    this.memory.markDirty();
     this.memory.save();
     try {
       await api.applyConfig(
@@ -357,6 +369,7 @@ class Controller {
       await api.applyConfig(this.selected, { outputs: [{ index: output, fir: { coefficients: taps } }] });
       s.fir.taps = taps;
       s.fir.name = name;
+      this.memory.markDirty();
       return true;
     } catch (e) {
       s.fir.taps = undefined;
@@ -386,6 +399,141 @@ class Controller {
       (v) => ({ outputs: [{ index: output, fir: { bypass: v } }] }),
       () => (s.fir.bypass = undefined),
     );
+  }
+
+  // ---- Presets -----------------------------------------------------------------------------
+
+  /** Settings in the active slot that a preset can't include, because they're unknown */
+  unknownSettings() {
+    return this.layout ? countUnknown(this.memory.state, this.layout) : { unknown: 0, total: 0 };
+  }
+
+  async loadPresets() {
+    try {
+      this.presets = await api.presets();
+    } catch (e) {
+      reportError(e);
+    } finally {
+      this.presetsLoaded = true;
+    }
+  }
+
+  #presetFromActiveSlot(name: string, notes: string): Preset {
+    const state = $state.snapshot(this.memory.state) as ChannelState;
+    delete state.slot;
+    return {
+      name,
+      notes,
+      product_name: this.layout!.product_name,
+      config: stateToConfig(state, this.layout!, this.fs),
+      ui: state,
+    };
+  }
+
+  #markSlot(info: SlotInfo) {
+    this.memory.state.slot = info;
+    this.memory.save();
+    this.refreshSlots();
+  }
+
+  /** Saves the active slot's settings as a new library preset */
+  async savePreset(name: string, notes: string) {
+    try {
+      const { id } = await api.createPreset(this.#presetFromActiveSlot(name, notes));
+      this.#markSlot({ presetId: id, presetName: name, dirty: false });
+      notify(`Saved preset “${name}”`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  /** Overwrites a library preset with the active slot's settings */
+  async updatePreset(id: string) {
+    const existing = this.presets.find((p) => p.id === id);
+    if (!existing) return;
+    try {
+      await api.updatePreset(id, this.#presetFromActiveSlot(existing.name, existing.notes));
+      this.#markSlot({ presetId: id, presetName: existing.name, dirty: false });
+      notify(`Updated preset “${existing.name}”`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  async deletePreset(id: string) {
+    try {
+      await api.deletePreset(id);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  /** Switches the device to `slot` and writes a library preset into it */
+  async applyPreset(id: string, slot: number) {
+    const device = this.selected;
+    this.applyingSlot = slot;
+    try {
+      const preset = await api.preset(id);
+      const master = await api.applyPreset(device, id, slot);
+      // The device is now on `slot`; switch to its remembered values, then overlay the preset
+      this.applySummary({ master });
+      if (this.#activeSlot !== slot) this.#useSlot(slot);
+      const base = $state.snapshot(this.memory.state) as ChannelState;
+      const merged = mergeState(base, (preset.ui ?? { inputs: {}, outputs: {} }) as ChannelState);
+      merged.slot = { presetId: id, presetName: preset.name, dirty: false };
+      this.memory.replace(merged);
+      this.refreshSlots();
+      notify(`Loaded “${preset.name}” into slot ${slot + 1}`);
+    } catch (e) {
+      reportError(e);
+    } finally {
+      this.applyingSlot = undefined;
+    }
+  }
+
+  /** Flips between the current slot and the previous one */
+  async toggleAB() {
+    if (this.previousSlot !== undefined) await this.setMaster({ preset: this.previousSlot });
+  }
+
+  /** Downloads a library preset as a JSON file */
+  async exportPreset(id: string) {
+    try {
+      const preset = await api.preset(id);
+      const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${preset.name.replace(/[^\w\- ]+/g, '').trim() || 'preset'}.minidsp-preset.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  /** Adds a preset file (as exported) to the library */
+  async importPreset(file: File) {
+    try {
+      const parsed = JSON.parse(await file.text()) as Partial<Preset>;
+      if (typeof parsed.name !== 'string' || typeof parsed.product_name !== 'string' || typeof parsed.config !== 'object') {
+        throw new Error(`${file.name} is not a minidsp preset`);
+      }
+      await api.createPreset({
+        name: parsed.name,
+        notes: parsed.notes ?? '',
+        product_name: parsed.product_name,
+        config: parsed.config,
+        ui: parsed.ui ?? {},
+      });
+      notify(`Imported preset “${parsed.name}”`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e instanceof SyntaxError ? new Error(`${file.name} is not valid JSON`) : e);
+    }
   }
 
   // ---- Responses ---------------------------------------------------------------------------

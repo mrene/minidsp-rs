@@ -1,8 +1,8 @@
-import type { Config, Device, DeviceLayout, MasterStatus, StatusSummary } from './types';
+import type { Config, Device, DeviceLayout, MasterStatus, Preset, PresetSummary, StatusSummary } from './types';
 
 export class ApiError extends Error {}
 
-async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
@@ -36,6 +36,16 @@ export const api = {
     request<MasterStatus>('POST', `/devices/${device}`, status),
   applyConfig: (device: number, config: Config) =>
     request<void>('POST', `/devices/${device}/config`, config),
+
+  presets: () => request<PresetSummary[]>('GET', '/presets'),
+  preset: (id: string) => request<Preset>('GET', `/presets/${encodeURIComponent(id)}`),
+  createPreset: (preset: Preset) => request<{ id: string }>('POST', '/presets', preset),
+  updatePreset: (id: string, preset: Preset) =>
+    request<{ id: string }>('PUT', `/presets/${encodeURIComponent(id)}`, preset),
+  deletePreset: (id: string) => request<void>('DELETE', `/presets/${encodeURIComponent(id)}`),
+  /** Switches the device to `slot` and writes the preset into it */
+  applyPreset: (device: number, id: string, slot: number) =>
+    request<MasterStatus>('POST', `/devices/${device}/presets/${encodeURIComponent(id)}/apply`, { slot }),
 };
 
 export type ConnectionState = 'connecting' | 'live' | 'offline';

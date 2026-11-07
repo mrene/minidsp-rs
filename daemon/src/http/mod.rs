@@ -28,6 +28,7 @@ use helpers::{parse_body, parse_param, serialize_response};
 
 mod gui;
 mod openapi;
+mod presets;
 mod websocket;
 
 #[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
@@ -397,6 +398,16 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
         )
         .post("/devices/:deviceIndex/config", post_config)
         .get("/devices/:deviceIndex/layout", gui::get_layout)
+        .post(
+            "/devices/:deviceIndex/presets/:presetId/apply",
+            presets::apply,
+        )
+        .get("/presets", presets::list)
+        .post("/presets", presets::create)
+        .get("/presets/get.schema", schema_fn::<presets::Preset>)
+        .get("/presets/:presetId", presets::get)
+        .put("/presets/:presetId", presets::update)
+        .delete("/presets/:presetId", presets::delete)
         .get(
             "/devices/:deviceIndex/layout/get.schema",
             schema_fn::<gui::DeviceLayout>,

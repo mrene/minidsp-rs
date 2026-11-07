@@ -5,6 +5,7 @@
   import MasterBar from './lib/MasterBar.svelte';
   import Nav from './lib/Nav.svelte';
   import Overview from './lib/Overview.svelte';
+  import PresetsPage from './lib/PresetsPage.svelte';
   import { router } from './lib/route.svelte';
   import Routing from './lib/Routing.svelte';
   import { dismiss, toasts } from './lib/toasts.svelte';
@@ -85,6 +86,8 @@
           <Overview />
         {:else if route.page === 'routing'}
           <Routing />
+        {:else if route.page === 'presets'}
+          <PresetsPage />
         {:else}
           {#key `${route.ch.kind}${route.ch.index}`}
             <ChannelPage ch={route.ch} />

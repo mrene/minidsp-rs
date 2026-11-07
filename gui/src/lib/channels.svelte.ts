@@ -53,9 +53,59 @@ export interface OutputState {
   fir: FirState;
 }
 
+/** Which library preset a device slot holds, as far as this interface knows */
+export interface SlotInfo {
+  presetId?: string;
+  presetName?: string;
+  /** Changed since the preset was loaded or saved */
+  dirty?: boolean;
+}
+
 export interface ChannelState {
   inputs: Record<number, InputState>;
   outputs: Record<number, OutputState>;
+  slot?: SlotInfo;
+}
+
+/** Storage key for a device's configuration slot. Each slot holds different settings. */
+export const slotKey = (deviceUrl: string, slot: number) => `minidsp-gui:channels:${deviceUrl}:slot${slot}`;
+const legacyKey = (deviceUrl: string) => `minidsp-gui:channels:${deviceUrl}`;
+
+/** Reads what a slot holds without switching to it */
+export function peekSlot(deviceUrl: string, slot: number): SlotInfo | undefined {
+  return load(slotKey(deviceUrl, slot)).slot;
+}
+
+/**
+ * Overlays known values from `overlay` onto `base`. Used when a preset is loaded: the preset only
+ * writes what it knows, so anything else the slot already had stays true.
+ */
+export function mergeState(base: ChannelState, overlay: ChannelState): ChannelState {
+  const result: ChannelState = structuredClone(base);
+  const assignDefined = <T extends object>(target: T, source: Partial<T> | undefined) => {
+    for (const [k, v] of Object.entries(source ?? {})) {
+      if (v !== undefined && (typeof v !== 'object' || Array.isArray(v))) (target as Record<string, unknown>)[k] = v;
+    }
+  };
+  for (const [i, input] of Object.entries(overlay.inputs ?? {})) {
+    const target = (result.inputs[Number(i)] ??= { routing: {}, peq: {} });
+    assignDefined(target, input);
+    for (const [o, r] of Object.entries(input.routing ?? {})) assignDefined((target.routing[Number(o)] ??= {}), r);
+    Object.assign(target.peq, structuredClone(input.peq ?? {}));
+  }
+  for (const [i, output] of Object.entries(overlay.outputs ?? {})) {
+    const target = (result.outputs[Number(i)] ??= { peq: {}, xover: {}, compressor: {}, fir: {} });
+    assignDefined(target, output);
+    Object.assign(target.peq, structuredClone(output.peq ?? {}));
+    Object.assign(target.xover, structuredClone(output.xover ?? {}));
+    assignDefined(target.compressor, output.compressor);
+    if (output.fir?.taps) {
+      target.fir.taps = [...output.fir.taps];
+      target.fir.name = output.fir.name;
+    }
+    if (output.fir?.bypass !== undefined) target.fir.bypass = output.fir.bypass;
+  }
+  return result;
 }
 
 const empty = (): ChannelState => ({ inputs: {}, outputs: {} });
@@ -75,14 +125,41 @@ export class ChannelMemory {
   #key = '';
   #saveTimer: ReturnType<typeof setTimeout> | undefined;
 
+  #counts = { inputs: 0, outputs: 0 };
+
   /**
-   * Switches to the remembered values of a device, identified by its URL, and makes sure every
-   * channel has an entry (state must not be created while rendering).
+   * Switches to the remembered values of one of a device's slots, and makes sure every channel
+   * has an entry (state must not be created while rendering).
    */
-  use(deviceUrl: string, inputs: number, outputs: number) {
+  use(deviceUrl: string, slot: number, inputs: number, outputs: number) {
     this.flush();
-    this.#key = `minidsp-gui:channels:${deviceUrl}`;
-    const state = load(this.#key);
+    this.#key = slotKey(deviceUrl, slot);
+    this.#counts = { inputs, outputs };
+    let state = load(this.#key);
+    // Values remembered before slots were tracked belong to whichever slot is active now
+    try {
+      const legacy = localStorage.getItem(legacyKey(deviceUrl));
+      if (legacy && !localStorage.getItem(this.#key)) {
+        state = load(legacyKey(deviceUrl));
+        localStorage.setItem(this.#key, legacy);
+        localStorage.removeItem(legacyKey(deviceUrl));
+      }
+    } catch {
+      // Storage unavailable
+    }
+    this.#prepare(state);
+    this.state = state;
+  }
+
+  /** Replaces the state of the current slot, e.g. after loading a preset into it */
+  replace(state: ChannelState) {
+    this.#prepare(state);
+    this.state = state;
+    this.save();
+  }
+
+  #prepare(state: ChannelState) {
+    const { inputs, outputs } = this.#counts;
     for (let i = 0; i < inputs; i++) {
       const input = (state.inputs[i] ??= { routing: {}, peq: {} });
       input.routing ??= {};
@@ -95,7 +172,11 @@ export class ChannelMemory {
       output.compressor ??= {};
       output.fir ??= {};
     }
-    this.state = state;
+  }
+
+  /** Marks the slot as changed since its preset was loaded */
+  markDirty() {
+    if (this.state.slot?.presetId && !this.state.slot.dirty) this.state.slot.dirty = true;
   }
 
   input(index: number): InputState {
@@ -124,8 +205,8 @@ export class ChannelMemory {
     }
   }
 
-  /** Clears the remembered values, e.g. after the device was changed from another app */
-  forget(inputs: number, outputs: number) {
+  /** Clears the remembered values of the current slot, e.g. after it was changed from another app */
+  forget() {
     clearTimeout(this.#saveTimer);
     this.#saveTimer = undefined;
     try {
@@ -133,6 +214,8 @@ export class ChannelMemory {
     } catch {
       // Nothing to clear
     }
-    this.use(this.#key.replace('minidsp-gui:channels:', ''), inputs, outputs);
+    const state = empty();
+    this.#prepare(state);
+    this.state = state;
   }
 }
