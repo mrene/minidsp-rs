@@ -16,7 +16,7 @@ import { cascadeDb, firDb, logFrequencies } from './dsp';
 import { bandCoeffs, toBiquad, xoverCoeffs } from './filters';
 import { countUnknown, stateToConfig } from './presets';
 import { notify, reportError } from './toasts.svelte';
-import type { ChannelNames, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
+import type { ChannelNames, HistoryEntry, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
 
 export type ChannelKind = 'in' | 'out';
 export interface ChannelRef {
@@ -59,6 +59,7 @@ class Controller {
   /** What each slot holds, as far as this interface knows */
   slots = $state<(SlotInfo | undefined)[]>([]);
   presets = $state<PresetSummary[]>([]);
+  deletedPresets = $state<PresetSummary[]>([]);
   presetsLoaded = $state(false);
   /** Slot a preset is currently being written into */
   applyingSlot = $state<number | undefined>();
@@ -450,7 +451,7 @@ class Controller {
 
   async loadPresets() {
     try {
-      this.presets = await api.presets();
+      [this.presets, this.deletedPresets] = await Promise.all([api.presets(), api.deletedPresets()]);
     } catch (e) {
       reportError(e);
     } finally {
@@ -476,13 +477,15 @@ class Controller {
     this.refreshSlots();
   }
 
-  /** Saves the active slot's settings as a new library preset */
-  async savePreset(name: string, notes: string) {
+  /** Saves the active slot's settings as a new library preset. Returns its id. */
+  async savePreset(name: string, notes: string): Promise<string | undefined> {
     try {
-      const { id } = await api.createPreset(this.#presetFromActiveSlot(name, notes));
-      this.#markSlot({ presetId: id, presetName: name, dirty: false });
-      notify(`Saved preset “${name}”`);
+      const slot = (this.master.preset ?? 0) + 1;
+      const { id } = await api.createPreset(this.#presetFromActiveSlot(name, notes), `created from slot ${slot}`);
+      this.#markSlot({ presetId: id, presetName: id, dirty: false });
+      notify(`Saved preset “${id}”`);
       await this.loadPresets();
+      return id;
     } catch (e) {
       reportError(e);
     }
@@ -493,7 +496,8 @@ class Controller {
     const existing = this.presets.find((p) => p.id === id);
     if (!existing) return;
     try {
-      await api.updatePreset(id, this.#presetFromActiveSlot(existing.name, existing.notes));
+      const slot = (this.master.preset ?? 0) + 1;
+      await api.updatePreset(id, this.#presetFromActiveSlot(existing.name, existing.notes), `updated from slot ${slot}`);
       this.#markSlot({ presetId: id, presetName: existing.name, dirty: false });
       notify(`Updated preset “${existing.name}”`);
       await this.loadPresets();
@@ -504,11 +508,123 @@ class Controller {
 
   async deletePreset(id: string) {
     try {
+      // Slots keep naming the preset: the device still holds its settings, and the link
+      // comes back if the preset is restored
       await api.deletePreset(id);
+      notify(`Deleted “${id}”. It can be restored from Deleted presets.`);
       await this.loadPresets();
     } catch (e) {
       reportError(e);
     }
+  }
+
+  async restorePreset(id: string) {
+    try {
+      await api.restorePreset(id);
+      notify(`Restored “${id}”`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  /** Renames a preset. Returns the new id (the name), or undefined if it failed. */
+  async renamePreset(id: string, name: string): Promise<string | undefined> {
+    try {
+      const { id: newId } = await api.renamePreset(id, name);
+      this.#relinkSlots(id, newId);
+      await this.loadPresets();
+      return newId;
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  async setPresetNotes(id: string, notes: string) {
+    try {
+      const preset = await api.preset(id);
+      await api.updatePreset(id, { ...preset, notes }, 'edited notes');
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  async presetHistory(id: string): Promise<HistoryEntry[]> {
+    try {
+      return await api.presetHistory(id);
+    } catch (e) {
+      reportError(e);
+      return [];
+    }
+  }
+
+  /** Undoes the last change to a preset. Repeating it steps further back. */
+  async undoPreset(id: string) {
+    try {
+      const entry = await api.undoPreset(id);
+      this.#markLinkedSlotsChanged(id);
+      notify(`“${id}” is back to version ${entry.restored_from}`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  async rollbackPreset(id: string, version: number) {
+    try {
+      await api.rollbackPreset(id, version);
+      this.#markLinkedSlotsChanged(id);
+      notify(`Rolled “${id}” back to version ${version}`);
+      await this.loadPresets();
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  /** Updates which preset device slots hold after a rename */
+  #relinkSlots(from: string, to: string) {
+    this.memory.flush();
+    const relink = (state: ChannelState) => {
+      if (state.slot?.presetId !== from) return false;
+      state.slot = { ...state.slot, presetId: to, presetName: to };
+      return true;
+    };
+    if (relink(this.memory.state)) this.memory.save();
+    try {
+      for (const key of Object.keys(localStorage)) {
+        if (!key.startsWith('minidsp-gui:channels:')) continue;
+        const state = JSON.parse(localStorage.getItem(key) ?? 'null') as ChannelState | null;
+        if (state && relink(state)) localStorage.setItem(key, JSON.stringify(state));
+      }
+    } catch {
+      // Storage unavailable
+    }
+    this.memory.use(this.#deviceUrl, this.#activeSlot ?? 0, this.layout!.inputs.length, this.layout!.outputs.length);
+    this.refreshSlots();
+  }
+
+  /** After an undo or rollback, slots holding the preset no longer match it */
+  #markLinkedSlotsChanged(id: string) {
+    this.memory.flush();
+    if (this.memory.state.slot?.presetId === id) {
+      this.memory.state.slot.dirty = true;
+      this.memory.save();
+    }
+    try {
+      for (const key of Object.keys(localStorage)) {
+        if (!key.startsWith('minidsp-gui:channels:')) continue;
+        const state = JSON.parse(localStorage.getItem(key) ?? 'null') as ChannelState | null;
+        if (state?.slot?.presetId === id) {
+          state.slot.dirty = true;
+          localStorage.setItem(key, JSON.stringify(state));
+        }
+      }
+    } catch {
+      // Storage unavailable
+    }
+    this.memory.flush();
+    this.refreshSlots();
   }
 
   /** Switches the device to `slot` and writes a library preset into it */
@@ -547,7 +663,8 @@ class Controller {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${preset.name.replace(/[^\w\- ]+/g, '').trim() || 'preset'}.minidsp-preset.json`;
+      // Exported files carry the preset's name
+      a.download = `${preset.name}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
@@ -562,14 +679,24 @@ class Controller {
       if (typeof parsed.name !== 'string' || typeof parsed.product_name !== 'string' || typeof parsed.config !== 'object') {
         throw new Error(`${file.name} is not a minidsp preset`);
       }
-      await api.createPreset({
+      const preset: Preset = {
         name: parsed.name,
         notes: parsed.notes ?? '',
         product_name: parsed.product_name,
         config: parsed.config,
         ui: parsed.ui ?? {},
-      });
-      notify(`Imported preset “${parsed.name}”`);
+      };
+      // Keep the file's name; if it's taken, add a number
+      let id: string | undefined;
+      for (let n = 1; !id; n++) {
+        const name = n === 1 ? parsed.name : `${parsed.name} (${n})`;
+        try {
+          ({ id } = await api.createPreset({ ...preset, name }, `imported from ${file.name}`));
+        } catch (e) {
+          if (n >= 20 || !(e instanceof Error) || !e.message.includes('already exists')) throw e;
+        }
+      }
+      notify(`Imported preset “${id}”`);
       await this.loadPresets();
     } catch (e) {
       reportError(e instanceof SyntaxError ? new Error(`${file.name} is not valid JSON`) : e);

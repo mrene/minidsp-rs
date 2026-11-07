@@ -147,11 +147,25 @@ export interface ChannelNames {
 }
 
 export interface PresetSummary {
+  /** Identifies the preset in URLs; this is its name */
   id: string;
   name: string;
   notes: string;
   product_name: string;
   updated_ms: number;
+  /** Latest version number */
+  version: number;
+}
+
+/** One recorded version of a preset */
+export interface HistoryEntry {
+  version: number;
+  at_ms: number;
+  action: string;
+  name: string;
+  /** For undo and rollback: the version whose settings were restored */
+  restored_from?: number;
+  deleted?: boolean;
 }
 
 export interface Preset {

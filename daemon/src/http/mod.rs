@@ -357,17 +357,32 @@ async fn redoc(_: Request<Body>) -> Result<Response<Body>, Error> {
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError) -> Response<Body> {
-    let error = if let Some(err) = err.downcast_ref::<Error>() {
+    let (status, error) = if let Some(err) = err.downcast_ref::<Error>() {
+        // Problems with the request are the client's to fix; the rest are on our side
+        let status = match err {
+            Error::ParseError { .. }
+            | Error::ParameterError { .. }
+            | Error::DeviceIndexOutOfRange { .. } => StatusCode::BAD_REQUEST,
+            Error::ApplicationStillInitializing | Error::DeviceNotReady => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
+            Error::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        };
         let err: FormattedError = err.clone().into();
-        serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
+        let body = serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
             format!("the error: '{err:?}' couldn't be serialized as json: {e:?}")
-        })
+        });
+        (status, body)
     } else {
-        format!("Something went wrong: {err}")
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {err}"),
+        )
     };
 
     Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .status(status)
+        .header("Content-Type", "application/json")
         .body(Body::from(error))
         .unwrap()
 }
@@ -407,10 +422,16 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
         )
         .get("/presets", presets::list)
         .post("/presets", presets::create)
+        .get("/deleted-presets", presets::list_deleted)
         .get("/presets/get.schema", schema_fn::<presets::Preset>)
         .get("/presets/:presetId", presets::get)
         .put("/presets/:presetId", presets::update)
         .delete("/presets/:presetId", presets::delete)
+        .post("/presets/:presetId/rename", presets::rename)
+        .get("/presets/:presetId/history", presets::history)
+        .post("/presets/:presetId/rollback", presets::rollback)
+        .post("/presets/:presetId/undo", presets::undo)
+        .post("/presets/:presetId/restore", presets::restore)
         .get(
             "/devices/:deviceIndex/layout/get.schema",
             schema_fn::<gui::DeviceLayout>,

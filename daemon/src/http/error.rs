@@ -17,7 +17,8 @@ pub enum Error {
     #[error("couldn't parse parameter named {name}: {error}")]
     ParameterError { name: String, error: String },
 
-    #[error("the request could not be parsed")]
+    /// The request was understood but can't be carried out, or couldn't be parsed
+    #[error("{reason}")]
     ParseError { reason: String },
 
     #[error("the specified device is not ready to accept requests")]

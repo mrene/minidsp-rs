@@ -1,4 +1,16 @@
-import type { ChannelNames, Config, Device, DeviceLayout, MasterStatus, Preset, PresetSummary, StatusSummary } from './types';
+import type {
+  ChannelNames,
+  Config,
+  Device,
+  DeviceLayout,
+  HistoryEntry,
+  MasterStatus,
+  Preset,
+  PresetSummary,
+  StatusSummary,
+} from './types';
+
+const presetUrl = (id: string) => `/presets/${encodeURIComponent(id)}`;
 
 export class ApiError extends Error {}
 
@@ -41,11 +53,19 @@ export const api = {
   setNames: (device: number, names: ChannelNames) => request<ChannelNames>('PUT', `/devices/${device}/names`, names),
 
   presets: () => request<PresetSummary[]>('GET', '/presets'),
-  preset: (id: string) => request<Preset>('GET', `/presets/${encodeURIComponent(id)}`),
-  createPreset: (preset: Preset) => request<{ id: string }>('POST', '/presets', preset),
-  updatePreset: (id: string, preset: Preset) =>
-    request<{ id: string }>('PUT', `/presets/${encodeURIComponent(id)}`, preset),
-  deletePreset: (id: string) => request<void>('DELETE', `/presets/${encodeURIComponent(id)}`),
+  deletedPresets: () => request<PresetSummary[]>('GET', '/deleted-presets'),
+  preset: (id: string) => request<Preset>('GET', presetUrl(id)),
+  /** Saves a new preset; `action` describes it in the history */
+  createPreset: (preset: Preset, action?: string) => request<{ id: string }>('POST', '/presets', { ...preset, action }),
+  updatePreset: (id: string, preset: Preset, action?: string) =>
+    request<{ id: string }>('PUT', presetUrl(id), { ...preset, action }),
+  renamePreset: (id: string, name: string) => request<{ id: string }>('POST', `${presetUrl(id)}/rename`, { name }),
+  presetHistory: (id: string) => request<HistoryEntry[]>('GET', `${presetUrl(id)}/history`),
+  undoPreset: (id: string) => request<HistoryEntry>('POST', `${presetUrl(id)}/undo`),
+  rollbackPreset: (id: string, version: number) =>
+    request<HistoryEntry>('POST', `${presetUrl(id)}/rollback`, { version }),
+  deletePreset: (id: string) => request<{ id: string }>('DELETE', presetUrl(id)),
+  restorePreset: (id: string) => request<HistoryEntry>('POST', `${presetUrl(id)}/restore`),
   /** Switches the device to `slot` and writes the preset into it */
   applyPreset: (device: number, id: string, slot: number) =>
     request<MasterStatus>('POST', `/devices/${device}/presets/${encodeURIComponent(id)}/apply`, { slot }),
