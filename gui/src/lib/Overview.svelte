@@ -21,6 +21,8 @@
   function summary(ch: ChannelRef): string {
     const s = ctl.state(ch);
     const parts: string[] = [];
+    const group = ctl.linkGroup(ch);
+    if (group) parts.push(`⇄ ${group.channels.filter((i) => i !== ch.index).map((i) => ctl.label({ kind: ch.kind, index: i })).join(' + ')}`);
     const active = Object.values(s.peq).filter((b) => !b.bypass).length;
     if (active) parts.push(`PEQ ${active}`);
     if (ch.kind === 'out') {

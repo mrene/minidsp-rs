@@ -16,7 +16,7 @@ import { cascadeDb, firDb, logFrequencies } from './dsp';
 import { bandCoeffs, toBiquad, xoverCoeffs } from './filters';
 import { countUnknown, stateToConfig } from './presets';
 import { notify, reportError } from './toasts.svelte';
-import type { ChannelNames, HistoryEntry, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
+import type { ChannelLinks, ChannelNames, HistoryEntry, LinkGroup, LinkParam, Preset, PresetSummary, Config, Device, DeviceLayout, MasterStatus, PeqConfig, StatusSummary } from './types';
 
 export type ChannelKind = 'in' | 'out';
 export interface ChannelRef {
@@ -66,6 +66,8 @@ class Controller {
 
   /** Custom channel names, stored by the daemon and shared by every client */
   names = $state<ChannelNames>({ inputs: {}, outputs: {} });
+  /** Linked channels, stored by the daemon and shared by every client */
+  links = $state<ChannelLinks>({ groups: [] });
 
   #deviceUrl = '';
   #activeSlot: number | undefined;
@@ -129,6 +131,7 @@ class Controller {
     this.previousSlot = undefined;
     this.master = {};
     this.names = { inputs: {}, outputs: {} };
+    this.links = { groups: [] };
     this.inputLevels = [];
     this.outputLevels = [];
     this.firLoading = {};
@@ -140,8 +143,10 @@ class Controller {
         const initial = await api.status(index);
         // Names are optional; the interface works without them
         const names = await api.names(index).catch(() => ({ inputs: {}, outputs: {} }));
+        const links = await api.links(index).catch(() => ({ groups: [] }));
         if (cancelled) return;
         this.names = names;
+        this.links = links;
         this.layout = layout;
         this.#useSlot(initial.master.preset ?? 0);
         this.applySummary(initial);
@@ -251,7 +256,140 @@ class Controller {
     }
   }
 
+  // ---- Linked channels ---------------------------------------------------------------------
+
+  /** The link group a channel belongs to, if any */
+  linkGroup(ch: ChannelRef): LinkGroup | undefined {
+    return this.links.groups.find((g) => g.kind === ch.kind && g.channels.includes(ch.index));
+  }
+
+  /** Channels a change applies to: the whole link group if it shares `param`, else just `ch` */
+  #targets(ch: ChannelRef, param: LinkParam): ChannelRef[] {
+    const group = this.linkGroup(ch);
+    if (!group || !group.params.includes(param)) return [ch];
+    return group.channels.map((index) => ({ kind: ch.kind, index }));
+  }
+
+  #outputTargets(output: number, param: LinkParam): number[] {
+    return this.#targets({ kind: 'out', index: output }, param).map((t) => t.index);
+  }
+
+  async #saveLinks(groups: LinkGroup[]): Promise<boolean> {
+    try {
+      this.links = await api.setLinks(this.selected, { groups });
+      return true;
+    } catch (e) {
+      reportError(e);
+      return false;
+    }
+  }
+
+  /**
+   * Links `ch` with `members` (replacing its current link). Members leave any other link.
+   * With `copy`, the known values of the shared settings are copied from `ch` to the members.
+   */
+  async linkChannels(ch: ChannelRef, members: number[], params: LinkParam[], copy: boolean) {
+    const channels = [...new Set([ch.index, ...members])].sort((a, b) => a - b);
+    const groups = this.links.groups
+      .filter((g) => !(g.kind === ch.kind && g.channels.includes(ch.index)))
+      .map((g) => (g.kind === ch.kind ? { ...g, channels: g.channels.filter((c) => !channels.includes(c)) } : g))
+      .filter((g) => g.channels.length >= 2);
+    groups.push({ kind: ch.kind, channels, params });
+    if (!(await this.#saveLinks(groups))) return;
+    if (copy) await this.#copySettings(ch, members.filter((m) => m !== ch.index), params);
+    notify(`Linked ${channels.map((i) => this.label({ kind: ch.kind, index: i })).join(' + ')}`);
+  }
+
+  async unlink(ch: ChannelRef) {
+    const groups = this.links.groups.filter((g) => !(g.kind === ch.kind && g.channels.includes(ch.index)));
+    if (await this.#saveLinks(groups)) notify(`Unlinked ${this.label(ch)}`);
+  }
+
+  /** Copies the known values of `params` from one channel to others */
+  async #copySettings(from: ChannelRef, to: number[], params: LinkParam[]) {
+    const src = $state.snapshot(this.state(from)) as InputState & Partial<OutputState>;
+    for (const index of to) {
+      const t: ChannelRef = { kind: from.kind, index };
+      if (params.includes('gain') && src.gain !== undefined) this.#setGain(t, src.gain);
+      if (params.includes('mute') && src.mute !== undefined) this.#setMute(t, src.mute);
+      if (params.includes('peq') && Object.keys(src.peq).length) await this.#setPeqs(t, src.peq);
+      if (from.kind !== 'out') continue;
+      if (params.includes('invert') && src.invert !== undefined) this.#setInvert(index, src.invert);
+      if (params.includes('delay') && src.delayMs !== undefined) this.#setDelay(index, src.delayMs);
+      if (params.includes('crossover')) {
+        for (const [g, x] of Object.entries(src.xover ?? {})) this.#setCrossover(index, Number(g), x);
+      }
+      if (params.includes('compressor') && src.compressor && Object.keys(src.compressor).length) {
+        this.#setCompressor(index, src.compressor);
+      }
+      if (params.includes('fir')) {
+        if (src.fir?.taps?.length) await this.#loadFir(index, src.fir.taps, src.fir.name ?? '');
+        if (src.fir?.bypass !== undefined) this.#setFirBypass(index, src.fir.bypass);
+      }
+    }
+  }
+
   // ---- Channels ----------------------------------------------------------------------------
+
+  setGain(ch: ChannelRef, db: number) {
+    for (const t of this.#targets(ch, 'gain')) this.#setGain(t, db);
+  }
+
+  setMute(ch: ChannelRef, mute: boolean) {
+    for (const t of this.#targets(ch, 'mute')) this.#setMute(t, mute);
+  }
+
+  setInvert(output: number, invert: boolean) {
+    for (const o of this.#outputTargets(output, 'invert')) this.#setInvert(o, invert);
+  }
+
+  setDelay(output: number, ms: number) {
+    for (const o of this.#outputTargets(output, 'delay')) this.#setDelay(o, ms);
+  }
+
+  #peqCount(ch: ChannelRef): number {
+    const layout = this.layout!;
+    return (ch.kind === 'in' ? layout.inputs[ch.index] : layout.outputs[ch.index])?.peq_count ?? 0;
+  }
+
+  setPeq(ch: ChannelRef, index: number, band: PeqBand) {
+    for (const t of this.#targets(ch, 'peq')) if (index < this.#peqCount(t)) this.#setPeq(t, index, { ...band });
+  }
+
+  /** Replaces several bands in one request per channel, e.g. after importing filters from REW */
+  async setPeqs(ch: ChannelRef, bands: Record<number, PeqBand>) {
+    await Promise.all(
+      this.#targets(ch, 'peq').map((t) => {
+        const count = this.#peqCount(t);
+        const fitting = Object.fromEntries(Object.entries(bands).filter(([i]) => Number(i) < count).map(([i, b]) => [i, { ...b }]));
+        return this.#setPeqs(t, fitting);
+      }),
+    );
+  }
+
+  setCrossover(output: number, group: number, settings: XoverGroup) {
+    for (const o of this.#outputTargets(output, 'crossover')) {
+      if (group < (this.layout?.outputs[o]?.crossover_groups ?? 0)) this.#setCrossover(o, group, { ...settings });
+    }
+  }
+
+  setCompressor(output: number, change: CompressorState) {
+    for (const o of this.#outputTargets(output, 'compressor')) this.#setCompressor(o, { ...change });
+  }
+
+  /** Loads FIR taps into an output (and outputs linked to it). Returns whether all accepted them. */
+  async loadFir(output: number, taps: number[], name: string): Promise<boolean> {
+    let ok = true;
+    // One at a time: each load takes a while and the device handles one FIR load at once
+    for (const o of this.#outputTargets(output, 'fir')) ok = (await this.#loadFir(o, taps, name)) && ok;
+    return ok;
+  }
+
+  setFirBypass(output: number, bypass: boolean) {
+    for (const o of this.#outputTargets(output, 'fir')) this.#setFirBypass(o, bypass);
+  }
+
+  // ---- Channel state ------------------------------------------------------------------------
 
   state(ch: ChannelRef): InputState | OutputState {
     return ch.kind === 'in' ? this.memory.input(ch.index) : this.memory.output(ch.index);
@@ -272,25 +410,25 @@ class Controller {
     return (ch.kind === 'in' ? this.inputLevels : this.outputLevels)[position];
   }
 
-  setGain(ch: ChannelRef, db: number) {
+  #setGain(ch: ChannelRef, db: number) {
     const s = this.state(ch);
     s.gain = db;
     this.#apply(`${ch.kind}${ch.index}:gain`, db, (gain) => this.#channelConfig(ch, { gain }), () => (s.gain = undefined));
   }
 
-  setMute(ch: ChannelRef, mute: boolean) {
+  #setMute(ch: ChannelRef, mute: boolean) {
     const s = this.state(ch);
     s.mute = mute;
     this.#apply(`${ch.kind}${ch.index}:mute`, mute, (m) => this.#channelConfig(ch, { mute: m }), () => (s.mute = undefined));
   }
 
-  setInvert(output: number, invert: boolean) {
+  #setInvert(output: number, invert: boolean) {
     const s = this.memory.output(output);
     s.invert = invert;
     this.#apply(`out${output}:invert`, invert, (v) => ({ outputs: [{ index: output, invert: v }] }), () => (s.invert = undefined));
   }
 
-  setDelay(output: number, ms: number) {
+  #setDelay(output: number, ms: number) {
     const s = this.memory.output(output);
     s.delayMs = ms;
     this.#apply(
@@ -331,7 +469,7 @@ class Controller {
     return { index, coeff: toBiquad(bandCoeffs(band, this.fs)), bypass: band.bypass };
   }
 
-  setPeq(ch: ChannelRef, index: number, band: PeqBand) {
+  #setPeq(ch: ChannelRef, index: number, band: PeqBand) {
     const s = this.state(ch);
     s.peq[index] = band;
     this.#apply(
@@ -342,8 +480,7 @@ class Controller {
     );
   }
 
-  /** Replaces several bands in one request, e.g. after importing filters from REW */
-  async setPeqs(ch: ChannelRef, bands: Record<number, PeqBand>) {
+  async #setPeqs(ch: ChannelRef, bands: Record<number, PeqBand>) {
     const s = this.state(ch);
     Object.assign(s.peq, bands);
     this.memory.markDirty();
@@ -364,7 +501,7 @@ class Controller {
 
   // ---- Crossover ---------------------------------------------------------------------------
 
-  setCrossover(output: number, group: number, settings: XoverGroup) {
+  #setCrossover(output: number, group: number, settings: XoverGroup) {
     const s = this.memory.output(output);
     s.xover[group] = settings;
     this.#apply(
@@ -386,7 +523,7 @@ class Controller {
 
   // ---- Compressor --------------------------------------------------------------------------
 
-  setCompressor(output: number, change: CompressorState) {
+  #setCompressor(output: number, change: CompressorState) {
     const s = this.memory.output(output);
     Object.assign(s.compressor, change);
     const field = Object.keys(change).join(',');
@@ -402,8 +539,7 @@ class Controller {
 
   // ---- FIR ---------------------------------------------------------------------------------
 
-  /** Loads FIR taps into an output. Returns whether the device accepted them. */
-  async loadFir(output: number, taps: number[], name: string): Promise<boolean> {
+  async #loadFir(output: number, taps: number[], name: string): Promise<boolean> {
     const s = this.memory.output(output);
     this.firLoading[output] = true;
     try {
@@ -431,7 +567,7 @@ class Controller {
     await this.loadFir(output, [1], 'Flat (unit impulse)');
   }
 
-  setFirBypass(output: number, bypass: boolean) {
+  #setFirBypass(output: number, bypass: boolean) {
     const s = this.memory.output(output);
     s.fir.bypass = bypass;
     this.#apply(

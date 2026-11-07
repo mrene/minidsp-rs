@@ -27,7 +27,9 @@ mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
 mod branding;
+mod device_store;
 mod gui;
+mod links;
 mod names;
 mod openapi;
 mod presets;
@@ -417,6 +419,8 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
         .get("/devices/:deviceIndex/layout", gui::get_layout)
         .get("/devices/:deviceIndex/names", names::get)
         .put("/devices/:deviceIndex/names", names::put)
+        .get("/devices/:deviceIndex/links", links::get)
+        .put("/devices/:deviceIndex/links", links::put)
         .post(
             "/devices/:deviceIndex/presets/:presetId/apply",
             presets::apply,

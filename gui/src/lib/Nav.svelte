@@ -13,6 +13,11 @@
   <a href={href.channel(ch)} class="item ch" class:current={router.isChannel(ch)} aria-current={router.isChannel(ch) ? 'page' : undefined}>
     <span class="swatch" style:background={channelColor(ch)}></span>
     <span class="name"><ChannelLabel {ch} showTag={false} /></span>
+    {#if ctl.linkGroup(ch)}
+      <svg class="linked" viewBox="0 0 16 16" width="11" height="11" aria-label="linked">
+        <path d="M6.5 9.5l3-3M7 4.5l1-1a2.8 2.8 0 0 1 4 4l-1 1M9 11.5l-1 1a2.8 2.8 0 0 1-4-4l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+    {/if}
     {#if ctl.state(ch)?.mute}<span class="flag">M</span>{/if}
     <span class="mini"><Meter level={ctl.level(ch)} showValue={false} /></span>
   </a>
@@ -81,6 +86,10 @@
   .mini {
     flex: 1;
     min-width: 30px;
+  }
+  .linked {
+    flex: none;
+    color: var(--accent);
   }
   .settings {
     margin-top: 14px;

@@ -149,6 +149,20 @@ export interface Branding {
   accent?: string;
 }
 
+/** Settings a link group can share */
+export type LinkParam = 'peq' | 'crossover' | 'compressor' | 'fir' | 'gain' | 'mute' | 'delay' | 'invert';
+
+/** Channels of one kind that share settings */
+export interface LinkGroup {
+  kind: 'in' | 'out';
+  channels: number[];
+  params: LinkParam[];
+}
+
+export interface ChannelLinks {
+  groups: LinkGroup[];
+}
+
 /** Custom channel names, by 0-based channel index */
 export interface ChannelNames {
   inputs: Record<string, string>;

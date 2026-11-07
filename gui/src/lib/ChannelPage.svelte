@@ -1,5 +1,6 @@
 <script lang="ts">
   import ChannelLabel from './ChannelLabel.svelte';
+  import LinkPanel from './LinkPanel.svelte';
   import { channelColor, channelName, ctl, MAX_NAME_LENGTH, type ChannelRef } from './controller.svelte';
   import { peqTypeInfo } from './dsp';
   import CompressorPanel from './CompressorPanel.svelte';
@@ -155,6 +156,8 @@
       {/if}
     </div>
   </header>
+
+  <LinkPanel {ch} />
 
   <section class="panel">
     <div class="panel-head">
