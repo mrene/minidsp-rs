@@ -26,7 +26,14 @@ pub use error::{Error, FormattedError};
 mod helpers;
 use helpers::{parse_body, parse_param, serialize_response};
 
+mod branding;
+mod device_store;
+mod gui;
+mod links;
+mod locks;
+mod names;
 mod openapi;
+mod presets;
 mod websocket;
 
 #[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
@@ -229,13 +236,19 @@ async fn get_master_status(req: Request<Body>) -> Result<Response<Body>, Error> 
 /// Updates the device's master status directly
 async fn post_master_status(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
+    let status: MasterStatus = parse_body(&mut req).await?;
+    locks::check(
+        device_index,
+        status.source.is_some(),
+        status.preset.is_some(),
+    )
+    .await?;
 
     let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index).await?;
 
     // Apply the requested, changes, then fetch the master status again to return it
-    let status: MasterStatus = parse_body(&mut req).await?;
     status.apply(&device).await?;
 
     let status = device.get_master_status().await?;
@@ -273,8 +286,15 @@ async fn update_volume(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device = get_device_instance(&app, device_index).await?;
 
     let status = device.get_master_status().await?;
-    let current_gain = status.volume.unwrap().0;
-    let current_mute = status.mute.unwrap();
+    let current_gain = status
+        .volume
+        .ok_or_else(|| {
+            minidsp::MiniDSPError::MalformedResponse("master volume not reported".into())
+        })?
+        .0;
+    let current_mute = status.mute.ok_or_else(|| {
+        minidsp::MiniDSPError::MalformedResponse("mute status not reported".into())
+    })?;
     match direction {
         VolumeDirection::Down => {
             device
@@ -297,6 +317,7 @@ async fn update_volume(req: Request<Body>) -> Result<Response<Body>, Error> {
 async fn update_source(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let source: Source = parse_param(&req, "source")?;
+    locks::check(device_index, true, false).await?;
 
     let app = super::APP.get().unwrap();
     let app = app.read().await;
@@ -310,6 +331,7 @@ async fn update_source(req: Request<Body>) -> Result<Response<Body>, Error> {
 async fn update_preset(req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
     let preset: u8 = parse_param(&req, "preset")?;
+    locks::check(device_index, false, true).await?;
 
     let app = super::APP.get().unwrap();
     let app = app.read().await;
@@ -324,11 +346,20 @@ async fn update_preset(req: Request<Body>) -> Result<Response<Body>, Error> {
 /// safe to change config and apply other changes to the target config using a single call.
 async fn post_config(mut req: Request<Body>) -> Result<Response<Body>, Error> {
     let device_index: usize = parse_param(&req, "deviceIndex")?;
+    let config: Config = parse_body(&mut req).await?;
+    // Checked before taking the application lock, which the check also reads
+    if let Some(master) = &config.master_status {
+        locks::check(
+            device_index,
+            master.source.is_some(),
+            master.preset.is_some(),
+        )
+        .await?;
+    }
+
     let app = super::APP.get().unwrap();
     let app = app.read().await;
     let device = get_device_instance(&app, device_index).await?;
-
-    let config: Config = parse_body(&mut req).await?;
     config.apply(&device).await?;
     Ok(Response::new(Body::default()))
 }
@@ -347,17 +378,33 @@ async fn redoc(_: Request<Body>) -> Result<Response<Body>, Error> {
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError) -> Response<Body> {
-    let error = if let Some(err) = err.downcast_ref::<Error>() {
+    let (status, error) = if let Some(err) = err.downcast_ref::<Error>() {
+        // Problems with the request are the client's to fix; the rest are on our side
+        let status = match err {
+            Error::ParseError { .. }
+            | Error::ParameterError { .. }
+            | Error::DeviceIndexOutOfRange { .. } => StatusCode::BAD_REQUEST,
+            Error::ApplicationStillInitializing | Error::DeviceNotReady => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
+            Error::Locked { .. } => StatusCode::LOCKED,
+            Error::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        };
         let err: FormattedError = err.clone().into();
-        serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
+        let body = serde_json::to_string_pretty(&err).unwrap_or_else(|e| {
             format!("the error: '{err:?}' couldn't be serialized as json: {e:?}")
-        })
+        });
+        (status, body)
     } else {
-        format!("Something went wrong: {err}")
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {err}"),
+        )
     };
 
     Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .status(status)
+        .header("Content-Type", "application/json")
         .body(Body::from(error))
         .unwrap()
 }
@@ -388,6 +435,35 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
             schema_fn::<MasterStatus>,
         )
         .post("/devices/:deviceIndex/config", post_config)
+        .get("/devices/:deviceIndex/layout", gui::get_layout)
+        .get("/devices/:deviceIndex/names", names::get)
+        .put("/devices/:deviceIndex/names", names::put)
+        .get("/devices/:deviceIndex/links", links::get)
+        .put("/devices/:deviceIndex/links", links::put)
+        .get("/devices/:deviceIndex/locks", locks::get)
+        .put("/devices/:deviceIndex/locks", locks::put)
+        .post(
+            "/devices/:deviceIndex/presets/:presetId/apply",
+            presets::apply,
+        )
+        .get("/branding", branding::get)
+        .put("/branding", branding::put)
+        .get("/presets", presets::list)
+        .post("/presets", presets::create)
+        .get("/deleted-presets", presets::list_deleted)
+        .get("/presets/get.schema", schema_fn::<presets::Preset>)
+        .get("/presets/:presetId", presets::get)
+        .put("/presets/:presetId", presets::update)
+        .delete("/presets/:presetId", presets::delete)
+        .post("/presets/:presetId/rename", presets::rename)
+        .get("/presets/:presetId/history", presets::history)
+        .post("/presets/:presetId/rollback", presets::rollback)
+        .post("/presets/:presetId/undo", presets::undo)
+        .post("/presets/:presetId/restore", presets::restore)
+        .get(
+            "/devices/:deviceIndex/layout/get.schema",
+            schema_fn::<gui::DeviceLayout>,
+        )
         .get(
             "/devices/:deviceIndex/config/post.schema",
             schema_fn::<Config>,
@@ -399,6 +475,13 @@ fn router(server: Option<HttpServer>) -> Router<Body, Error> {
     if let Some(server) = server {
         if let Some(allowed_origins) = server.allowed_origins {
             builder = builder.middleware(enable_cors_all(allowed_origins.into()));
+        }
+
+        // Registered last so that API routes always take precedence over static files
+        if let Some(static_dir) = server.static_dir {
+            let root = std::path::PathBuf::from(static_dir);
+            log::info!("Serving web interface from {}", root.display());
+            builder = builder.get("/*", move |req| gui::serve_static(root.clone(), req));
         }
     }
 

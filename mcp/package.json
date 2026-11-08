@@ -1,0 +1,15 @@
+{
+  "name": "minidsp-mcp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "MCP server that lets an AI assistant read and adjust a miniDSP through minidspd",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.ts",
+    "test": "node --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.6.7"
+  }
+}

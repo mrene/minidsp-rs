@@ -231,18 +231,22 @@ impl MiniDSP<'_> {
 
         // The MiniDSP Flex is immediately responding to `SetConfig` without waiting for it to be applied
         // Try polling the master status until the new config is reported
-        loop {
-            let status = self.get_master_status().await?;
-            let preset = status.preset.unwrap();
+        const POLL_INTERVAL: Duration = Duration::from_millis(500);
+        const MAX_ATTEMPTS: usize = 20; // ~10 seconds
 
-            if preset == config {
-                break;
+        for _ in 0..MAX_ATTEMPTS {
+            let status = self.get_master_status().await?;
+            match status.preset {
+                Some(preset) if preset == config => return Ok(()),
+                Some(_) => {}
+                // This device doesn't report its active preset, the ack is all we can go by
+                None => return Ok(()),
             }
 
-            tokio::time::sleep(Duration::from_millis(500)).await;
+            tokio::time::sleep(POLL_INTERVAL).await;
         }
 
-        Ok(())
+        Err(MiniDSPError::Timeout)
     }
 
     /// Enables or disables Dirac Live
@@ -668,12 +672,34 @@ impl<'a> Fir<'a> {
 
     /// Loads all coefficients into the filter, automatically setting the number of active taps
     pub async fn set_coefficients(&self, coefficients: &[f32]) -> Result<()> {
+        // Validate before touching the device, so a rejected filter doesn't leave a bogus number
+        // of active taps behind.
+        let num_coefficients: u16 = coefficients
+            .len()
+            .try_into()
+            .map_err(|_| MiniDSPError::TooManyCoefficients)?;
+        if num_coefficients > self.spec.max_coefficients {
+            return Err(MiniDSPError::TooManyCoefficients);
+        }
+
         // The device will change the master mute status while loading the filter
         let master_status = self.dsp.get_master_status().await?;
 
+        let result = self.load_coefficients(coefficients, num_coefficients).await;
+
+        // Set the master mute status back, even if loading failed
+        let restore = match master_status.mute {
+            Some(mute) => self.dsp.set_master_mute(mute).await,
+            None => Ok(()),
+        };
+
+        result.and(restore)
+    }
+
+    async fn load_coefficients(&self, coefficients: &[f32], num_coefficients: u16) -> Result<()> {
         // Set the number of active coefficients
         self.dsp
-            .write_dsp_int(self.spec.num_coefficients, coefficients.len() as u16)
+            .write_dsp_int(self.spec.num_coefficients, num_coefficients)
             .await?;
 
         // Get the max number of usable coefficients
@@ -708,11 +734,6 @@ impl<'a> Fir<'a> {
             .roundtrip(Commands::FirLoadEnd)
             .await?
             .into_ack()?;
-
-        // Set the master mute status back
-        self.dsp
-            .set_master_mute(master_status.mute.unwrap())
-            .await?;
 
         Ok(())
     }

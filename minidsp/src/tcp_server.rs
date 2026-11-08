@@ -109,16 +109,25 @@ where
     loop {
         select! {
            result = &mut tx_handle => {
-               let result = result.expect("tx joinhandle");
+               // The device can no longer be written to. Polling this handle again would panic,
+               // so stop serving.
+               let result = result.context("tx task failed")?;
                if let Err(e) = result {
-                   log::error!("tx error: {}", e.into());
+                   let e = e.into();
+                   log::error!("tx error: {e}");
+                   return Err(e);
                }
+               return Err(MiniDSPError::TransportClosed.into());
            }
            result = &mut rx_handle => {
-                let result = result.expect("rx joinhandle");
+                // The device stream has ended, there is nothing left to serve
+                let result = result.context("rx task failed")?;
                 if let Err(e) = result {
-                    log::error!("rx error: {}", e.into());
+                    let e = e.into();
+                    log::error!("rx error: {e}");
+                    return Err(e);
                 }
+                return Err(MiniDSPError::TransportClosed.into());
             }
            result = listener.accept() => {
                 let (stream, addr) = result?;

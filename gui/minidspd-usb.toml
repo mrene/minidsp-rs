@@ -1,0 +1,18 @@
+# minidspd config for a Mac connected to a miniDSP over USB.
+# Run from the repository root, after building the web interface (cd gui && npm run build):
+#   cargo run --release --bin minidspd -- --config gui/minidspd-usb.toml
+# then open http://127.0.0.1:5380
+
+# Only use the miniDSP plugged in over USB; ignore network devices such as a WI-DG
+ignore_advertisements = true
+
+[http_server]
+# Only this Mac can open the interface. To use it from a phone or another computer on your
+# network, change this to "0.0.0.0:5380" (the interface has no login: trusted networks only).
+bind_address = "127.0.0.1:5380"
+# The built web interface, relative to the directory minidspd is started from
+static_dir = "gui/dist"
+
+# Presets, their history, channel names, links, locks and branding are kept in
+# ~/.local/share/minidsp/ by default. Uncomment to keep them elsewhere:
+# presets_dir = "/Users/you/minidsp/presets"

@@ -20,6 +20,10 @@ pub struct Config {
     /// Set to ignore network devices that broadcast advertisement packets (such as the WI-DG).
     /// It's still possible to add them using `[[static_device]]`
     pub ignore_advertisements: bool,
+
+    /// Directory where the preset library is stored. Defaults to
+    /// `~/.local/share/minidsp/presets`, or `/var/lib/minidsp/presets` without a home directory.
+    pub presets_dir: Option<String>,
 }
 
 impl Default for Config {
@@ -32,6 +36,7 @@ impl Default for Config {
             tcp_servers: Vec::new(),
             static_devices: Vec::new(),
             ignore_advertisements: false,
+            presets_dir: None,
         }
     }
 }
@@ -52,6 +57,10 @@ pub struct HttpServer {
 
     /// If set, CORS headers will be set to allow the specified origins
     pub allowed_origins: Option<String>,
+
+    /// If set, serves the web interface from this directory (e.g. the `gui/dist` build output).
+    /// API routes take precedence over files in this directory.
+    pub static_dir: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
